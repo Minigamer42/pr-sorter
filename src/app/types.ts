@@ -2,6 +2,18 @@ export type AppConfig = {
   localStoragePrefix: string;
   title: string;
   description: string;
+  googleSheets?: GoogleSheetsConfig;
+};
+
+export type GoogleSheetsConfig = {
+  clientId: string;
+  appId: string;
+  rankColumnHeader: string;
+};
+
+export type GoogleSpreadsheetSelection = {
+  id: string;
+  name: string;
 };
 
 export type Region = "eu" | "naw" | "nae";

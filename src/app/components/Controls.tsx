@@ -3,21 +3,33 @@ import type { SavedProgressKind, Screen } from "../types";
 type ControlsProps = {
   screen: Screen;
   savedKind: SavedProgressKind;
+  googleSheetsEnabled: boolean;
+  googleSheetsDisabledReason: string | null;
+  googleSheetsSetupReason: string | null;
+  isWritingSheet: boolean;
   onOpenSettings(): void;
   onStart(): void;
   onLoad(): void;
   onUndo(): void;
   onCopyRanks(): void;
+  onWriteRanksToSheet(): void;
+  onSetupGoogleSheet(): void;
 };
 
 export function Controls({
   screen,
   savedKind,
+  googleSheetsEnabled,
+  googleSheetsDisabledReason,
+  googleSheetsSetupReason,
+  isWritingSheet,
   onOpenSettings,
   onStart,
   onLoad,
   onUndo,
   onCopyRanks,
+  onWriteRanksToSheet,
+  onSetupGoogleSheet,
 }: ControlsProps) {
   return (
     <div className="button-container">
@@ -42,6 +54,23 @@ export function Controls({
       {screen === "complete" ? (
         <button className="copy-button" type="button" onClick={onCopyRanks}>
           Copy ranks to clipboard
+        </button>
+      ) : null}
+      {screen === "complete" && googleSheetsEnabled ? (
+        <button
+          className="copy-button"
+          type="button"
+          onClick={googleSheetsSetupReason ? onSetupGoogleSheet : onWriteRanksToSheet}
+          disabled={isWritingSheet || Boolean(googleSheetsDisabledReason)}
+          title={googleSheetsDisabledReason ?? googleSheetsSetupReason ?? undefined}
+        >
+          {isWritingSheet
+            ? "Writing to Google Sheet..."
+            : googleSheetsDisabledReason
+              ? googleSheetsDisabledReason
+              : googleSheetsSetupReason
+                ? googleSheetsSetupReason
+              : "Write ranks to Google Sheet"}
         </button>
       ) : null}
     </div>

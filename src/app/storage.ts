@@ -1,6 +1,6 @@
 import type { SortState } from "../sorter";
 import { z } from "zod";
-import type { AppConfig, Settings } from "./types";
+import type { AppConfig, GoogleSpreadsheetSelection, Settings } from "./types";
 import { isSortState } from "./internal/savedSortValidation";
 
 type StorageFacade = {
@@ -8,6 +8,9 @@ type StorageFacade = {
   saveSort(sort: SortState): void;
   loadSettings(): Settings;
   saveSettings(settings: Settings): void;
+  loadGoogleSpreadsheetSelection(): GoogleSpreadsheetSelection | null;
+  saveGoogleSpreadsheetSelection(selection: GoogleSpreadsheetSelection): void;
+  clearGoogleSpreadsheetSelection(): void;
 };
 
 const settingsSchema = z.object({
@@ -15,9 +18,15 @@ const settingsSchema = z.object({
   region: z.enum(["eu", "naw", "nae"]),
 });
 
+const googleSpreadsheetSelectionSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+});
+
 export function createStorage(config: AppConfig, songCount: number): StorageFacade {
   const sortKey = `${config.localStoragePrefix}:sort`;
   const settingsKey = `${config.localStoragePrefix}:settings`;
+  const googleSpreadsheetSelectionKey = `${config.localStoragePrefix}:google-spreadsheet-selection`;
 
   function loadSort(): SortState | null {
     const raw = localStorage.getItem(sortKey);
@@ -67,5 +76,41 @@ export function createStorage(config: AppConfig, songCount: number): StorageFaca
     localStorage.setItem(settingsKey, JSON.stringify(settings));
   }
 
-  return { loadSort, saveSort, loadSettings, saveSettings };
+  function loadGoogleSpreadsheetSelection(): GoogleSpreadsheetSelection | null {
+    const raw = localStorage.getItem(googleSpreadsheetSelectionKey);
+    if (!raw) {
+      return null;
+    }
+
+    try {
+      const parsed: unknown = JSON.parse(raw);
+      const result = googleSpreadsheetSelectionSchema.safeParse(parsed);
+      if (result.success) {
+        return result.data;
+      }
+    } catch {
+      // Invalid Google Sheet selection is removed below.
+    }
+
+    localStorage.removeItem(googleSpreadsheetSelectionKey);
+    return null;
+  }
+
+  function saveGoogleSpreadsheetSelection(selection: GoogleSpreadsheetSelection): void {
+    localStorage.setItem(googleSpreadsheetSelectionKey, JSON.stringify(selection));
+  }
+
+  function clearGoogleSpreadsheetSelection(): void {
+    localStorage.removeItem(googleSpreadsheetSelectionKey);
+  }
+
+  return {
+    loadSort,
+    saveSort,
+    loadSettings,
+    saveSettings,
+    loadGoogleSpreadsheetSelection,
+    saveGoogleSpreadsheetSelection,
+    clearGoogleSpreadsheetSelection,
+  };
 }

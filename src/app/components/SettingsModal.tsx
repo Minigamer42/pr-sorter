@@ -1,10 +1,16 @@
-import type { Region, Settings } from "../types";
+import type { GoogleSpreadsheetSelection, Region, Settings } from "../types";
 
 type SettingsModalProps = {
   open: boolean;
   settings: Settings;
+  googleSheetsConfigured: boolean;
+  googleSheetsDisabledReason: string | null;
+  googleSpreadsheetSelection: GoogleSpreadsheetSelection | null;
+  isConnectingGoogleSheet: boolean;
   onClose(): void;
   onChange(settings: Settings): void;
+  onChooseGoogleSheet(): void;
+  onClearGoogleSheet(): void;
 };
 
 const regions: { value: Region; label: string }[] = [
@@ -13,7 +19,18 @@ const regions: { value: Region; label: string }[] = [
   { value: "nae", label: "NA East" },
 ];
 
-export function SettingsModal({ open, settings, onClose, onChange }: SettingsModalProps) {
+export function SettingsModal({
+  open,
+  settings,
+  googleSheetsConfigured,
+  googleSheetsDisabledReason,
+  googleSpreadsheetSelection,
+  isConnectingGoogleSheet,
+  onClose,
+  onChange,
+  onChooseGoogleSheet,
+  onClearGoogleSheet,
+}: SettingsModalProps) {
   if (!open) {
     return null;
   }
@@ -53,6 +70,34 @@ export function SettingsModal({ open, settings, onClose, onChange }: SettingsMod
             </button>
           ))}
         </div>
+        {googleSheetsConfigured ? (
+          <div className="option-group">
+            <p>Google Sheet:</p>
+            <div className="setting-value">
+              {googleSpreadsheetSelection ? googleSpreadsheetSelection.name : "No spreadsheet selected"}
+            </div>
+            <button
+              className="option-button"
+              type="button"
+              onClick={onChooseGoogleSheet}
+              disabled={isConnectingGoogleSheet || Boolean(googleSheetsDisabledReason)}
+              title={googleSheetsDisabledReason ?? undefined}
+            >
+              {isConnectingGoogleSheet
+                ? "Connecting..."
+                : googleSheetsDisabledReason
+                  ? "Google setup missing"
+                  : googleSpreadsheetSelection
+                    ? "Change Sheet"
+                    : "Choose Sheet"}
+            </button>
+            {googleSpreadsheetSelection ? (
+              <button className="option-button" type="button" onClick={onClearGoogleSheet}>
+                Forget Sheet
+              </button>
+            ) : null}
+          </div>
+        ) : null}
         <button className="close-button" type="button" onClick={onClose}>
           Close
         </button>

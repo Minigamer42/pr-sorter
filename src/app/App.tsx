@@ -9,6 +9,8 @@ import {
   type SortChoice,
   type SortState,
 } from "../sorter";
+import { GooglePickerCanceledError, GoogleWritebackError } from "../google/types";
+import { chooseGoogleSpreadsheet, writeRanksToGoogleSheet } from "../google/googleSheetsWriteback";
 import type { Song } from "../songs";
 import { Controls } from "./components/Controls";
 import { Duel } from "./components/Duel";
@@ -16,7 +18,7 @@ import { Progress } from "./components/Progress";
 import { Results } from "./components/Results";
 import { SettingsModal } from "./components/SettingsModal";
 import { createStorage } from "./storage";
-import type { AppConfig, SavedProgressKind, Screen, Settings } from "./types";
+import type { AppConfig, GoogleSpreadsheetSelection, SavedProgressKind, Screen, Settings } from "./types";
 
 type AppProps = {
   config: AppConfig;
@@ -37,6 +39,11 @@ export function App({ config, songs }: AppProps) {
   const [settings, setSettings] = useState<Settings>(() => storage.loadSettings());
   const [sort, setSort] = useState<SortState | null>(null);
   const [isSettingsOpen, setSettingsOpen] = useState(false);
+  const [isWritingSheet, setWritingSheet] = useState(false);
+  const [isConnectingGoogleSheet, setConnectingGoogleSheet] = useState(false);
+  const [googleSpreadsheetSelection, setGoogleSpreadsheetSelection] = useState<GoogleSpreadsheetSelection | null>(() =>
+    storage.loadGoogleSpreadsheetSelection(),
+  );
 
   useEffect(() => {
     document.title = config.title;
@@ -103,6 +110,21 @@ export function App({ config, songs }: AppProps) {
     storage.saveSettings(nextSettings);
   }
 
+  function googleWritebackConfig() {
+    const googleSheets = config.googleSheets;
+    const apiKey = import.meta.env.VITE_GOOGLE_API_KEY;
+
+    if (!googleSheets || !apiKey) {
+      return null;
+    }
+
+    return {
+      ...googleSheets,
+      apiKey,
+      tokenStorageKey: `${config.localStoragePrefix}:google-oauth-access-token`,
+    };
+  }
+
   function copyRanks(): void {
     if (!sort) {
       return;
@@ -128,6 +150,77 @@ export function App({ config, songs }: AppProps) {
       });
   }
 
+  function writeRanksToSheet(): void {
+    if (screen !== "complete" || !sort) {
+      return;
+    }
+
+    const writebackConfig = googleWritebackConfig();
+    if (!writebackConfig) {
+      alert("Google integration is not configured.");
+      return;
+    }
+
+    if (!googleSpreadsheetSelection) {
+      alert("Choose a Google Sheet in Settings before writing ranks.");
+      return;
+    }
+
+    setWritingSheet(true);
+    void writeRanksToGoogleSheet(writebackConfig, ranksBySongId(songs, sort), googleSpreadsheetSelection)
+      .then((spreadsheet) => {
+        alert(`Updated ranks in ${spreadsheet.name}.`);
+      })
+      .catch((error: unknown) => {
+        if (error instanceof GooglePickerCanceledError) {
+          return;
+        }
+
+        console.error("Error writing ranks to Google Sheet:", error);
+        alert(error instanceof GoogleWritebackError ? error.message : "Could not write ranks to Google Sheet.");
+      })
+      .finally(() => {
+        setWritingSheet(false);
+      });
+  }
+
+  function chooseSheet(): void {
+    const writebackConfig = googleWritebackConfig();
+    if (!writebackConfig) {
+      alert("Google integration is not configured.");
+      return;
+    }
+
+    setConnectingGoogleSheet(true);
+    void chooseGoogleSpreadsheet(writebackConfig)
+      .then((spreadsheet) => {
+        setGoogleSpreadsheetSelection(spreadsheet);
+        storage.saveGoogleSpreadsheetSelection(spreadsheet);
+        alert(`Selected ${spreadsheet.name}.`);
+      })
+      .catch((error: unknown) => {
+        if (error instanceof GooglePickerCanceledError) {
+          return;
+        }
+
+        console.error("Error choosing Google Sheet:", error);
+        alert(error instanceof GoogleWritebackError ? error.message : "Could not choose Google Sheet.");
+      })
+      .finally(() => {
+        setConnectingGoogleSheet(false);
+      });
+  }
+
+  function clearSheetSelection(): void {
+    setGoogleSpreadsheetSelection(null);
+    storage.clearGoogleSpreadsheetSelection();
+  }
+
+  const googleSheetsDisabledReason = config.googleSheets && !import.meta.env.VITE_GOOGLE_API_KEY
+    ? "Google API key is not configured."
+    : null;
+  const writeSheetSetupReason = config.googleSheets && !googleSpreadsheetSelection ? "Choose a Google Sheet in Settings." : null;
+
   const progressLabel =
     sort && screen === "complete"
       ? `Completed! (${sort.battleNo} battles)`
@@ -146,24 +239,36 @@ export function App({ config, songs }: AppProps) {
       <SettingsModal
         open={isSettingsOpen}
         settings={settings}
+        googleSheetsConfigured={Boolean(config.googleSheets)}
+        googleSheetsDisabledReason={googleSheetsDisabledReason}
+        googleSpreadsheetSelection={googleSpreadsheetSelection}
+        isConnectingGoogleSheet={isConnectingGoogleSheet}
         onClose={() => setSettingsOpen(false)}
         onChange={updateSettings}
+        onChooseGoogleSheet={chooseSheet}
+        onClearGoogleSheet={clearSheetSelection}
       />
       <div className={`main-page ${screen === "landing" ? "main-page--landing" : ""}`}>
         {screen !== "sorting" ? (
           <div className="title" style={screen === "complete" ? { height: "3%" } : undefined}>
-            {screen === "complete" ? "Make sure your sheet is sorted by ID before pasting!" : landingTitle(savedKind)}
+            {screen === "complete" ? "Results" : landingTitle(savedKind)}
           </div>
         ) : null}
 
         <Controls
           screen={screen}
           savedKind={savedKind}
+          googleSheetsEnabled={Boolean(config.googleSheets)}
+          googleSheetsDisabledReason={googleSheetsDisabledReason}
+          googleSheetsSetupReason={writeSheetSetupReason}
+          isWritingSheet={isWritingSheet}
           onOpenSettings={() => setSettingsOpen(true)}
           onStart={startSort}
           onLoad={loadSort}
           onUndo={undoPick}
           onCopyRanks={copyRanks}
+          onWriteRanksToSheet={writeRanksToSheet}
+          onSetupGoogleSheet={() => setSettingsOpen(true)}
         />
 
         {screen !== "landing" && sort ? (
