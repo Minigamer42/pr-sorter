@@ -7,7 +7,7 @@ This project is a simple single-page application template that allows users to r
 For a normal fork, only edit:
 
 - `customize/config.ts`
-- `customize/songList.json`
+- `customize/songList.ts`
 
 ## Project Structure
 
@@ -19,9 +19,9 @@ party-ranking-sorter-template/
 │   └── favicon.ico
 ├── customize/
 │   ├── config.ts
-│   └── songList.json
+│   └── songList.ts
 ├── src/
-│   ├── main.ts
+│   ├── main.tsx
 │   └── ...
 ├── package.json
 ├── tsconfig.json
@@ -40,14 +40,16 @@ party-ranking-sorter-template/
 
 To set up a custom sorter for your specific party ranking, follow these steps:
 
-1. **Update `customize/songList.json`:**
-   - Replace the content of `customize/songList.json` with your own list of songs. Each song should have an `id`, `anime`, `name`, `video`, and optionally an `mp3` field.
+1. **Update `customize/songList.ts`:**
+   - Replace the content of `customize/songList.ts` with your own list of songs. Each song should have an `id`, `anime`, `name`, `video`, and `mp3` field.
    - Links should be either animemusicquiz catbox links or YouTube links.
    - Regex because I'm lazy:
    `(\d+)\t(.+)?\t(.+)\t\t(.+)\n?` to `{"id": $1, "anime": "$2", "name": "$3", "video": "$4", "mp3": null },\n`
    - Example:
-     ```json
-     [
+     ```typescript
+     import type { Song } from "../src/songs";
+
+     export const songList = [
          {
              "id": 1,
              "anime": "Your Anime Title",
@@ -69,7 +71,7 @@ To set up a custom sorter for your specific party ranking, follow these steps:
              "video": "https://eudist.animemusicquiz.com/example.webm",
              "mp3": "https://eudist.animemusicquiz.com/example.mp3"
          }
-     ]
+     ] satisfies Song[];
      ```
 
 2. **Update the Title and Description in `customize/config.ts`:**

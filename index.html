@@ -12,55 +12,8 @@
 </head>
 
 <body>
-
-  <div class="modal-overlay" id="modalOverlay"></div>
-  <div class="modal" id="settingsModal">
-    <h2>Settings</h2>
-    <div class="option-group">
-      <p>Format:</p>
-      <button class="option-button active" data-type="format" data-value="video">Video</button>
-      <button class="option-button" data-type="format" data-value="audio">Audio</button>
-    </div>
-    <div class="option-group">
-      <p>Region:</p>
-      <button class="option-button active" data-type="region" data-value="eu">Europe</button>
-      <button class="option-button" data-type="region" data-value="naw">NA West</button>
-      <button class="option-button" data-type="region" data-value="nae">NA East</button>
-    </div>
-    <button id="close-settings" class="close-button">Close</button>
-  </div>
-
-  <div id="main" class="main-page">
-
-    <div class="title">Press "Start" to begin sorting.</div>
-
-    <div id="buttons" class="button-container">
-      <button id="settings" class="basic-button">Settings</button>
-      <button id="start" class="basic-button">Start</button>
-      <button id="load" class="basic-button">Load</button>
-    </div>
-
-    <template id="song-card-template">
-      <div class="music-card">
-        <div data-slot="media"></div>
-        <div class="anime" data-slot="anime"></div>
-        <div class="song" data-slot="song"></div>
-        <button type="button" data-action="pick">PICK</button>
-      </div>
-    </template>
-
-    <div id="duel" class="duel-container"></div>
-
-    <div class="progress">
-      <span class="progressbattle"></span>
-      <div class="progress-container" hidden>
-        <div class="progress-bar" id="progressBar"></div>
-      </div>
-    </div>
-
-  </div>
-
-  <script type="module" src="/src/main.ts"></script>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
 
 </body>
 

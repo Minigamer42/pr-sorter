@@ -1,55 +1,47 @@
+import { z } from "zod";
 import type { SortState } from "../../sorter";
 
-function isNumberArray(value: unknown): value is number[] {
-  return Array.isArray(value) && value.every((item) => Number.isInteger(item));
-}
+function createSortStateSchema(songCount: number) {
+  const songIndexSchema = z.number().int().refine((index) => index >= 0 && index < songCount);
+  const indexArraySchema = z.array(songIndexSchema);
+  const mergeSchema = z
+    .object({
+      left: indexArraySchema,
+      right: indexArraySchema,
+      merged: indexArraySchema,
+      leftPos: z.number().int(),
+      rightPos: z.number().int(),
+    })
+    .superRefine((merge, context) => {
+      if (merge.leftPos < 0 || merge.leftPos >= merge.left.length) {
+        context.addIssue({
+          code: "custom",
+          message: "leftPos must point to an active left item.",
+          path: ["leftPos"],
+        });
+      }
 
-function isMerge(value: unknown, songCount: number): value is SortState["current"] {
-  if (value === null) {
-    return true;
-  }
+      if (merge.rightPos < 0 || merge.rightPos >= merge.right.length) {
+        context.addIssue({
+          code: "custom",
+          message: "rightPos must point to an active right item.",
+          path: ["rightPos"],
+        });
+      }
+    });
+  const snapshotSchema = z.object({
+    groups: z.array(indexArraySchema),
+    current: mergeSchema.nullable(),
+    battleNo: z.number().int(),
+    pickedCount: z.number().int(),
+    estimatedBattles: z.number().int(),
+  });
 
-  if (typeof value !== "object") {
-    return false;
-  }
-
-  const merge = value as Record<string, unknown>;
-  return (
-    isNumberArray(merge.left) &&
-    isNumberArray(merge.right) &&
-    isNumberArray(merge.merged) &&
-    Number.isInteger(merge.leftPos) &&
-    Number.isInteger(merge.rightPos) &&
-    merge.left.every((index) => index >= 0 && index < songCount) &&
-    merge.right.every((index) => index >= 0 && index < songCount) &&
-    merge.merged.every((index) => index >= 0 && index < songCount) &&
-    (merge.leftPos as number) >= 0 &&
-    (merge.leftPos as number) < merge.left.length &&
-    (merge.rightPos as number) >= 0 &&
-    (merge.rightPos as number) < merge.right.length
-  );
-}
-
-function isSnapshot(value: unknown, songCount: number): value is Omit<SortState, "history"> {
-  if (typeof value !== "object" || value === null) {
-    return false;
-  }
-
-  const snapshot = value as Record<string, unknown>;
-  return (
-    Array.isArray(snapshot.groups) &&
-    snapshot.groups.every((group) => isNumberArray(group) && group.every((index) => index >= 0 && index < songCount)) &&
-    isMerge(snapshot.current, songCount) &&
-    Number.isInteger(snapshot.battleNo) &&
-    Number.isInteger(snapshot.pickedCount) &&
-    Number.isInteger(snapshot.estimatedBattles)
-  );
+  return snapshotSchema.extend({
+    history: z.array(snapshotSchema),
+  });
 }
 
 export function isSortState(value: unknown, songCount: number): value is SortState {
-  return (
-    isSnapshot(value, songCount) &&
-    Array.isArray((value as Record<string, unknown>).history) &&
-    ((value as Record<string, unknown>).history as unknown[]).every((item) => isSnapshot(item, songCount))
-  );
+  return createSortStateSchema(songCount).safeParse(value).success;
 }

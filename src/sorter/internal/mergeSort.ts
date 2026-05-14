@@ -102,3 +102,61 @@ export function undo(sort: SortState): SortState {
 
 export const sortedSongIndexes = (sort: SortState): number[] =>
   isComplete(sort) ? sort.groups[0] : [];
+
+function totalMergePlacements(songCount: number): number {
+  const queue = Array.from({ length: songCount }, () => 1);
+  let total = 0;
+
+  while (queue.length > 1) {
+    const left = queue.shift();
+    const right = queue.shift();
+    if (left === undefined || right === undefined) {
+      break;
+    }
+
+    const mergedSize = left + right;
+    total += mergedSize;
+    queue.push(mergedSize);
+  }
+
+  return Math.max(1, total);
+}
+
+function sameArray(left: number[], right: number[]): boolean {
+  return left.length === right.length && left.every((value, index) => value === right[index]);
+}
+
+function hasSameMergeInputs(left: Merge | null, right: Merge | null): boolean {
+  return (
+    left !== null &&
+    right !== null &&
+    sameArray(left.left, right.left) &&
+    sameArray(left.right, right.right)
+  );
+}
+
+function placedByTransition(previous: Snapshot, next: Snapshot): number {
+  if (previous.current === null || next.pickedCount <= previous.pickedCount) {
+    return 0;
+  }
+
+  const manualPickCount = next.pickedCount - previous.pickedCount;
+  const mergeSize = previous.current.left.length + previous.current.right.length;
+  const nextIsSameMerge = hasSameMergeInputs(previous.current, next.current);
+
+  return nextIsSameMerge ? manualPickCount : mergeSize - previous.current.merged.length;
+}
+
+export function progressPercentage(sort: SortState, songCount: number): number {
+  if (isComplete(sort)) {
+    return 100;
+  }
+
+  const snapshots = [...sort.history, snapshot(sort)];
+  const placed = snapshots.reduce((total, current, index) => {
+    const previous = snapshots[index - 1];
+    return previous ? total + placedByTransition(previous, current) : total;
+  }, 0);
+
+  return Math.min(99, Math.floor((placed * 100) / totalMergePlacements(songCount)));
+}

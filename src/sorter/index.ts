@@ -3,6 +3,7 @@ export {
   createSort,
   currentBattle,
   isComplete,
+  progressPercentage,
   undo,
   type SortChoice,
   type SortState,

@@ -1,7 +1,11 @@
-[
+// noinspection SpellCheckingInspection
+
+import type { Song } from "../src/songs";
+
+export const songList = [
     {"id": 1, "anime": "Asu no Yozora Shoukaihan by Afterglow", "name": "Bang Dream", "video": "https://www.youtube.com/watch?v=aaxlWyLU9vY", "mp3": null},
     {"id": 2, "anime": "Ave Mujica by Ave Mujica", "name": "Bang Dream", "video": "https://youtu.be/QDsd0nyzwz0", "mp3": null},
-    {"id": 3, "anime": "Bad Kids All Bet by  RAISE A SUILEN", "name": "Bang Dream", "video": "https://www.youtube.com/watch?v=mKt2u5a3-H8", "mp3": null},
+    {"id": 3, "anime": "Bad Kids All Bet by RAISE A SUILEN", "name": "Bang Dream", "video": "https://www.youtube.com/watch?v=mKt2u5a3-H8", "mp3": null},
     {"id": 4, "anime": "Beautiful Birthday & RAISE A SUILEN", "name": "Bang Dream", "video": "https://youtu.be/lpV2AtyGCk4", "mp3": null},
     {"id": 5, "anime": "Choir 's' Choir by Ave Mujica", "name": "Bang Dream", "video": "https://youtu.be/7llj4mh4L-8", "mp3": null},
     {"id": 6, "anime": "Double Rainbow by Poppin'Party", "name": "Bang Dream", "video": "https://youtu.be/ulGsr3MxM8M", "mp3": null},
@@ -28,5 +32,5 @@
     {"id": 27, "anime": "Telepathy by Mugendai Mewtype", "name": "Bang Dream", "video": "https://www.youtube.com/watch?v=GN_0T7cClGM", "mp3": null},
     {"id": 28, "anime": "The Circle of Butterflies by Morfonica x fhána", "name": "Bang Dream", "video": "https://www.youtube.com/watch?v=JfhgKn1hnnk", "mp3": null},
     {"id": 29, "anime": "Utakotoba by MyGO!!!!!", "name": "Bang Dream", "video": "https://youtu.be/wJ-OebTVyvk", "mp3": null},
-    {"id": 30, "anime": "Yakusoku by Roselia", "name": "Bang Dream", "video": "https://naedist.animemusicquiz.com/h0rza6.webm", "mp3": null}
-]
+    {"id": 30, "anime": "Yakusoku by Roselia", "name": "Bang Dream", "video": "https://naedist.animemusicquiz.com/h0rza6.webm", "mp3": null},
+] satisfies Song[];

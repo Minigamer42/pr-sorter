@@ -1,5 +1,6 @@
 import type { SortState } from "../sorter";
-import type { AppConfig, Region, Settings } from "./types";
+import { z } from "zod";
+import type { AppConfig, Settings } from "./types";
 import { isSortState } from "./internal/savedSortValidation";
 
 type StorageFacade = {
@@ -9,9 +10,10 @@ type StorageFacade = {
   saveSettings(settings: Settings): void;
 };
 
-function isRegion(value: unknown): value is Region {
-  return value === "eu" || value === "naw" || value === "nae";
-}
+const settingsSchema = z.object({
+  preferVideo: z.boolean(),
+  region: z.enum(["eu", "naw", "nae"]),
+});
 
 export function createStorage(config: AppConfig, songCount: number): StorageFacade {
   const sortKey = `${config.localStoragePrefix}:sort`;
@@ -24,7 +26,7 @@ export function createStorage(config: AppConfig, songCount: number): StorageFaca
     }
 
     try {
-      const parsed = JSON.parse(raw) as unknown;
+      const parsed: unknown = JSON.parse(raw);
       if (isSortState(parsed, songCount)) {
         return parsed;
       }
@@ -48,9 +50,10 @@ export function createStorage(config: AppConfig, songCount: number): StorageFaca
     }
 
     try {
-      const parsed = JSON.parse(raw) as Partial<Settings>;
-      if (typeof parsed.preferVideo === "boolean" && isRegion(parsed.region)) {
-        return { preferVideo: parsed.preferVideo, region: parsed.region };
+      const parsed: unknown = JSON.parse(raw);
+      const result = settingsSchema.safeParse(parsed);
+      if (result.success) {
+        return result.data;
       }
     } catch {
       // Invalid settings fall back to defaults.

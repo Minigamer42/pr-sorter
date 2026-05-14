@@ -12,7 +12,6 @@ body {
 }
 
 .modal {
-  display: none;
   position: fixed;
   top: 50%;
   left: 50%;
@@ -28,7 +27,6 @@ body {
 }
 
 .modal-overlay {
-  display: none;
   position: fixed;
   top: 0;
   left: 0;
@@ -95,11 +93,16 @@ body {
   align-content: center;
 }
 
+.main-page--landing {
+  align-content: start;
+  padding-top: 24px;
+  box-sizing: border-box;
+}
+
 .title {
   height: 7%;
   max-width: 70%;
   font-size: 3vh;
-  max-lines: 2;
   padding: 20px;
   color: #f0fff2;
   align-content: center;
@@ -234,10 +237,6 @@ body {
   border-radius: 10px;
   box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(3px);
-}
-
-.progress[hidden] {
-  display: none;
 }
 
 .progressbattle {
