@@ -2,15 +2,30 @@
 
 This project is a simple single-page application template that allows users to rank songs from a list by comparing them in duels.
 
+## Customize A Fork
+
+For a normal fork, only edit:
+
+- `customize/config.ts`
+- `customize/songList.json`
+
 ## Project Structure
 
 ```
 party-ranking-sorter-template/
 ├── index.html
 ├── style.css
-├── script.js
-├── songList.json
-├── config.js
+├── public/
+│   └── favicon.ico
+├── customize/
+│   ├── config.ts
+│   └── songList.json
+├── src/
+│   ├── main.ts
+│   └── ...
+├── package.json
+├── tsconfig.json
+├── vite.config.ts
 └── README.md
 ```
 
@@ -19,26 +34,15 @@ party-ranking-sorter-template/
 - Autosave to the local storage after each duel.
 - Can load saved result or show final result if sorter was previously completed.
 - Options for choosing between mp3 and video files when sorting.
-- Region selection for catbox links (EU, NA1, NA2).
+- Region selection for AnimeMusicQuiz CDN links (EU, NA West, NA East).
 
 ## Setting Up a Custom Sorter
 
 To set up a custom sorter for your specific party ranking, follow these steps:
 
-1. **Update `songList.json`:**
-   - Replace the content of `songList.json` with your own list of songs. Each song should have an `id`, `anime`, `name`, `video`, and optionally an `mp3` field.
+1. **Update `customize/songList.json`:**
+   - Replace the content of `customize/songList.json` with your own list of songs. Each song should have an `id`, `anime`, `name`, `video`, and optionally an `mp3` field.
    - Links should be either animemusicquiz catbox links or YouTube links.
-   - Converting hyperlinks to URLs:
-   ```javascript
-    function GETURL(input) {
-        const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-        const myFormula = SpreadsheetApp.getActiveRange().getFormula();
-        const matches = (myFormula.indexOf("(") !== -1 && myFormula.indexOf(")") !== -1) ? myFormula.slice(myFormula.indexOf("(") + 1, myFormula.indexOf(")")) : undefined;
-        const range = sheet.getRange(matches);
-        const linkUrls = range.getRichTextValues().map(ia => ia.map(row => row.getLinkUrl()));
-        return linkUrls;
-    }
-    ```
    - Regex because I'm lazy:
    `(\d+)\t(.+)?\t(.+)\t\t(.+)\n?` to `{"id": $1, "anime": "$2", "name": "$3", "video": "$4", "mp3": null },\n`
    - Example:
@@ -68,17 +72,32 @@ To set up a custom sorter for your specific party ranking, follow these steps:
      ]
      ```
 
-2. **Update the Title and Description in `config.js`:**
-   - Open `config.js` and change the `title` and `description` variables to match your custom sorter.
+2. **Update the Title and Description in `customize/config.ts`:**
+   - Open `customize/config.ts` and change the `title` and `description` values to match your custom sorter.
    - Also you **will** have to change `localStoragePrefix` if you plan on hosting multiple github-pages from a single account (there is an issue of shared `localStorage` if base URL is the same, so need to differentiate `localStorage` for different party rankings)
    - Example:
-     ```javascript
-     const config = {
+     ```typescript
+     export const config = {
          localStoragePrefix: "your-party-rank-sorter",
          title: "Your Custom Party Rank Sorter",
          description: "Party rank sorter for your custom list of songs."
      };
      ```
+
+## Development
+
+Install dependencies and run the Vite build:
+
+```bash
+npm install
+npm run build
+```
+
+Preview the generated `dist/` output locally:
+
+```bash
+npm run preview
+```
 
 ## Credit
 

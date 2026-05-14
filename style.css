@@ -1,6 +1,8 @@
+@import "./customize/theme.css";
+
 body {
   font-family: Arial, sans-serif;
-  background-image: url("https://images3.alphacoders.com/132/1322308.jpeg");
+  background-image: var(--background-image);
   background-color: #f4f4f9;
   background-size: cover;
   background-repeat: no-repeat;
@@ -153,9 +155,7 @@ body {
 .duel-container {
   display: flex;
   justify-content: space-between;
-  padding: 20px;
-  padding-left: 10%;
-  padding-right: 10%;
+  padding: 20px 10%;
   height: 75%;
   box-sizing: border-box;
 }
@@ -163,12 +163,12 @@ body {
 .music-card {
   padding: 20px;
   width: 48%;
-  background: rgba(0, 26, 63, 0.6); /* Updated background with opacity */
+  background: rgba(0, 26, 63, 0.6);
   text-align: center;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   box-sizing: border-box;
-  backdrop-filter: blur(3px); /* Add blur effect for glassmorphism */
+  backdrop-filter: blur(3px);
 }
 
 .music-card .anime {
@@ -202,17 +202,21 @@ body {
   background-color: #45a049;
 }
 
+.music-card [data-slot="media"] {
+  height: 70%;
+}
+
 .music-card video,
 .music-card iframe,
 .music-card audio {
   width: 100%;
-  height: 70%;
+  height: 100%;
   border-radius: 8px;
 }
 
 .music-card audio {
   width: 70%;
-  height: 70%;
+  height: 100%;
   border-radius: 8px;
 }
 
@@ -230,6 +234,10 @@ body {
   border-radius: 10px;
   box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(3px);
+}
+
+.progress[hidden] {
+  display: none;
 }
 
 .progressbattle {
@@ -250,7 +258,7 @@ body {
 }
 
 .progress-bar {
-  width: 0%;
+  width: 0;
   height: 100%;
   background: linear-gradient(90deg, #7f9bff, #2975ff);
   border-radius: 10px;
@@ -260,11 +268,8 @@ body {
 .table-container {
   width: 100%;
   max-height: 100%;
-  /* Hauteur maximale du conteneur du tableau */
   overflow-y: auto;
-  /* Scroll vertical si nécessaire */
   background-color: rgba(0, 0, 50, 0.7);
-  /* Fond bleu foncé transparent */
   border-radius: 8px;
 }
 
@@ -287,23 +292,17 @@ th {
 
 tr:nth-child(even) {
   background-color: rgba(0, 0, 50, 0.5);
-  /* Lignes alternées légèrement transparentes */
 }
 
 tr:hover {
   background-color: rgba(0, 0, 50, 0.8);
-  /* Fond bleu foncé au survol */
 }
 
 td {
   white-space: nowrap;
-  /* Empêche le texte de se casser en ligne */
   overflow: hidden;
-  /* Cache le texte qui dépasse */
   text-overflow: ellipsis;
-  /* Ajoute "..." lorsque le texte est trop long */
   max-width: 200px;
-  /* Limite la largeur pour forcer le texte à se tronquer */
 }
 
 table th,

@@ -8,34 +8,26 @@
   <meta name="og:description" content="">
   <title></title>
   <link rel="stylesheet" href="style.css">
-  <link rel="shortcut icon" type="image/x-icon" href="favicon.ico?">
-  <script src="config.js"></script>
-  <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      document.title = config.title;
-      document.querySelector('meta[name="og:site_name"]').setAttribute("content", config.title);
-      document.querySelector('meta[name="og:description"]').setAttribute("content", config.description);
-    });
-  </script>
+  <link rel="shortcut icon" type="image/x-icon" href="./customize/favicon.ico?">
 </head>
 
 <body>
 
-  <div class="modal-overlay" id="modalOverlay" onclick="closeSettings()"></div>
+  <div class="modal-overlay" id="modalOverlay"></div>
   <div class="modal" id="settingsModal">
     <h2>Settings</h2>
     <div class="option-group">
       <p>Format:</p>
-      <button class="option-button active" data-type="format" onclick="selectOption('format', this)">Video</button>
-      <button class="option-button" data-type="format" onclick="selectOption('format', this)">Audio</button>
+      <button class="option-button active" data-type="format" data-value="video">Video</button>
+      <button class="option-button" data-type="format" data-value="audio">Audio</button>
     </div>
     <div class="option-group">
       <p>Region:</p>
-      <button class="option-button active" data-type="region" onclick="selectOption('region', this)">Europe</button>
-      <button class="option-button" data-type="region" onclick="selectOption('region', this)">NA West</button>
-      <button class="option-button" data-type="region" onclick="selectOption('region', this)">NA East</button>
+      <button class="option-button active" data-type="region" data-value="eu">Europe</button>
+      <button class="option-button" data-type="region" data-value="naw">NA West</button>
+      <button class="option-button" data-type="region" data-value="nae">NA East</button>
     </div>
-    <button class="close-button" onclick="closeSettings()">Close</button>
+    <button id="close-settings" class="close-button">Close</button>
   </div>
 
   <div id="main" class="main-page">
@@ -43,10 +35,19 @@
     <div class="title">Press "Start" to begin sorting.</div>
 
     <div id="buttons" class="button-container">
-      <button id="settings" class="basic-button" onclick="showSettings()">Settings</button>
-      <button id="start" class="basic-button" onclick="start()">Start</button>
-      <button id="load" class="basic-button" onclick="loadProgress()">Load</button>
+      <button id="settings" class="basic-button">Settings</button>
+      <button id="start" class="basic-button">Start</button>
+      <button id="load" class="basic-button">Load</button>
     </div>
+
+    <template id="song-card-template">
+      <div class="music-card">
+        <div data-slot="media"></div>
+        <div class="anime" data-slot="anime"></div>
+        <div class="song" data-slot="song"></div>
+        <button type="button" data-action="pick">PICK</button>
+      </div>
+    </template>
 
     <div id="duel" class="duel-container"></div>
 
@@ -59,7 +60,7 @@
 
   </div>
 
-  <script src="script.js"></script>
+  <script type="module" src="/src/main.ts"></script>
 
 </body>
 
