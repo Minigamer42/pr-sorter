@@ -196,7 +196,6 @@ export function App({ config, songs }: AppProps) {
       .then((spreadsheet) => {
         setGoogleSpreadsheetSelection(spreadsheet);
         storage.saveGoogleSpreadsheetSelection(spreadsheet);
-        alert(`Selected ${spreadsheet.name}.`);
       })
       .catch((error: unknown) => {
         if (error instanceof GooglePickerCanceledError) {

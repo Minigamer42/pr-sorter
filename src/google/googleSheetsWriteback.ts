@@ -12,6 +12,7 @@ import {
 } from "./types";
 
 const DRIVE_FILE_SCOPE = "https://www.googleapis.com/auth/drive.file";
+const TOKENINFO_ENDPOINT = "https://oauth2.googleapis.com/tokeninfo";
 
 let sessionToken: string | null = null;
 let tokenClient: TokenClient | null = null;
@@ -77,15 +78,17 @@ export async function chooseGoogleSpreadsheet(config: GoogleSheetsWritebackConfi
 }
 
 async function getToken(google: GoogleIdentityServices, config: GoogleSheetsWritebackConfig): Promise<string> {
-  if (sessionToken) {
+  if (sessionToken && (await isStoredTokenValid(sessionToken))) {
     return sessionToken;
   }
+  sessionToken = null;
 
   const storedToken = localStorage.getItem(config.tokenStorageKey);
-  if (storedToken) {
+  if (storedToken && (await isStoredTokenValid(storedToken))) {
     sessionToken = storedToken;
     return storedToken;
   }
+  localStorage.removeItem(config.tokenStorageKey);
 
   tokenClient ??= google.accounts.oauth2.initTokenClient({
     client_id: config.clientId,
@@ -101,6 +104,21 @@ async function getToken(google: GoogleIdentityServices, config: GoogleSheetsWrit
   });
 
   return requestToken(tokenClient, config.tokenStorageKey);
+}
+
+async function isStoredTokenValid(token: string): Promise<boolean> {
+  try {
+    const response = await fetch(`${TOKENINFO_ENDPOINT}?access_token=${encodeURIComponent(token)}`);
+    if (!response.ok) {
+      return false;
+    }
+
+    const tokenInfo = (await response.json()) as { scope?: string };
+    const scopes = tokenInfo.scope?.split(/\s+/) ?? [];
+    return scopes.includes(DRIVE_FILE_SCOPE);
+  } catch {
+    return false;
+  }
 }
 
 function requestToken(client: TokenClient, tokenStorageKey: string): Promise<string> {
