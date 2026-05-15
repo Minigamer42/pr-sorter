@@ -17,7 +17,7 @@ export function SongCard({ song, side, settings, scoreEnabled, score, onPick, on
   return (
     <div className={`music-card${scoreEnabled ? " music-card--scored" : ""}`}>
       <div data-slot="media">
-        <Media key={`${song.id}:${settings.preferVideo}:${settings.region}`} song={song} settings={settings} />
+        <Media key={`${song.id}:${settings.mediaFormat}:${settings.region}`} song={song} settings={settings} />
       </div>
       <div className="anime">{song.anime}</div>
       <div className="song">{song.name}</div>

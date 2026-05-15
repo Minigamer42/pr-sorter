@@ -18,7 +18,7 @@ type StorageFacade = {
 };
 
 const settingsSchema = z.object({
-  preferVideo: z.boolean(),
+  mediaFormat: z.enum(["video", "audio", "full"]),
   region: z.enum(["eu", "naw", "nae"]),
   autoSkipScoreDifference: z.number().min(0).max(10).default(10),
 });
@@ -110,7 +110,7 @@ export function createStorage(config: AppConfig, songIds: number[]): StorageFaca
   }
 
   function loadSettings(): Settings {
-    const fallback: Settings = { preferVideo: true, region: "eu", autoSkipScoreDifference: 10 };
+    const fallback: Settings = { mediaFormat: "video", region: "eu", autoSkipScoreDifference: 10 };
     const raw = localStorage.getItem(settingsKey);
     if (!raw) {
       return fallback;

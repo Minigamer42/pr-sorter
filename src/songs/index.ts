@@ -4,4 +4,5 @@ export type Song = {
   name: string;
   video: string | null;
   mp3: string | null;
+  full?: string | null;
 };

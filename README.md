@@ -33,7 +33,7 @@ party-ranking-sorter-template/
 
 - Autosave to the local storage after each duel.
 - Can load saved result or show final result if sorter was previously completed.
-- Options for choosing between mp3 and video files when sorting.
+- Options for choosing between mp3, video, and full-song files when sorting.
 - Region selection for AnimeMusicQuiz CDN links (EU, NA West, NA East).
 - Optional Google Sheets writeback for completed ranks.
 - Optional per-song scores from `0` to `10`, with score-based auto-skip.
@@ -43,7 +43,7 @@ party-ranking-sorter-template/
 To set up a custom sorter for your specific party ranking, follow these steps:
 
 1. **Update `customize/songList.ts`:**
-   - Replace the content of `customize/songList.ts` with your own list of songs. Each song should have an `id`, `anime`, `name`, `video`, and `mp3` field.
+   - Replace the content of `customize/songList.ts` with your own list of songs. Each song should have an `id`, `anime`, `name`, `video`, `mp3`, and optional `full` field.
    - Links should be either animemusicquiz catbox links or YouTube links.
    - Regex because I'm lazy:
    `(\d+)\t(.+)?\t(.+)\t\t(.+)\n?` to `{"id": $1, "anime": "$2", "name": "$3", "video": "$4", "mp3": null },\n`
@@ -57,7 +57,8 @@ To set up a custom sorter for your specific party ranking, follow these steps:
              "anime": "Your Anime Title",
              "name": "Your Song Name",
              "video": "https://your-video-url.com",
-             "mp3": "https://your-mp3-url.com"
+             "mp3": "https://your-mp3-url.com",
+             "full": "https://your-full-song-url.com"
          },
          {
              "id": 2,

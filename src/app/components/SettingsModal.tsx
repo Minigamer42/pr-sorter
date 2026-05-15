@@ -1,4 +1,4 @@
-import type { GoogleSpreadsheetSelection, Region, Settings } from '../types';
+import type { GoogleSpreadsheetSelection, MediaFormat, Region, Settings } from '../types';
 
 type SettingsModalProps = {
     open: boolean;
@@ -18,6 +18,12 @@ const regions: { value: Region; label: string }[] = [
     {value: 'eu', label: 'Europe'},
     {value: 'naw', label: 'NA West'},
     {value: 'nae', label: 'NA East'}
+];
+
+const mediaFormats: { value: MediaFormat; label: string }[] = [
+    {value: 'video', label: 'Video'},
+    {value: 'audio', label: 'Audio'},
+    {value: 'full', label: 'Full songs'}
 ];
 
 export function SettingsModal({
@@ -44,20 +50,16 @@ export function SettingsModal({
                 <h2>Settings</h2>
                 <div className="option-group">
                     <p>Format:</p>
-                    <button
-                        className={`option-button${settings.preferVideo ? ' active' : ''}`}
-                        type="button"
-                        onClick={() => onChange({...settings, preferVideo: true})}
-                    >
-                        Video
-                    </button>
-                    <button
-                        className={`option-button${!settings.preferVideo ? ' active' : ''}`}
-                        type="button"
-                        onClick={() => onChange({...settings, preferVideo: false})}
-                    >
-                        Audio
-                    </button>
+                    {mediaFormats.map((format) => (
+                        <button
+                            key={format.value}
+                            className={`option-button${settings.mediaFormat === format.value ? ' active' : ''}`}
+                            type="button"
+                            onClick={() => onChange({...settings, mediaFormat: format.value})}
+                        >
+                            {format.label}
+                        </button>
+                    ))}
                 </div>
                 <div className="option-group">
                     <p>Region:</p>

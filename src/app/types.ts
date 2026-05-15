@@ -19,8 +19,10 @@ export type GoogleSpreadsheetSelection = {
 
 export type Region = "eu" | "naw" | "nae";
 
+export type MediaFormat = "video" | "audio" | "full";
+
 export type Settings = {
-  preferVideo: boolean;
+  mediaFormat: MediaFormat;
   region: Region;
   autoSkipScoreDifference: number;
 };
