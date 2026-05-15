@@ -1,12 +1,15 @@
 import { ranksBySongId, type SortState } from "../../sorter";
 import type { Song } from "../../songs";
+import type { SongScoresById } from "../types";
 
 type ResultsProps = {
   songs: Song[];
   sort: SortState;
+  scoreEnabled: boolean;
+  scoresBySongId: SongScoresById;
 };
 
-export function Results({ songs, sort }: ResultsProps) {
+export function Results({ songs, sort, scoreEnabled, scoresBySongId }: ResultsProps) {
   const ranks = ranksBySongId(songs, sort);
 
   return (
@@ -18,6 +21,7 @@ export function Results({ songs, sort }: ResultsProps) {
             <th>Anime</th>
             <th>Song</th>
             <th>Rank</th>
+            {scoreEnabled ? <th>Score</th> : null}
           </tr>
         </thead>
         <tbody>
@@ -33,6 +37,7 @@ export function Results({ songs, sort }: ResultsProps) {
                 <td title={song.anime}>{song.anime}</td>
                 <td title={song.name}>{song.name}</td>
                 <td>{rank}</td>
+                {scoreEnabled ? <td>{scoresBySongId[song.id] ?? ""}</td> : null}
               </tr>
             );
           })}

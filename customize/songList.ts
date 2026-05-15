@@ -1,6 +1,6 @@
 // noinspection SpellCheckingInspection
 
-import type { Song } from "../src/songs";
+import type { Song } from '../src/songs';
 
 export const songList = [
     {"id": 1, "anime": "Asu no Yozora Shoukaihan by Afterglow", "name": "Bang Dream", "video": "https://www.youtube.com/watch?v=aaxlWyLU9vY", "mp3": null},

@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   choose,
+  chooseWithoutHistory,
   createSort,
+  currentBattle,
   isComplete,
   progressPercentage,
   ranksBySongId,
@@ -10,15 +12,16 @@ import {
   type SortState,
 } from "../sorter";
 import { GooglePickerCanceledError, GoogleWritebackError } from "../google/types";
-import { chooseGoogleSpreadsheet, writeRanksToGoogleSheet } from "../google/googleSheetsWriteback";
+import { chooseGoogleSpreadsheet, loadScoresFromGoogleSheet, writeRanksToGoogleSheet } from "../google/googleSheetsWriteback";
 import type { Song } from "../songs";
 import { Controls } from "./components/Controls";
 import { Duel } from "./components/Duel";
 import { Progress } from "./components/Progress";
 import { Results } from "./components/Results";
 import { SettingsModal } from "./components/SettingsModal";
+import { isScoreEnabled, normalizeScore } from "./internal/songScores";
 import { createStorage } from "./storage";
-import type { AppConfig, GoogleSpreadsheetSelection, SavedProgressKind, Screen, Settings } from "./types";
+import type { AppConfig, GoogleSpreadsheetSelection, SavedProgressKind, Screen, Settings, SongScoresById } from "./types";
 
 type AppProps = {
   config: AppConfig;
@@ -34,9 +37,12 @@ const screenFor = (sort: SortState | null): Screen => {
 };
 
 export function App({ config, songs }: AppProps) {
-  const storage = useMemo(() => createStorage(config, songs.length), [config, songs.length]);
+  const songIds = useMemo(() => songs.map((song) => song.id), [songs]);
+  const storage = useMemo(() => createStorage(config, songIds), [config, songIds]);
+  const scoreEnabled = isScoreEnabled(config);
   const [screen, setScreen] = useState<Screen>("landing");
   const [settings, setSettings] = useState<Settings>(() => storage.loadSettings());
+  const [scoresBySongId, setScoresBySongId] = useState<SongScoresById>(() => storage.loadScores());
   const [sort, setSort] = useState<SortState | null>(null);
   const [isSettingsOpen, setSettingsOpen] = useState(false);
   const [isWritingSheet, setWritingSheet] = useState(false);
@@ -65,6 +71,11 @@ export function App({ config, songs }: AppProps) {
   }, [screen, storage]);
 
   function startSort(): void {
+    if (scoreEnabled) {
+      storage.clearScores();
+      setScoresBySongId({});
+    }
+
     const nextSort = createSort(songs.length);
     setSort(nextSort);
     setScreen(screenFor(nextSort));
@@ -79,8 +90,12 @@ export function App({ config, songs }: AppProps) {
       return;
     }
 
-    setSort(savedSort);
-    setScreen(screenFor(savedSort));
+    const savedScores = storage.loadScores();
+    const nextSort = resolveAutoSkips(savedSort, savedScores, settings);
+    setScoresBySongId(savedScores);
+    setSort(nextSort);
+    setScreen(screenFor(nextSort));
+    storage.saveSort(nextSort);
   }
 
   function pick(choice: SortChoice): void {
@@ -88,7 +103,7 @@ export function App({ config, songs }: AppProps) {
       return;
     }
 
-    const nextSort = choose(sort, choice);
+    const nextSort = resolveAutoSkips(choose(sort, choice), scoresBySongId, settings);
     setSort(nextSort);
     setScreen(screenFor(nextSort));
     storage.saveSort(nextSort);
@@ -108,6 +123,113 @@ export function App({ config, songs }: AppProps) {
   function updateSettings(nextSettings: Settings): void {
     setSettings(nextSettings);
     storage.saveSettings(nextSettings);
+  }
+
+  function updateScore(songId: number, score: string): void {
+    if (!scoreEnabled) {
+      return;
+    }
+
+    const nextScores = { ...scoresBySongId, [songId]: score };
+    setScoresBySongId(nextScores);
+    storage.saveScores(nextScores);
+  }
+
+  function autoChoiceForCurrentBattle(
+    currentSort: SortState,
+    currentScoresBySongId: SongScoresById,
+    currentSettings: Settings,
+  ): SortChoice | null {
+    if (!scoreEnabled) {
+      return null;
+    }
+
+    const battle = currentBattle(currentSort);
+    if (!battle) {
+      return null;
+    }
+
+    const [leftIndex, rightIndex] = battle;
+    const leftSong = songs[leftIndex];
+    const rightSong = songs[rightIndex];
+    if (!leftSong || !rightSong) {
+      return null;
+    }
+
+    try {
+      const leftScore = normalizeScore(currentScoresBySongId[leftSong.id] ?? "");
+      const rightScore = normalizeScore(currentScoresBySongId[rightSong.id] ?? "");
+      if (leftScore === null || rightScore === null || leftScore === rightScore) {
+        return null;
+      }
+
+      const difference = Math.abs(leftScore - rightScore);
+      if (difference < currentSettings.autoSkipScoreDifference) {
+        return null;
+      }
+
+      return leftScore > rightScore ? "left" : "right";
+    } catch {
+      return null;
+    }
+  }
+
+  function resolveAutoSkips(
+    currentSort: SortState,
+    currentScoresBySongId: SongScoresById,
+    currentSettings: Settings,
+  ): SortState {
+    let nextSort = currentSort;
+    const maxIterations = songs.length * songs.length * 2;
+
+    for (let iteration = 0; iteration < maxIterations; iteration += 1) {
+      const choice = autoChoiceForCurrentBattle(nextSort, currentScoresBySongId, currentSettings);
+      if (!choice) {
+        return nextSort;
+      }
+
+      logAutoSkippedBattle(nextSort, currentScoresBySongId, choice);
+      nextSort = chooseWithoutHistory(nextSort, choice);
+      if (isComplete(nextSort)) {
+        return nextSort;
+      }
+    }
+
+    return nextSort;
+  }
+
+  function logAutoSkippedBattle(
+    currentSort: SortState,
+    currentScoresBySongId: SongScoresById,
+    choice: SortChoice,
+  ): void {
+    const battle = currentBattle(currentSort);
+    if (!battle) {
+      return;
+    }
+
+    const [leftIndex, rightIndex] = battle;
+    const leftSong = songs[leftIndex];
+    const rightSong = songs[rightIndex];
+    if (!leftSong || !rightSong) {
+      return;
+    }
+
+    console.info("Auto-skipped comparison", {
+      picked: choice,
+      left: {
+        id: leftSong.id,
+        anime: leftSong.anime,
+        name: leftSong.name,
+        score: currentScoresBySongId[leftSong.id] ?? "",
+      },
+      right: {
+        id: rightSong.id,
+        anime: rightSong.anime,
+        name: rightSong.name,
+        score: currentScoresBySongId[rightSong.id] ?? "",
+      },
+    });
   }
 
   function googleWritebackConfig() {
@@ -166,8 +288,16 @@ export function App({ config, songs }: AppProps) {
       return;
     }
 
+    let normalizedScoresBySongId: Map<number, number> | undefined;
+    try {
+      normalizedScoresBySongId = scoreEnabled ? normalizedScoresForWriteback(scoresBySongId) : undefined;
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Scores must be numbers from 0 to 10.");
+      return;
+    }
+
     setWritingSheet(true);
-    void writeRanksToGoogleSheet(writebackConfig, ranksBySongId(songs, sort), googleSpreadsheetSelection)
+    void writeRanksToGoogleSheet(writebackConfig, ranksBySongId(songs, sort), googleSpreadsheetSelection, normalizedScoresBySongId)
       .then((spreadsheet) => {
         alert(`Updated ranks in ${spreadsheet.name}.`);
       })
@@ -193,7 +323,16 @@ export function App({ config, songs }: AppProps) {
 
     setConnectingGoogleSheet(true);
     void chooseGoogleSpreadsheet(writebackConfig)
-      .then((spreadsheet) => {
+      .then(async (spreadsheet) => {
+        let loadedScoreCount = 0;
+        if (scoreEnabled) {
+          const sheetScores = await loadScoresFromGoogleSheet(writebackConfig, spreadsheet, songIds);
+          const nextScores = scoresRecordFromSheet(sheetScores);
+          loadedScoreCount = Object.keys(nextScores).length;
+          setScoresBySongId(nextScores);
+          storage.saveScores(nextScores);
+        }
+
         setGoogleSpreadsheetSelection(spreadsheet);
         storage.saveGoogleSpreadsheetSelection(spreadsheet);
       })
@@ -238,6 +377,7 @@ export function App({ config, songs }: AppProps) {
       <SettingsModal
         open={isSettingsOpen}
         settings={settings}
+        scoreEnabled={scoreEnabled}
         googleSheetsConfigured={Boolean(config.googleSheets)}
         googleSheetsDisabledReason={googleSheetsDisabledReason}
         googleSpreadsheetSelection={googleSpreadsheetSelection}
@@ -273,8 +413,20 @@ export function App({ config, songs }: AppProps) {
         {screen !== "landing" && sort ? (
           <>
             <div className="duel-container">
-              {screen === "sorting" ? <Duel songs={songs} sort={sort} settings={settings} onPick={pick} /> : null}
-              {screen === "complete" ? <Results songs={songs} sort={sort} /> : null}
+              {screen === "sorting" ? (
+                <Duel
+                  songs={songs}
+                  sort={sort}
+                  settings={settings}
+                  scoreEnabled={scoreEnabled}
+                  scoresBySongId={scoresBySongId}
+                  onPick={pick}
+                  onScoreChange={updateScore}
+                />
+              ) : null}
+              {screen === "complete" ? (
+                <Results songs={songs} sort={sort} scoreEnabled={scoreEnabled} scoresBySongId={scoresBySongId} />
+              ) : null}
             </div>
             <Progress label={progressLabel} percentage={progressValue} />
           </>
@@ -282,6 +434,30 @@ export function App({ config, songs }: AppProps) {
       </div>
     </>
   );
+}
+
+function scoresRecordFromSheet(sheetScores: Map<number, string>): SongScoresById {
+  const scores: SongScoresById = {};
+
+  for (const [songId, rawScore] of sheetScores.entries()) {
+    normalizeScore(rawScore);
+    scores[songId] = rawScore;
+  }
+
+  return scores;
+}
+
+function normalizedScoresForWriteback(scoresBySongId: SongScoresById): Map<number, number> | undefined {
+  const normalizedScores = new Map<number, number>();
+
+  for (const [songId, rawScore] of Object.entries(scoresBySongId)) {
+    const score = normalizeScore(rawScore);
+    if (score !== null) {
+      normalizedScores.set(Number.parseInt(songId, 10), score);
+    }
+  }
+
+  return normalizedScores.size > 0 ? normalizedScores : undefined;
 }
 
 function landingTitle(savedKind: SavedProgressKind): string {

@@ -1,16 +1,19 @@
 import { currentBattle, type SortChoice, type SortState } from "../../sorter";
 import type { Song } from "../../songs";
-import type { Settings } from "../types";
+import type { Settings, SongScoresById } from "../types";
 import { SongCard } from "./SongCard";
 
 type DuelProps = {
   songs: Song[];
   sort: SortState;
   settings: Settings;
+  scoreEnabled: boolean;
+  scoresBySongId: SongScoresById;
   onPick(choice: SortChoice): void;
+  onScoreChange(songId: number, score: string): void;
 };
 
-export function Duel({ songs, sort, settings, onPick }: DuelProps) {
+export function Duel({ songs, sort, settings, scoreEnabled, scoresBySongId, onPick, onScoreChange }: DuelProps) {
   const battle = currentBattle(sort);
   if (battle === null) {
     return null;
@@ -25,8 +28,24 @@ export function Duel({ songs, sort, settings, onPick }: DuelProps) {
 
   return (
     <>
-      <SongCard song={leftSong} side="left" settings={settings} onPick={onPick} />
-      <SongCard song={rightSong} side="right" settings={settings} onPick={onPick} />
+      <SongCard
+        song={leftSong}
+        side="left"
+        settings={settings}
+        scoreEnabled={scoreEnabled}
+        score={scoresBySongId[leftSong.id] ?? ""}
+        onPick={onPick}
+        onScoreChange={(score) => onScoreChange(leftSong.id, score)}
+      />
+      <SongCard
+        song={rightSong}
+        side="right"
+        settings={settings}
+        scoreEnabled={scoreEnabled}
+        score={scoresBySongId[rightSong.id] ?? ""}
+        onPick={onPick}
+        onScoreChange={(score) => onScoreChange(rightSong.id, score)}
+      />
     </>
   );
 }

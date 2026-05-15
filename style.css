@@ -84,6 +84,61 @@ body {
   overflow-wrap: anywhere;
 }
 
+.setting-number-input {
+  width: 90px;
+  margin-left: 8px;
+  padding: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 5px;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.95);
+  color: #001a3f;
+}
+
+.help-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.15em;
+  height: 1.15em;
+  margin-left: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-radius: 50%;
+  color: #f0fff2;
+  font-size: 0.75em;
+  line-height: 1;
+  cursor: help;
+  vertical-align: middle;
+}
+
+.help-icon::after {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  z-index: 1001;
+  width: min(260px, 70vw);
+  padding: 8px 10px;
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.92);
+  color: #ffffff;
+  content: attr(data-tooltip);
+  font-size: 12px;
+  font-weight: normal;
+  line-height: 1.35;
+  opacity: 0;
+  pointer-events: none;
+  text-align: left;
+  transform: translateX(-50%);
+  transition: opacity 0.15s ease;
+  white-space: normal;
+}
+
+.help-icon:hover::after,
+.help-icon:focus::after {
+  opacity: 1;
+}
+
 .close-button {
   margin-top: 20px;
   padding: 10px 20px;
@@ -201,6 +256,31 @@ body {
   height: 10%;
 }
 
+.score-field {
+  height: 10%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #fcffef;
+  font-size: 1.8vh;
+  box-sizing: border-box;
+}
+
+.score-field input {
+  width: 80px;
+  max-width: 45%;
+  height: 70%;
+  min-height: 28px;
+  padding: 4px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 5px;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.95);
+  color: #001a3f;
+  font-size: 1.8vh;
+}
+
 .music-card button {
   padding: 10px;
   background-color: #40ab47a6;
@@ -220,6 +300,10 @@ body {
 
 .music-card [data-slot="media"] {
   height: 70%;
+}
+
+.music-card--scored [data-slot="media"] {
+  height: 60%;
 }
 
 .music-card video,
@@ -320,4 +404,24 @@ td {
 table th,
 table td {
   text-overflow: ellipsis;
+}
+
+@media (max-width: 700px) {
+  .duel-container {
+    padding: 12px 4%;
+  }
+
+  .music-card {
+    padding: 12px;
+  }
+
+  .music-card--scored [data-slot="media"] {
+    height: 55%;
+  }
+
+  .music-card .anime,
+  .music-card .song,
+  .score-field {
+    font-size: 1.7vh;
+  }
 }

@@ -36,6 +36,7 @@ party-ranking-sorter-template/
 - Options for choosing between mp3 and video files when sorting.
 - Region selection for AnimeMusicQuiz CDN links (EU, NA West, NA East).
 - Optional Google Sheets writeback for completed ranks.
+- Optional per-song scores from `0` to `10`, with score-based auto-skip.
 
 ## Setting Up a Custom Sorter
 
@@ -87,10 +88,30 @@ To set up a custom sorter for your specific party ranking, follow these steps:
          googleSheets: {
              clientId: "575550662002-....apps.googleusercontent.com",
              appId: "575550662002",
-             rankColumnHeader: "rank"
+             rankColumnHeader: "rank",
+             scoreColumnHeader: "Score (optional)"
          }
      };
      ```
+
+## Optional Song Scores
+
+Scores are opt-in. Add `googleSheets.scoreColumnHeader` to `customize/config.ts` to enable score inputs, score persistence, score results, the auto-skip setting, and score writeback:
+
+```ts
+googleSheets: {
+  clientId: "YOUR_GOOGLE_OAUTH_CLIENT_ID.apps.googleusercontent.com",
+  appId: "YOUR_GOOGLE_CLOUD_PROJECT_NUMBER",
+  rankColumnHeader: "rank",
+  scoreColumnHeader: "Score (optional)",
+}
+```
+
+If `scoreColumnHeader` is omitted, the sorter remains ranking-only: no score fields render, no scores are saved, no auto-skip setting is shown, and only ranks are written to Google Sheets.
+
+When enabled, each song can have a score from `0` to `10`. Blank scores are allowed. Scores are stored locally per song.
+
+Settings includes `Auto-skip score gap`, defaulting to `10`. During sorting, if both compared songs have valid scores and their absolute score difference is greater than or equal to this setting, the higher-scored song is picked automatically. Equal scores and missing scores never auto-skip. For example, `10` only skips comparisons such as `10` vs `0`, while `7` skips `10` vs `3`.
 
 ## Google Sheets Writeback
 
@@ -104,6 +125,7 @@ To enable it:
      clientId: "YOUR_GOOGLE_OAUTH_CLIENT_ID.apps.googleusercontent.com",
      appId: "YOUR_GOOGLE_CLOUD_PROJECT_NUMBER",
      rankColumnHeader: "rank",
+     scoreColumnHeader: "Score (optional)",
    }
    ```
 2. Set the Picker API key through Vite, for example in a local `.env.local` file:
@@ -124,9 +146,12 @@ Spreadsheet format:
 - Row `1` is the header row.
 - Column `A` contains song IDs.
 - The rank column is the header that exactly matches `googleSheets.rankColumnHeader` after trimming surrounding whitespace. Matching is case-sensitive.
+- If score support is enabled and at least one song has a score, the score column is the header that exactly matches `googleSheets.scoreColumnHeader` after trimming surrounding whitespace. Matching is case-sensitive.
 - Data rows may be in any order.
 
-Writeback validation is strict. The write aborts before changing cells if the sheet is empty, the rank header is missing or duplicated, a song ID is duplicated or non-numeric, the sheet contains unknown song IDs, or the sheet is missing sorter song IDs. Only the configured rank column is overwritten.
+Writeback validation is strict. The write aborts before changing cells if the sheet is empty, the rank header is missing or duplicated, the enabled score header is missing or duplicated, a song ID is duplicated or non-numeric, the sheet contains unknown song IDs, or the sheet is missing sorter song IDs.
+
+Ranks always write. Scores write only when score support is enabled and at least one nonblank score exists. Blank scores are skipped and do not clear existing spreadsheet cells. Rank and score changes are sent together in one Sheets batch update.
 
 User flow:
 

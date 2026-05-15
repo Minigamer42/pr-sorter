@@ -66,12 +66,24 @@ export function currentBattle(sort: SortState): [number, number] | null {
 }
 
 export function choose(sort: SortState, choice: SortChoice): SortState {
+  return chooseWithHistory(sort, choice, true);
+}
+
+export function chooseWithoutHistory(sort: SortState, choice: SortChoice): SortState {
+  return chooseWithHistory(sort, choice, false);
+}
+
+function chooseWithHistory(sort: SortState, choice: SortChoice, shouldRecordHistory: boolean): SortState {
   const merge = cloneMerge(sort.current);
   if (!merge) {
     return sort;
   }
 
-  const next: SortState = { ...snapshot(sort), current: merge, history: [...sort.history, snapshot(sort)] };
+  const next: SortState = {
+    ...snapshot(sort),
+    current: merge,
+    history: shouldRecordHistory ? [...sort.history, snapshot(sort)] : [...sort.history],
+  };
   const source = choice === "left" ? merge.left : merge.right;
   const pos = choice === "left" ? merge.leftPos : merge.rightPos;
   merge.merged.push(source[pos]);

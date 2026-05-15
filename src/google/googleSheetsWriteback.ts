@@ -1,5 +1,5 @@
 import { loadGoogleApis } from "./googleApiLoader";
-import { writeRanksToFirstSheet } from "./sheetsClient";
+import { readScoresFromFirstSheet, writeRanksToFirstSheet } from "./sheetsClient";
 import {
   GooglePickerCanceledError,
   GoogleWritebackError,
@@ -33,6 +33,7 @@ export async function writeRanksToGoogleSheet(
   config: GoogleSheetsWritebackConfig,
   ranksBySongId: Map<number, number>,
   spreadsheet: PickedSpreadsheet,
+  scoresBySongId?: Map<number, number>,
 ): Promise<PickedSpreadsheet> {
   if (!config.clientId || !config.appId || !config.apiKey || !config.rankColumnHeader) {
     throw new GoogleWritebackError("Google integration is not configured.");
@@ -47,6 +48,8 @@ export async function writeRanksToGoogleSheet(
       token,
       ranksBySongId,
       rankColumnHeader: config.rankColumnHeader,
+      scoreColumnHeader: config.scoreColumnHeader,
+      scoresBySongId,
     });
 
     return spreadsheet;
@@ -68,6 +71,34 @@ export async function chooseGoogleSpreadsheet(config: GoogleSheetsWritebackConfi
     const { google, picker } = await loadGoogleApis();
     const token = await getToken(google, config);
     return await pickSpreadsheet(picker, token, config.apiKey, config.appId);
+  } catch (error) {
+    if (isAuthError(error)) {
+      clearStoredToken(config);
+    }
+
+    throw error;
+  }
+}
+
+export async function loadScoresFromGoogleSheet(
+  config: GoogleSheetsWritebackConfig,
+  spreadsheet: PickedSpreadsheet,
+  songIds: number[],
+): Promise<Map<number, string>> {
+  if (!config.clientId || !config.appId || !config.apiKey || !config.rankColumnHeader || !config.scoreColumnHeader) {
+    throw new GoogleWritebackError("Google integration is not configured.");
+  }
+
+  try {
+    const { google } = await loadGoogleApis();
+    const token = await getToken(google, config);
+
+    return await readScoresFromFirstSheet({
+      spreadsheetId: spreadsheet.id,
+      token,
+      songIds,
+      scoreColumnHeader: config.scoreColumnHeader,
+    });
   } catch (error) {
     if (isAuthError(error)) {
       clearStoredToken(config);

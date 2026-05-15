@@ -1,5 +1,6 @@
 export {
   choose,
+  chooseWithoutHistory,
   createSort,
   currentBattle,
   isComplete,
