@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   choose,
-  chooseWithoutHistory,
+  chooseAutomatic,
   createSort,
   currentBattle,
   isComplete,
+  pickHistory,
   progressPercentage,
   ranksBySongId,
   undo,
@@ -16,6 +17,7 @@ import { chooseGoogleSpreadsheet, loadScoresFromGoogleSheet, writeRanksToGoogleS
 import type { Song } from "../songs";
 import { Controls } from "./components/Controls";
 import { Duel } from "./components/Duel";
+import { HistoryModal } from "./components/HistoryModal";
 import { Progress } from "./components/Progress";
 import { Results } from "./components/Results";
 import { SettingsModal } from "./components/SettingsModal";
@@ -44,6 +46,7 @@ export function App({ config, songs }: AppProps) {
   const [settings, setSettings] = useState<Settings>(() => storage.loadSettings());
   const [scoresBySongId, setScoresBySongId] = useState<SongScoresById>(() => storage.loadScores());
   const [sort, setSort] = useState<SortState | null>(null);
+  const [isHistoryOpen, setHistoryOpen] = useState(false);
   const [isSettingsOpen, setSettingsOpen] = useState(false);
   const [isWritingSheet, setWritingSheet] = useState(false);
   const [isConnectingGoogleSheet, setConnectingGoogleSheet] = useState(false);
@@ -189,7 +192,7 @@ export function App({ config, songs }: AppProps) {
       }
 
       logAutoSkippedBattle(nextSort, currentScoresBySongId, choice);
-      nextSort = chooseWithoutHistory(nextSort, choice);
+      nextSort = chooseAutomatic(nextSort, choice);
       if (isComplete(nextSort)) {
         return nextSort;
       }
@@ -387,6 +390,13 @@ export function App({ config, songs }: AppProps) {
         onChooseGoogleSheet={chooseSheet}
         onClearGoogleSheet={clearSheetSelection}
       />
+      <HistoryModal
+        open={isHistoryOpen}
+        picks={sort ? pickHistory(sort) : []}
+        songs={songs}
+        scoresBySongId={scoresBySongId}
+        onClose={() => setHistoryOpen(false)}
+      />
       <div className={`main-page ${screen === "landing" ? "main-page--landing" : ""}`}>
         {screen !== "sorting" ? (
           <div className="title" style={screen === "complete" ? { height: "3%" } : undefined}>
@@ -401,6 +411,7 @@ export function App({ config, songs }: AppProps) {
           googleSheetsDisabledReason={googleSheetsDisabledReason}
           googleSheetsSetupReason={writeSheetSetupReason}
           isWritingSheet={isWritingSheet}
+          onOpenHistory={() => setHistoryOpen(true)}
           onOpenSettings={() => setSettingsOpen(true)}
           onStart={startSort}
           onLoad={loadSort}

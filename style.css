@@ -153,6 +153,105 @@ body {
   background: #a14444;
 }
 
+.history-modal {
+  width: min(720px, 90vw);
+  max-height: 80vh;
+  box-sizing: border-box;
+}
+
+.history-empty {
+  color: #f0fff2;
+}
+
+.history-list {
+  max-height: 55vh;
+  overflow-y: auto;
+  padding-right: 8px;
+  text-align: left;
+}
+
+.history-entry {
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.history-entry__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  color: #cbd5e1;
+  font-size: 13px;
+}
+
+.history-entry__kind {
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: #ffffff;
+  font-weight: bold;
+}
+
+.history-entry__kind--manual {
+  background: #2d6a4f;
+}
+
+.history-entry__kind--automatic {
+  background: #1e3a8a;
+}
+
+.history-entry__matchup {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+}
+
+.history-song {
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 6px;
+  background: rgba(0, 26, 63, 0.35);
+  color: #dbeafe;
+  overflow-wrap: anywhere;
+}
+
+.history-song--picked {
+  border-color: rgba(160, 255, 172, 0.8);
+  background: rgba(45, 106, 79, 0.35);
+}
+
+.history-song__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+  color: #cbd5e1;
+  font-size: 12px;
+}
+
+.history-song__picked {
+  color: #a0ffac;
+  font-weight: bold;
+}
+
+.history-song__anime {
+  color: #a0ffac;
+  font-weight: bold;
+}
+
+.history-song__name {
+  margin-top: 3px;
+  color: #fcffef;
+}
+
+.history-song__score {
+  margin-top: 6px;
+  color: #bbf7d0;
+  font-size: 13px;
+  font-weight: bold;
+}
+
 .main-page {
   height: 100vh;
   width: 100vw;
@@ -407,6 +506,10 @@ table td {
 }
 
 @media (max-width: 700px) {
+  .history-entry__matchup {
+    grid-template-columns: 1fr;
+  }
+
   .duel-container {
     padding: 12px 4%;
   }

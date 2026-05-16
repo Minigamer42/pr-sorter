@@ -1,4 +1,14 @@
 export type SortChoice = "left" | "right";
+export type SortPickKind = "manual" | "automatic";
+
+export type SortPickEntry = {
+  battleNo: number;
+  leftIndex: number;
+  rightIndex: number;
+  pickedIndex: number;
+  choice: SortChoice;
+  kind: SortPickKind;
+};
 
 export type Merge = {
   left: number[];
@@ -14,10 +24,13 @@ export type SortState = {
   battleNo: number;
   pickedCount: number;
   estimatedBattles: number;
-  history: Omit<SortState, "history">[];
+  history: Snapshot[];
 };
 
-type Snapshot = Omit<SortState, "history">;
+type Snapshot = Omit<SortState, "history"> & {
+  historyEntryKind?: SortPickKind;
+  historyEntryChoice?: SortChoice;
+};
 
 const cloneMerge = (merge: SortState["current"]): SortState["current"] =>
   merge && {
@@ -28,13 +41,25 @@ const cloneMerge = (merge: SortState["current"]): SortState["current"] =>
     rightPos: merge.rightPos,
   };
 
-const snapshot = (state: SortState): Snapshot => ({
-  groups: state.groups.map((group) => [...group]),
-  current: cloneMerge(state.current),
-  battleNo: state.battleNo,
-  pickedCount: state.pickedCount,
-  estimatedBattles: state.estimatedBattles,
-});
+const snapshot = (state: SortState, historyEntryKind?: SortPickKind, historyEntryChoice?: SortChoice): Snapshot => {
+  const next: Snapshot = {
+    groups: state.groups.map((group) => [...group]),
+    current: cloneMerge(state.current),
+    battleNo: state.battleNo,
+    pickedCount: state.pickedCount,
+    estimatedBattles: state.estimatedBattles,
+  };
+
+  if (historyEntryKind) {
+    next.historyEntryKind = historyEntryKind;
+  }
+
+  if (historyEntryChoice) {
+    next.historyEntryChoice = historyEntryChoice;
+  }
+
+  return next;
+};
 
 export const isComplete = (sort: SortState): boolean => sort.current === null && sort.groups.length === 1;
 
@@ -66,14 +91,18 @@ export function currentBattle(sort: SortState): [number, number] | null {
 }
 
 export function choose(sort: SortState, choice: SortChoice): SortState {
-  return chooseWithHistory(sort, choice, true);
+  return chooseWithHistory(sort, choice, "manual");
 }
 
-export function chooseWithoutHistory(sort: SortState, choice: SortChoice): SortState {
-  return chooseWithHistory(sort, choice, false);
+export function chooseAutomatic(sort: SortState, choice: SortChoice): SortState {
+  return chooseWithHistory(sort, choice, "automatic");
 }
 
-function chooseWithHistory(sort: SortState, choice: SortChoice, shouldRecordHistory: boolean): SortState {
+function chooseWithHistory(
+  sort: SortState,
+  choice: SortChoice,
+  kind: SortPickKind,
+): SortState {
   const merge = cloneMerge(sort.current);
   if (!merge) {
     return sort;
@@ -82,7 +111,7 @@ function chooseWithHistory(sort: SortState, choice: SortChoice, shouldRecordHist
   const next: SortState = {
     ...snapshot(sort),
     current: merge,
-    history: shouldRecordHistory ? [...sort.history, snapshot(sort)] : [...sort.history],
+    history: [...sort.history, snapshot(sort, kind, choice)],
   };
   const source = choice === "left" ? merge.left : merge.right;
   const pos = choice === "left" ? merge.leftPos : merge.rightPos;
@@ -108,12 +137,90 @@ function chooseWithHistory(sort: SortState, choice: SortChoice, shouldRecordHist
 }
 
 export function undo(sort: SortState): SortState {
-  const previous = sort.history[sort.history.length - 1];
-  return previous ? { ...previous, history: sort.history.slice(0, -1) } : sort;
+  for (let index = sort.history.length - 1; index >= 0; index -= 1) {
+    const previous = sort.history[index];
+    if (previous.historyEntryKind === "automatic") {
+      continue;
+    }
+
+    return {
+      ...previous,
+      history: sort.history.slice(0, index),
+    };
+  }
+
+  return sort;
 }
 
 export const sortedSongIndexes = (sort: SortState): number[] =>
   isComplete(sort) ? sort.groups[0] : [];
+
+export function pickHistory(sort: SortState): SortPickEntry[] {
+  const entries = [...sort.history, snapshot(sort)];
+
+  return sort.history.flatMap((entry, index) => {
+    if (!entry.current) {
+      return [];
+    }
+
+    const choice = entry.historyEntryChoice ?? inferChoice(entry, entries[index + 1]);
+    if (!choice) {
+      return [];
+    }
+
+    const leftIndex = entry.current.left[entry.current.leftPos];
+    const rightIndex = entry.current.right[entry.current.rightPos];
+    const pickedIndex = choice === "left" ? leftIndex : rightIndex;
+
+    return [{
+      battleNo: entry.battleNo,
+      leftIndex,
+      rightIndex,
+      pickedIndex,
+      choice,
+      kind: entry.historyEntryKind ?? "manual",
+    }];
+  }).sort((left, right) => left.battleNo - right.battleNo);
+}
+
+function inferChoice(previous: Snapshot, next: Snapshot | undefined): SortChoice | null {
+  const previousMerge = previous.current;
+  if (!previousMerge || !next || next.pickedCount <= previous.pickedCount) {
+    return null;
+  }
+
+  const nextMerge = next.current;
+  if (hasSameMergeInputs(previousMerge, nextMerge) && nextMerge) {
+    if (nextMerge.leftPos > previousMerge.leftPos) {
+      return "left";
+    }
+
+    if (nextMerge.rightPos > previousMerge.rightPos) {
+      return "right";
+    }
+  }
+
+  const mergedGroup = next.groups.find((group) => includesMergeOutput(group, previousMerge));
+  if (!mergedGroup) {
+    return null;
+  }
+
+  const pickedPosition = previousMerge.merged.length;
+  if (mergedGroup[pickedPosition] === previousMerge.left[previousMerge.leftPos]) {
+    return "left";
+  }
+
+  if (mergedGroup[pickedPosition] === previousMerge.right[previousMerge.rightPos]) {
+    return "right";
+  }
+
+  return null;
+}
+
+function includesMergeOutput(group: number[], merge: Merge): boolean {
+  const expected = [...merge.left, ...merge.right];
+  return expected.every((index) => group.includes(index));
+}
 
 function totalMergePlacements(songCount: number): number {
   const queue = Array.from({ length: songCount }, () => 1);

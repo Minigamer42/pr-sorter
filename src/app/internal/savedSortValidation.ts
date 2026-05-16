@@ -35,6 +35,8 @@ function createSortStateSchema(songCount: number) {
     battleNo: z.number().int(),
     pickedCount: z.number().int(),
     estimatedBattles: z.number().int(),
+    historyEntryKind: z.enum(["manual", "automatic"]).optional(),
+    historyEntryChoice: z.enum(["left", "right"]).optional(),
   });
 
   return snapshotSchema.extend({

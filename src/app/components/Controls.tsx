@@ -8,6 +8,7 @@ type ControlsProps = {
   googleSheetsSetupReason: string | null;
   isWritingSheet: boolean;
   onOpenSettings(): void;
+  onOpenHistory(): void;
   onStart(): void;
   onLoad(): void;
   onUndo(): void;
@@ -24,6 +25,7 @@ export function Controls({
   googleSheetsSetupReason,
   isWritingSheet,
   onOpenSettings,
+  onOpenHistory,
   onStart,
   onLoad,
   onUndo,
@@ -33,6 +35,11 @@ export function Controls({
 }: ControlsProps) {
   return (
     <div className="button-container">
+      {screen === "sorting" ? (
+        <button className="basic-button" type="button" onClick={onOpenHistory}>
+          History
+        </button>
+      ) : null}
       <button className="basic-button" type="button" onClick={onOpenSettings}>
         Settings
       </button>
