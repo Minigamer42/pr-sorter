@@ -1,10 +1,11 @@
 import type { AppConfig } from '../src/app/types';
 
 export const config = {
-    localStoragePrefix: 'test',
-    title: 'test! Sorter',
-    description: 'Party rank sorter for your custom list of songs.',
-    deadline: new Date('2026-06-30T23:59:00+02:00'),
+    localStoragePrefix: 'hasunosora-105th-pr',
+    title: 'Hasunosora 105th',
+    description: 'Party rank sorter for Hasunosora 105th',
+    deadline: new Date('2026-06-11T23:59:00+02:00'),
+    tags: ['Franchise'],
     googleSheets: {
         clientId: '575550662002-hivobiln683gua375ss3b7k58afnn36t.apps.googleusercontent.com',
         appId: '575550662002',
