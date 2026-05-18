@@ -79,6 +79,13 @@ type ReadScoresOptions = {
   scoreColumnHeader: string;
 };
 
+type WriteScoresOptions = {
+  spreadsheetId: string;
+  token: string;
+  scoreColumnHeader: string;
+  scoresBySongId: Map<number, number>;
+};
+
 const SHEETS_API_BASE = "https://sheets.googleapis.com/v4/spreadsheets";
 
 export async function writeRanksToFirstSheet({
@@ -93,7 +100,7 @@ export async function writeRanksToFirstSheet({
   const values = await fetchSheetValues(spreadsheetId, sheet.title, token);
   const updates = buildUpdates(values, sheet.title, ranksBySongId, rankColumnHeader, scoreColumnHeader, scoresBySongId);
 
-  await postRankUpdates(spreadsheetId, token, updates);
+  await postSheetValueUpdates(spreadsheetId, token, updates);
   return updates.length;
 }
 
@@ -106,6 +113,28 @@ export async function readScoresFromFirstSheet({
   const sheet = await fetchFirstUsableSheet(spreadsheetId, token);
   const values = await fetchSheetValues(spreadsheetId, sheet.title, token);
   return readScores(values, songIds, scoreColumnHeader);
+}
+
+export async function writeScoresToFirstSheet({
+  spreadsheetId,
+  token,
+  scoreColumnHeader,
+  scoresBySongId,
+}: WriteScoresOptions): Promise<number> {
+  if (scoresBySongId.size === 0) {
+    return 0;
+  }
+
+  const sheet = await fetchFirstUsableSheet(spreadsheetId, token);
+  const values = await fetchSheetValues(spreadsheetId, sheet.title, token);
+  const updates = buildScoreUpdates(values, sheet.title, scoreColumnHeader, scoresBySongId);
+
+  if (updates.length === 0) {
+    return 0;
+  }
+
+  await postSheetValueUpdates(spreadsheetId, token, updates);
+  return updates.length;
 }
 
 export async function readFirstSheetGrid(spreadsheetId: string, token: string): Promise<FirstSheetGrid> {
@@ -328,6 +357,68 @@ function readScores(values: string[][], songIds: number[], scoreColumnHeader: st
   return scoresBySongId;
 }
 
+function buildScoreUpdates(
+  values: string[][],
+  sheetTitle: string,
+  scoreColumnHeader: string,
+  scoresBySongId: Map<number, number>,
+): Array<{ range: string; values: number[][] }> {
+  const headerRow = values[0];
+  if (!headerRow || headerRow.length === 0) {
+    throw new GoogleWritebackError("Sheet is empty or missing a header row.");
+  }
+
+  const scoreHeaderIndexes = matchingHeaderIndexes(headerRow, scoreColumnHeader);
+  if (scoreHeaderIndexes.length === 0) {
+    return [];
+  }
+
+  if (scoreHeaderIndexes.length > 1) {
+    throw new GoogleWritebackError(`Score header "${scoreColumnHeader}" appears more than once.`);
+  }
+
+  const scoreColumnIndex = scoreHeaderIndexes[0];
+  const rowsBySongId = rowsBySongIdFromValues(values);
+
+  return [...scoresBySongId.entries()].map(([songId, score]) => {
+    const rowNumber = rowsBySongId.get(songId);
+    if (rowNumber === undefined) {
+      throw new GoogleWritebackError(`Sheet is missing sorter song ID ${songId}.`);
+    }
+
+    return {
+      range: `${quoteSheetName(sheetTitle)}!${columnName(scoreColumnIndex + 1)}${rowNumber}`,
+      values: [[score]],
+    };
+  });
+}
+
+function rowsBySongIdFromValues(values: string[][]): Map<number, number> {
+  const rowsBySongId = new Map<number, number>();
+
+  for (let rowIndex = 1; rowIndex < values.length; rowIndex += 1) {
+    const rawId = values[rowIndex]?.[0];
+    const trimmedId = rawId === undefined || rawId === null ? "" : String(rawId).trim();
+
+    if (trimmedId === "") {
+      continue;
+    }
+
+    if (!/^\d+$/.test(trimmedId)) {
+      throw new GoogleWritebackError(`Sheet contains a non-numeric song ID in row ${rowIndex + 1}.`);
+    }
+
+    const songId = Number.parseInt(trimmedId, 10);
+    if (rowsBySongId.has(songId)) {
+      throw new GoogleWritebackError(`Sheet contains duplicate song ID ${songId}.`);
+    }
+
+    rowsBySongId.set(songId, rowIndex + 1);
+  }
+
+  return rowsBySongId;
+}
+
 function gridCellFromCellData(cell: GridCellData): SheetGridCell {
   return {
     value: cellValue(cell).trim(),
@@ -364,7 +455,7 @@ function cellValue(cell: GridCellData): string {
   return entered.formulaValue ?? "";
 }
 
-async function postRankUpdates(
+async function postSheetValueUpdates(
   spreadsheetId: string,
   token: string,
   updates: Array<{ range: string; values: number[][] }>,

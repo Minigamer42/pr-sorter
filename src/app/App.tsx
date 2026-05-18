@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   choose,
   chooseAutomatic,
@@ -13,7 +13,7 @@ import {
   type SortState,
 } from "../sorter";
 import { GooglePickerCanceledError, GoogleWritebackError } from "../google/types";
-import { chooseGoogleSpreadsheet, loadScoresFromGoogleSheet, writeRanksToGoogleSheet } from "../google/googleSheetsWriteback";
+import { chooseGoogleSpreadsheet, loadScoresFromGoogleSheet, writeRanksToGoogleSheet, writeScoresToGoogleSheet } from "../google/googleSheetsWriteback";
 import { resolveSongAnime, type Song } from "../songs";
 import { Controls } from "./components/Controls";
 import { Duel } from "./components/Duel";
@@ -57,6 +57,8 @@ export function App({ config, songs }: AppProps) {
   const [googleSpreadsheetSelection, setGoogleSpreadsheetSelection] = useState<GoogleSpreadsheetSelection | null>(() =>
     storage.loadGoogleSpreadsheetSelection(),
   );
+  const pendingScoreWritebackRef = useRef<Map<number, number>>(new Map());
+  const scoreWritebackQueueRef = useRef<Promise<void>>(Promise.resolve());
 
   useEffect(() => {
     document.title = config.title;
@@ -109,6 +111,7 @@ export function App({ config, songs }: AppProps) {
     setSort(nextSort);
     setScreen(screenFor(nextSort));
     storage.saveSort(nextSort);
+    flushPendingScoreWriteback();
   }
 
   function undoPick(): void {
@@ -135,6 +138,43 @@ export function App({ config, songs }: AppProps) {
     const nextScores = { ...scoresBySongId, [songId]: score };
     setScoresBySongId(nextScores);
     storage.saveScores(nextScores);
+
+    try {
+      const normalized = normalizeScore(score);
+      if (normalized !== null) {
+        pendingScoreWritebackRef.current.set(songId, normalized);
+      }
+    } catch {
+      // Keep locally typed invalid scores editable, but do not write them to Sheets.
+    }
+  }
+
+  function flushPendingScoreWriteback(): void {
+    if (!scoreEnabled || pendingScoreWritebackRef.current.size === 0) {
+      return;
+    }
+
+    const writebackConfig = googleWritebackConfig();
+    if (!writebackConfig?.scoreColumnHeader || !googleSpreadsheetSelection) {
+      return;
+    }
+
+    const scoresToWrite = new Map(pendingScoreWritebackRef.current);
+    pendingScoreWritebackRef.current.clear();
+
+    scoreWritebackQueueRef.current = scoreWritebackQueueRef.current
+      .catch(() => undefined)
+      .then(async () => {
+        try {
+          await writeScoresToGoogleSheet(writebackConfig, googleSpreadsheetSelection, scoresToWrite);
+        } catch (error) {
+          for (const [songId, score] of scoresToWrite.entries()) {
+            pendingScoreWritebackRef.current.set(songId, score);
+          }
+
+          console.error("Error writing scores to Google Sheet:", error);
+        }
+      });
   }
 
   function autoChoiceForCurrentBattle(
