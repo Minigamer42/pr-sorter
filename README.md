@@ -77,6 +77,18 @@ To set up a custom sorter for your specific party ranking, follow these steps:
      ] satisfies Song[];
      ```
 
+### Import From Google Sheets Locally
+
+When running the Vite dev server, open `/import` to generate the customize files from a Google Sheet:
+
+```bash
+npm run dev
+```
+
+Then open `http://localhost:5173/import`, select a Google Sheet, preview the parsed rows, and click `Write customize files`.
+
+The importer expects the first worksheet to be formatted like `Sheet1.html`: row `1` contains headers such as `ID`, `Anime Name`, `Song Type`, `Song Info`, `mp3 Links`, and `Rank`. `Song Info` should be a hyperlink cell for the video URL, and `mp3 Links` should be a hyperlink cell for the audio URL. The local route writes `customize/songList.ts` and `customize/config.ts`.
+
 2. **Update the Title and Description in `customize/config.ts`:**
    - Open `customize/config.ts` and change the `title` and `description` values to match your custom sorter.
    - Also you **will** have to change `localStoragePrefix` if you plan on hosting multiple github-pages from a single account (there is an issue of shared `localStorage` if base URL is the same, so need to differentiate `localStorage` for different party rankings)

@@ -106,3 +106,8 @@ export type GoogleWindow = Window &
     google?: GoogleIdentityServices & { picker?: GooglePicker };
     gapi?: Gapi;
   };
+
+export type GoogleSheetsAccessConfig = {
+  clientId: string;
+  tokenStorageKey: string;
+};

@@ -3,9 +3,10 @@ import { config } from "../customize/config";
 import { songList } from "../customize/songList";
 import { App } from "./app/App";
 import { exposeHistoryMigrationTool } from "./app/historyMigrationTool";
+import { CustomizeImporter } from "./customizeImporter/CustomizeImporter";
 
 exposeHistoryMigrationTool(config.localStoragePrefix, songList);
 
 createRoot(document.querySelector<HTMLElement>("#root")!).render(
-  <App config={config} songs={songList} />,
+  window.location.pathname.endsWith("/import") ? <CustomizeImporter config={config} /> : <App config={config} songs={songList} />,
 );

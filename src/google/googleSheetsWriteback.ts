@@ -1,8 +1,9 @@
-import { loadGoogleApis } from "./googleApiLoader";
+import { loadGoogleApis, loadGoogleIdentityServices } from "./googleApiLoader";
 import { readScoresFromFirstSheet, writeRanksToFirstSheet } from "./sheetsClient";
 import {
   GooglePickerCanceledError,
   GoogleWritebackError,
+  type GoogleSheetsAccessConfig,
   type GoogleIdentityServices,
   type GooglePicker,
   type GoogleSheetsWritebackConfig,
@@ -24,9 +25,26 @@ export function clearGoogleSessionToken(): void {
   sessionToken = null;
 }
 
-function clearStoredToken(config: GoogleSheetsWritebackConfig): void {
+function clearStoredToken(config: GoogleSheetsAccessConfig): void {
   clearGoogleSessionToken();
   localStorage.removeItem(config.tokenStorageKey);
+}
+
+export async function getGoogleSheetsAccessToken(config: GoogleSheetsAccessConfig): Promise<string> {
+  if (!config.clientId) {
+    throw new GoogleWritebackError("Google integration is not configured.");
+  }
+
+  try {
+    const google = await loadGoogleIdentityServices();
+    return await getToken(google, config);
+  } catch (error) {
+    if (isAuthError(error)) {
+      clearStoredToken(config);
+    }
+
+    throw error;
+  }
 }
 
 export async function writeRanksToGoogleSheet(
@@ -108,7 +126,7 @@ export async function loadScoresFromGoogleSheet(
   }
 }
 
-async function getToken(google: GoogleIdentityServices, config: GoogleSheetsWritebackConfig): Promise<string> {
+async function getToken(google: GoogleIdentityServices, config: GoogleSheetsAccessConfig): Promise<string> {
   if (sessionToken && (await isStoredTokenValid(sessionToken))) {
     return sessionToken;
   }

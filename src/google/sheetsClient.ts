@@ -17,6 +17,52 @@ type ValuesResponse = {
   values?: string[][];
 };
 
+export type SheetGridCell = {
+  value: string;
+  hyperlink: string | null;
+};
+
+export type FirstSheetGrid = {
+  title: string;
+  rows: SheetGridCell[][];
+};
+
+type SpreadsheetGridResponse = {
+  sheets?: Array<{
+    properties?: Partial<SheetProperties>;
+    data?: Array<{
+      rowData?: Array<{
+        values?: GridCellData[];
+      }>;
+    }>;
+  }>;
+};
+
+type GridCellData = {
+  formattedValue?: string;
+  hyperlink?: string;
+  userEnteredValue?: {
+    stringValue?: string;
+    numberValue?: number;
+    boolValue?: boolean;
+    formulaValue?: string;
+  };
+  userEnteredFormat?: {
+    textFormat?: {
+      link?: {
+        uri?: string;
+      };
+    };
+  };
+  textFormatRuns?: Array<{
+    format?: {
+      link?: {
+        uri?: string;
+      };
+    };
+  }>;
+};
+
 type WriteRanksOptions = {
   spreadsheetId: string;
   token: string;
@@ -60,6 +106,24 @@ export async function readScoresFromFirstSheet({
   const sheet = await fetchFirstUsableSheet(spreadsheetId, token);
   const values = await fetchSheetValues(spreadsheetId, sheet.title, token);
   return readScores(values, songIds, scoreColumnHeader);
+}
+
+export async function readFirstSheetGrid(spreadsheetId: string, token: string): Promise<FirstSheetGrid> {
+  const sheet = await fetchFirstUsableSheet(spreadsheetId, token);
+  const range = encodeURIComponent(quoteSheetName(sheet.title));
+  const metadata = await fetchJson<SpreadsheetGridResponse>(
+    `${SHEETS_API_BASE}/${encodeURIComponent(spreadsheetId)}?includeGridData=true&ranges=${range}&fields=sheets(properties(title,index,sheetType,hidden),data(rowData(values(formattedValue,hyperlink,userEnteredValue,userEnteredFormat/textFormat/link,textFormatRuns(format/link)))))`,
+    token,
+    "Sheets API read failed.",
+  );
+
+  const sheetGrid = (metadata.sheets ?? []).find((candidate) => candidate.properties?.title === sheet.title);
+  const rowData = sheetGrid?.data?.[0]?.rowData ?? [];
+
+  return {
+    title: sheet.title,
+    rows: rowData.map((row) => (row.values ?? []).map(gridCellFromCellData)),
+  };
 }
 
 async function fetchFirstUsableSheet(spreadsheetId: string, token: string): Promise<SheetProperties> {
@@ -129,15 +193,11 @@ function buildUpdates(
   if (shouldWriteScores && scoreColumnHeader) {
     const scoreHeaderIndexes = matchingHeaderIndexes(headerRow, scoreColumnHeader);
 
-    if (scoreHeaderIndexes.length === 0) {
-      throw new GoogleWritebackError(`Score header "${scoreColumnHeader}" was not found.`);
-    }
-
     if (scoreHeaderIndexes.length > 1) {
       throw new GoogleWritebackError(`Score header "${scoreColumnHeader}" appears more than once.`);
     }
 
-    scoreColumnIndex = scoreHeaderIndexes[0];
+    scoreColumnIndex = scoreHeaderIndexes[0] ?? null;
   }
 
   const rowsBySongId = new Map<number, number>();
@@ -213,7 +273,7 @@ function readScores(values: string[][], songIds: number[], scoreColumnHeader: st
 
   const scoreHeaderIndexes = matchingHeaderIndexes(headerRow, scoreColumnHeader);
   if (scoreHeaderIndexes.length === 0) {
-    throw new GoogleWritebackError(`Score header "${scoreColumnHeader}" was not found.`);
+    return new Map();
   }
 
   if (scoreHeaderIndexes.length > 1) {
@@ -266,6 +326,42 @@ function readScores(values: string[][], songIds: number[], scoreColumnHeader: st
   }
 
   return scoresBySongId;
+}
+
+function gridCellFromCellData(cell: GridCellData): SheetGridCell {
+  return {
+    value: cellValue(cell).trim(),
+    hyperlink:
+      cell.hyperlink ??
+      cell.userEnteredFormat?.textFormat?.link?.uri ??
+      cell.textFormatRuns?.find((run) => run.format?.link?.uri)?.format?.link?.uri ??
+      null,
+  };
+}
+
+function cellValue(cell: GridCellData): string {
+  if (cell.formattedValue !== undefined) {
+    return cell.formattedValue;
+  }
+
+  const entered = cell.userEnteredValue;
+  if (!entered) {
+    return "";
+  }
+
+  if (entered.stringValue !== undefined) {
+    return entered.stringValue;
+  }
+
+  if (entered.numberValue !== undefined) {
+    return String(entered.numberValue);
+  }
+
+  if (entered.boolValue !== undefined) {
+    return String(entered.boolValue);
+  }
+
+  return entered.formulaValue ?? "";
 }
 
 async function postRankUpdates(

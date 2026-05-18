@@ -1,10 +1,10 @@
 import { Media } from "../../media";
 import type { SortChoice } from "../../sorter";
-import type { Song } from "../../songs";
+import type { ResolvedSong } from "../../songs";
 import type { Settings } from "../types";
 
 type SongCardProps = {
-  song: Song;
+  song: ResolvedSong;
   side: SortChoice;
   settings: Settings;
   scoreEnabled: boolean;

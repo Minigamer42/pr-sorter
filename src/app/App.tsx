@@ -14,7 +14,7 @@ import {
 } from "../sorter";
 import { GooglePickerCanceledError, GoogleWritebackError } from "../google/types";
 import { chooseGoogleSpreadsheet, loadScoresFromGoogleSheet, writeRanksToGoogleSheet } from "../google/googleSheetsWriteback";
-import type { Song } from "../songs";
+import { resolveSongAnime, type Song } from "../songs";
 import { Controls } from "./components/Controls";
 import { Duel } from "./components/Duel";
 import { HistoryModal } from "./components/HistoryModal";
@@ -39,7 +39,11 @@ const screenFor = (sort: SortState | null): Screen => {
 };
 
 export function App({ config, songs }: AppProps) {
-  const songIds = useMemo(() => songs.map((song) => song.id), [songs]);
+  const resolvedSongs = useMemo(
+    () => songs.map((song) => resolveSongAnime(song, fallbackAnimeName(config))),
+    [config, songs],
+  );
+  const songIds = useMemo(() => resolvedSongs.map((song) => song.id), [resolvedSongs]);
   const storage = useMemo(() => createStorage(config, songIds), [config, songIds]);
   const scoreEnabled = isScoreEnabled(config);
   const [screen, setScreen] = useState<Screen>("landing");
@@ -74,12 +78,7 @@ export function App({ config, songs }: AppProps) {
   }, [screen, storage]);
 
   function startSort(): void {
-    if (scoreEnabled) {
-      storage.clearScores();
-      setScoresBySongId({});
-    }
-
-    const nextSort = createSort(songs.length);
+    const nextSort = createSort(resolvedSongs.length);
     setSort(nextSort);
     setScreen(screenFor(nextSort));
     storage.saveSort(nextSort);
@@ -153,8 +152,8 @@ export function App({ config, songs }: AppProps) {
     }
 
     const [leftIndex, rightIndex] = battle;
-    const leftSong = songs[leftIndex];
-    const rightSong = songs[rightIndex];
+    const leftSong = resolvedSongs[leftIndex];
+    const rightSong = resolvedSongs[rightIndex];
     if (!leftSong || !rightSong) {
       return null;
     }
@@ -183,7 +182,7 @@ export function App({ config, songs }: AppProps) {
     currentSettings: Settings,
   ): SortState {
     let nextSort = currentSort;
-    const maxIterations = songs.length * songs.length * 2;
+    const maxIterations = resolvedSongs.length * resolvedSongs.length * 2;
 
     for (let iteration = 0; iteration < maxIterations; iteration += 1) {
       const choice = autoChoiceForCurrentBattle(nextSort, currentScoresBySongId, currentSettings);
@@ -212,8 +211,8 @@ export function App({ config, songs }: AppProps) {
     }
 
     const [leftIndex, rightIndex] = battle;
-    const leftSong = songs[leftIndex];
-    const rightSong = songs[rightIndex];
+    const leftSong = resolvedSongs[leftIndex];
+    const rightSong = resolvedSongs[rightIndex];
     if (!leftSong || !rightSong) {
       return;
     }
@@ -255,8 +254,8 @@ export function App({ config, songs }: AppProps) {
       return;
     }
 
-    const ranks = ranksBySongId(songs, sort);
-    const lines = songs.map((song) => {
+    const ranks = ranksBySongId(resolvedSongs, sort);
+    const lines = resolvedSongs.map((song) => {
       const rank = ranks.get(song.id);
       if (rank === undefined) {
         throw new Error(`Missing rank for song id ${song.id}.`);
@@ -300,7 +299,7 @@ export function App({ config, songs }: AppProps) {
     }
 
     setWritingSheet(true);
-    void writeRanksToGoogleSheet(writebackConfig, ranksBySongId(songs, sort), googleSpreadsheetSelection, normalizedScoresBySongId)
+    void writeRanksToGoogleSheet(writebackConfig, ranksBySongId(resolvedSongs, sort), googleSpreadsheetSelection, normalizedScoresBySongId)
       .then((spreadsheet) => {
         alert(`Updated ranks in ${spreadsheet.name}.`);
       })
@@ -372,7 +371,7 @@ export function App({ config, songs }: AppProps) {
     sort && screen === "complete"
       ? 100
       : sort && screen === "sorting"
-        ? progressPercentage(sort, songs.length)
+        ? progressPercentage(sort, resolvedSongs.length)
         : 0;
 
   return (
@@ -393,7 +392,7 @@ export function App({ config, songs }: AppProps) {
       <HistoryModal
         open={isHistoryOpen}
         picks={sort ? pickHistory(sort) : []}
-        songs={songs}
+        songs={resolvedSongs}
         scoresBySongId={scoresBySongId}
         onClose={() => setHistoryOpen(false)}
       />
@@ -426,7 +425,7 @@ export function App({ config, songs }: AppProps) {
             <div className="duel-container">
               {screen === "sorting" ? (
                 <Duel
-                  songs={songs}
+                  songs={resolvedSongs}
                   sort={sort}
                   settings={settings}
                   scoreEnabled={scoreEnabled}
@@ -436,7 +435,7 @@ export function App({ config, songs }: AppProps) {
                 />
               ) : null}
               {screen === "complete" ? (
-                <Results songs={songs} sort={sort} scoreEnabled={scoreEnabled} scoresBySongId={scoresBySongId} />
+                <Results songs={resolvedSongs} sort={sort} scoreEnabled={scoreEnabled} scoresBySongId={scoresBySongId} />
               ) : null}
             </div>
             <Progress label={progressLabel} percentage={progressValue} />
@@ -481,4 +480,8 @@ function landingTitle(savedKind: SavedProgressKind): string {
   }
 
   return 'Press "Start" to begin sorting.';
+}
+
+function fallbackAnimeName(config: AppConfig): string {
+  return config.fallbackAnimeName?.trim() || config.title.replace(/\s+Sorter$/i, "").trim() || config.title;
 }
