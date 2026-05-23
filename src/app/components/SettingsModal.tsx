@@ -102,7 +102,16 @@ export function SettingsModal({
                     <div className="option-group">
                         <p>Google Sheet:</p>
                         <div className="setting-value">
-                            {googleSpreadsheetSelection ? googleSpreadsheetSelection.name : 'No spreadsheet selected'}
+                            {googleSpreadsheetSelection ? (
+                                <a
+                                    className="setting-value-link"
+                                    href={`https://docs.google.com/spreadsheets/d/${encodeURIComponent(googleSpreadsheetSelection.id)}/edit`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                >
+                                    {googleSpreadsheetSelection.name}
+                                </a>
+                            ) : 'No spreadsheet selected'}
                         </div>
                         <button
                             className="option-button"

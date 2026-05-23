@@ -84,6 +84,16 @@ body {
   overflow-wrap: anywhere;
 }
 
+.setting-value-link {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.setting-value-link:hover {
+  color: #ffffff;
+}
+
 .setting-number-input {
   width: 90px;
   margin-left: 8px;
