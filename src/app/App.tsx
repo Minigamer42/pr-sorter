@@ -474,17 +474,20 @@ export function App({ config, songs }: AppProps) {
     setConnectingGoogleSheet(true);
     void chooseGoogleSpreadsheet(writebackConfig)
       .then(async (spreadsheet) => {
-        let loadedScoreCount = 0;
-        if (scoreEnabled) {
-          const sheetScores = await loadScoresFromGoogleSheet(writebackConfig, spreadsheet, songIds);
-          const nextScores = scoresRecordFromSheet(sheetScores);
-          loadedScoreCount = Object.keys(nextScores).length;
-          setScoresBySongId(nextScores);
-          storage.saveScores(nextScores);
-        }
-
         setGoogleSpreadsheetSelection(spreadsheet);
         storage.saveGoogleSpreadsheetSelection(spreadsheet);
+
+        if (scoreEnabled) {
+          try {
+            const sheetScores = await loadScoresFromGoogleSheet(writebackConfig, spreadsheet, songIds);
+            const nextScores = scoresRecordFromSheet(sheetScores);
+            setScoresBySongId(nextScores);
+            storage.saveScores(nextScores);
+          } catch (error) {
+            console.error("Error loading scores from Google Sheet:", error);
+            alert(`Selected ${spreadsheet.name}, but could not load scores. ${messageFromError(error)}`);
+          }
+        }
       })
       .catch((error: unknown) => {
         if (error instanceof GooglePickerCanceledError) {
@@ -615,11 +618,19 @@ function scoresRecordFromSheet(sheetScores: Map<number, string>): SongScoresById
   const scores: SongScoresById = {};
 
   for (const [songId, rawScore] of sheetScores.entries()) {
-    normalizeScore(rawScore);
+    try {
+      normalizeScore(rawScore);
+    } catch (error) {
+      throw new GoogleWritebackError(`Sheet score for song ID ${songId} is invalid. ${messageFromError(error)}`);
+    }
     scores[songId] = rawScore;
   }
 
   return scores;
+}
+
+function messageFromError(error: unknown): string {
+  return error instanceof Error ? error.message : "Unknown error.";
 }
 
 function scoresRecordFromNumericScores(sheetScores: Map<number, number>): SongScoresById {

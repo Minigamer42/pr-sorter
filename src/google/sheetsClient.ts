@@ -14,7 +14,7 @@ type SpreadsheetMetadataResponse = {
 };
 
 type ValuesResponse = {
-  values?: string[][];
+  values?: unknown[][];
 };
 
 export type SheetGridCell = {
@@ -185,12 +185,12 @@ async function fetchFirstUsableSheet(spreadsheetId: string, token: string): Prom
 async function fetchSheetValues(spreadsheetId: string, sheetTitle: string, token: string): Promise<string[][]> {
   const range = encodeURIComponent(quoteSheetName(sheetTitle));
   const response = await fetchJson<ValuesResponse>(
-    `${SHEETS_API_BASE}/${encodeURIComponent(spreadsheetId)}/values/${range}`,
+    `${SHEETS_API_BASE}/${encodeURIComponent(spreadsheetId)}/values/${range}?valueRenderOption=UNFORMATTED_VALUE`,
     token,
     "Sheets API read failed.",
   );
 
-  return response.values ?? [];
+  return (response.values ?? []).map((row) => row.map((value) => String(value)));
 }
 
 function buildUpdates(
@@ -339,7 +339,7 @@ function readScores(values: string[][], songIds: number[], scoreColumnHeader: st
     seenSongIds.add(songId);
 
     const rawScore = values[rowIndex]?.[scoreColumnIndex];
-    const score = rawScore === undefined || rawScore === null ? "" : String(rawScore).trim();
+    const score = scoreValueFromSheetCell(rawScore);
     if (score !== "") {
       scoresBySongId.set(songId, score);
     }
@@ -355,6 +355,24 @@ function readScores(values: string[][], songIds: number[], scoreColumnHeader: st
   }
 
   return scoresBySongId;
+}
+
+function scoreValueFromSheetCell(rawScore: string | undefined): string {
+  if (rawScore === undefined || rawScore === null) {
+    return "";
+  }
+
+  const score = String(rawScore).trim();
+  if (score === "") {
+    return "";
+  }
+
+  const numericScore = Number(score);
+  if (!Number.isFinite(numericScore)) {
+    return score;
+  }
+
+  return String(Math.round(numericScore * 1000) / 1000);
 }
 
 function buildScoreUpdates(
