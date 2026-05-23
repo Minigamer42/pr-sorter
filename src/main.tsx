@@ -1,12 +1,6 @@
 import { createRoot } from "react-dom/client";
-import { config } from "../customize/config";
-import { songList } from "../customize/songList";
-import { App } from "./app/App";
-import { exposeHistoryMigrationTool } from "./app/historyMigrationTool";
-import { CustomizeImporter } from "./customizeImporter/CustomizeImporter";
+import { ActiveRoute } from "active-route";
 
-exposeHistoryMigrationTool(config.localStoragePrefix, songList);
+const root = createRoot(document.querySelector<HTMLElement>("#root")!);
 
-createRoot(document.querySelector<HTMLElement>("#root")!).render(
-  window.location.pathname.endsWith("/import") ? <CustomizeImporter config={config} /> : <App config={config} songs={songList} />,
-);
+root.render(<ActiveRoute />);
