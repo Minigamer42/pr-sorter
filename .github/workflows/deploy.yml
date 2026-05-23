@@ -18,11 +18,16 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  build-and-deploy:
-    if: github.ref_name == 'main' || startsWith(github.ref_name, 'pr-sorter/')
+  build-and-deploy-main:
+    if: github.ref_name == 'main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Fetch sorter branches
+        run: git fetch origin '+refs/heads/pr-sorter/*:refs/remotes/origin/pr-sorter/*'
 
       - uses: actions/setup-node@v6
         with:
@@ -31,32 +36,82 @@ jobs:
 
       - run: npm ci
 
+      - name: Build main and all sorter branches
+        shell: bash
+        env:
+          VITE_GOOGLE_API_KEY: ${{ vars.VITE_GOOGLE_API_KEY }}
+        run: |
+          set -euo pipefail
+
+          rm -rf pages-dist dist
+
+          npm run build
+          mkdir -p pages-dist
+          cp -a dist/. pages-dist/
+
+          git for-each-ref --format='%(refname:short)' refs/remotes/origin/pr-sorter/ | while read -r remote_branch; do
+            branch="${remote_branch#origin/}"
+            sorter="${branch#pr-sorter/}"
+            slug="$(printf '%s' "$sorter" | tr '/[:upper:]' '-[:lower:]' | tr -cd 'a-z0-9._-')"
+
+            rm -rf customize dist "pages-dist/$slug"
+            git checkout "origin/$branch" -- customize
+
+            npm run build
+            mkdir -p "pages-dist/$slug"
+            cp -a dist/. "pages-dist/$slug/"
+          done
+
+      - name: Deploy all builds
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: pages-dist
+
+  build-and-deploy-sorter:
+    if: startsWith(github.ref_name, 'pr-sorter/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Fetch sorter branches
+        run: git fetch origin '+refs/heads/pr-sorter/*:refs/remotes/origin/pr-sorter/*'
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Use sorter branch customize files
+        id: sorter
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          branch="${GITHUB_REF_NAME}"
+          sorter="${branch#pr-sorter/}"
+          slug="$(printf '%s' "$sorter" | tr '/[:upper:]' '-[:lower:]' | tr -cd 'a-z0-9._-')"
+
+          rm -rf customize
+          git checkout "origin/$branch" -- customize
+
+          echo "dir=$slug" >> "$GITHUB_OUTPUT"
+
       - run: npm run build
         env:
           VITE_GOOGLE_API_KEY: ${{ vars.VITE_GOOGLE_API_KEY }}
 
-      - name: Choose publish directory
-        id: publish
-        shell: bash
-        run: |
-          branch="${GITHUB_REF_NAME}"
-
-          if [[ "$branch" == "main" ]]; then
-            echo "dir=." >> "$GITHUB_OUTPUT"
-          elif [[ "$branch" == pr-sorter/* ]]; then
-            branch="${branch#pr-sorter/}"
-            slug="$(printf '%s' "$branch" | tr '/[:upper:]' '-[:lower:]' | tr -cd 'a-z0-9._-')"
-            echo "dir=$slug" >> "$GITHUB_OUTPUT"
-          else
-            echo "Unsupported branch for GitHub Pages deploy: $branch" >&2
-            exit 1
-          fi
-
-      - name: Deploy branch build
+      - name: Deploy sorter build
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: dist
-          destination_dir: ${{ steps.publish.outputs.dir }}
+          destination_dir: ${{ steps.sorter.outputs.dir }}
           keep_files: true
