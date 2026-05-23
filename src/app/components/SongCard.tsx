@@ -41,6 +41,7 @@ export function SongCard({ song, side, settings, scoreEnabled, score, sortInfo, 
             type="number"
             min="0"
             max="10"
+            step="0.01"
             value={score}
             onChange={(event) => onScoreChange(event.currentTarget.value)}
           />

@@ -183,6 +183,7 @@ body.sorter-index-body {
   box-sizing: border-box;
   background: rgba(255, 255, 255, 0.95);
   color: #001a3f;
+  text-align: right;
 }
 
 .help-icon {
@@ -342,6 +343,180 @@ body.sorter-index-body {
   font-weight: bold;
 }
 
+.song-list-modal {
+  width: min(1180px, 94vw);
+  max-height: 84vh;
+  box-sizing: border-box;
+}
+
+.song-list-status {
+  margin: 0 0 12px;
+  color: #dbeafe;
+  font-size: 13px;
+  text-align: left;
+}
+
+.song-list-status--ready {
+  color: #bbf7d0;
+}
+
+.song-list-status--error {
+  color: #fecaca;
+}
+
+.song-list-title-link {
+  color: #bbf7d0;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  overflow-wrap: anywhere;
+}
+
+.song-list-table-wrap {
+  max-height: 60vh;
+  overflow: auto;
+  border-radius: 8px;
+  background-color: rgba(0, 0, 50, 0.45);
+}
+
+.song-list-table {
+  min-width: 980px;
+}
+
+.song-list-table th,
+.song-list-table td {
+  padding: 9px 10px;
+  font-size: 13px;
+  vertical-align: middle;
+}
+
+.song-list-table td {
+  max-width: 240px;
+}
+
+.song-list-table th:nth-child(1),
+.song-list-table td:nth-child(1),
+.song-list-table th:nth-child(5),
+.song-list-table td:nth-child(5),
+.song-list-table th:nth-child(6),
+.song-list-table td:nth-child(6),
+.song-list-table th:nth-child(7),
+.song-list-table td:nth-child(7) {
+  text-align: center;
+}
+
+.song-list-sort-header {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  min-height: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  font-weight: bold;
+}
+
+.song-list-sort-header:hover,
+.song-list-sort-header:focus-visible {
+  color: #bbf7d0;
+  outline: none;
+}
+
+.song-list-sort-header__indicator {
+  display: inline-block;
+  width: 10px;
+  color: #bbf7d0;
+  text-align: left;
+}
+
+.song-list-links {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.song-list-links a {
+  color: #bbf7d0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.song-list-links__empty {
+  color: #cbd5e1;
+}
+
+.song-list-header-with-help {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.song-list-header-with-help .help-icon {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  margin-left: 0;
+  border-color: rgba(255, 255, 255, 0.85);
+  color: #f0fff2;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.song-list-header-with-help .help-icon::after {
+  top: calc(100% + 8px);
+  right: 0;
+  bottom: auto;
+  left: auto;
+  transform: none;
+}
+
+.song-list-score-input {
+  width: 72px;
+  min-height: 30px;
+  padding: 4px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 5px;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.95);
+  color: #001a3f;
+  text-align: right;
+}
+
+.song-list-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.song-list-actions .close-button {
+  margin-top: 0;
+}
+
+.song-list-write-button {
+  padding: 10px 20px;
+  background: #40ab47a6;
+  border: none;
+  color: white;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.song-list-write-button:hover {
+  background: #45a049;
+}
+
+.song-list-write-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .main-page {
   height: 100vh;
   width: 100vw;
@@ -483,6 +658,7 @@ body.sorter-index-body {
   background: rgba(255, 255, 255, 0.95);
   color: #001a3f;
   font-size: 1.8vh;
+  text-align: right;
 }
 
 .music-card button {

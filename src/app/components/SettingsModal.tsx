@@ -87,6 +87,7 @@ export function SettingsModal({
                             type="number"
                             min="0"
                             max="10"
+                            step="0.01"
                             value={settings.autoSkipScoreDifference}
                             onChange={(event) => {
                                 const value = event.currentTarget.valueAsNumber;

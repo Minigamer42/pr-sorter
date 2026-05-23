@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   choose,
   chooseAutomatic,
+  canUndo,
   createSort,
   currentBattle,
   isComplete,
@@ -21,6 +22,7 @@ import { HistoryModal } from "./components/HistoryModal";
 import { Progress } from "./components/Progress";
 import { Results } from "./components/Results";
 import { SettingsModal } from "./components/SettingsModal";
+import { SongListModal } from "./components/SongListModal";
 import { isScoreEnabled, normalizeScore } from "./internal/songScores";
 import { createStorage } from "./storage";
 import type { AppConfig, GoogleSpreadsheetSelection, SavedProgressKind, Screen, Settings, SongScoresById } from "./types";
@@ -51,9 +53,18 @@ export function App({ config, songs }: AppProps) {
   const [scoresBySongId, setScoresBySongId] = useState<SongScoresById>(() => storage.loadScores());
   const [sort, setSort] = useState<SortState | null>(null);
   const [isHistoryOpen, setHistoryOpen] = useState(false);
+  const [isSongListOpen, setSongListOpen] = useState(false);
   const [isSettingsOpen, setSettingsOpen] = useState(false);
   const [isWritingSheet, setWritingSheet] = useState(false);
+  const [isWritingSheetScores, setWritingSheetScores] = useState(false);
   const [isConnectingGoogleSheet, setConnectingGoogleSheet] = useState(false);
+  const [sheetScoresBySongId, setSheetScoresBySongId] = useState<SongScoresById>({});
+  const [sheetScoreStatus, setSheetScoreStatus] = useState<
+    | { state: "unavailable"; message: string }
+    | { state: "loading"; message: string }
+    | { state: "ready"; message: string }
+    | { state: "error"; message: string }
+  >({ state: "unavailable", message: "Choose a Google Sheet in Settings to show live sheet scores." });
   const [googleSpreadsheetSelection, setGoogleSpreadsheetSelection] = useState<GoogleSpreadsheetSelection | null>(() =>
     storage.loadGoogleSpreadsheetSelection(),
   );
@@ -65,6 +76,54 @@ export function App({ config, songs }: AppProps) {
     document.querySelector('meta[name="og:site_name"]')?.setAttribute("content", config.title);
     document.querySelector('meta[name="og:description"]')?.setAttribute("content", config.description);
   }, [config.description, config.title]);
+
+  useEffect(() => {
+    if (!isSongListOpen) {
+      return;
+    }
+
+    if (!scoreEnabled) {
+      setSheetScoresBySongId({});
+      setSheetScoreStatus({ state: "unavailable", message: "Score support is disabled for this sorter." });
+      return;
+    }
+
+    const writebackConfig = googleWritebackConfig();
+    if (!writebackConfig?.scoreColumnHeader || !googleSpreadsheetSelection) {
+      setSheetScoresBySongId({});
+      setSheetScoreStatus({ state: "unavailable", message: "Choose a Google Sheet in Settings to show live sheet scores." });
+      return;
+    }
+
+    let canceled = false;
+    setSheetScoreStatus({ state: "loading", message: "Loading live sheet scores..." });
+
+    void loadScoresFromGoogleSheet(writebackConfig, googleSpreadsheetSelection, songIds)
+      .then((sheetScores) => {
+        if (canceled) {
+          return;
+        }
+
+        setSheetScoresBySongId(scoresRecordFromSheet(sheetScores));
+        setSheetScoreStatus({ state: "ready", message: `Loaded sheet scores from ${googleSpreadsheetSelection.name}.` });
+      })
+      .catch((error: unknown) => {
+        if (canceled) {
+          return;
+        }
+
+        console.error("Error loading scores from Google Sheet:", error);
+        setSheetScoresBySongId({});
+        setSheetScoreStatus({
+          state: "error",
+          message: error instanceof GoogleWritebackError ? error.message : "Could not load sheet scores.",
+        });
+      });
+
+    return () => {
+      canceled = true;
+    };
+  }, [googleSpreadsheetSelection, isSongListOpen, scoreEnabled, songIds]);
 
   const savedKind: SavedProgressKind = useMemo(() => {
     if (screen !== "landing") {
@@ -356,6 +415,55 @@ export function App({ config, songs }: AppProps) {
       });
   }
 
+  function writeSongListScoresToSheet(): void {
+    if (!scoreEnabled) {
+      alert("Score support is disabled for this sorter.");
+      return;
+    }
+
+    const writebackConfig = googleWritebackConfig();
+    if (!writebackConfig?.scoreColumnHeader) {
+      alert("Google score writeback is not configured.");
+      return;
+    }
+
+    if (!googleSpreadsheetSelection) {
+      alert("Choose a Google Sheet in Settings before writing scores.");
+      return;
+    }
+
+    let normalizedScoresBySongId: Map<number, number> | undefined;
+    try {
+      normalizedScoresBySongId = normalizedScoresForWriteback(scoresBySongId);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Scores must be numbers from 0 to 10.");
+      return;
+    }
+
+    if (!normalizedScoresBySongId) {
+      alert("There are no scores to write.");
+      return;
+    }
+
+    setWritingSheetScores(true);
+    void writeScoresToGoogleSheet(writebackConfig, googleSpreadsheetSelection, normalizedScoresBySongId)
+      .then(() => {
+        pendingScoreWritebackRef.current.clear();
+        setSheetScoresBySongId((current) => ({
+          ...current,
+          ...scoresRecordFromNumericScores(normalizedScoresBySongId),
+        }));
+        setSheetScoreStatus({ state: "ready", message: `Updated sheet scores in ${googleSpreadsheetSelection.name}.` });
+      })
+      .catch((error: unknown) => {
+        console.error("Error writing scores to Google Sheet:", error);
+        alert(error instanceof GoogleWritebackError ? error.message : "Could not write scores to Google Sheet.");
+      })
+      .finally(() => {
+        setWritingSheetScores(false);
+      });
+  }
+
   function chooseSheet(): void {
     const writebackConfig = googleWritebackConfig();
     if (!writebackConfig) {
@@ -436,6 +544,21 @@ export function App({ config, songs }: AppProps) {
         scoresBySongId={scoresBySongId}
         onClose={() => setHistoryOpen(false)}
       />
+      <SongListModal
+        open={isSongListOpen}
+        songs={resolvedSongs}
+        sort={sort}
+        scoreEnabled={scoreEnabled}
+        scoresBySongId={scoresBySongId}
+        sheetScoresBySongId={sheetScoresBySongId}
+        sheetScoreStatus={sheetScoreStatus}
+        googleSpreadsheetSelection={googleSpreadsheetSelection}
+        canWriteSheetScores={Boolean(scoreEnabled && googleWritebackConfig()?.scoreColumnHeader && googleSpreadsheetSelection)}
+        isWritingSheetScores={isWritingSheetScores}
+        onScoreChange={updateScore}
+        onWriteSheetScores={writeSongListScoresToSheet}
+        onClose={() => setSongListOpen(false)}
+      />
       <div className={`main-page ${screen === "landing" ? "main-page--landing" : ""}`}>
         {screen !== "sorting" ? (
           <div className="title" style={screen === "complete" ? { height: "3%" } : undefined}>
@@ -450,6 +573,8 @@ export function App({ config, songs }: AppProps) {
           googleSheetsDisabledReason={googleSheetsDisabledReason}
           googleSheetsSetupReason={writeSheetSetupReason}
           isWritingSheet={isWritingSheet}
+          canUndo={sort ? canUndo(sort) : false}
+          onOpenSongList={() => setSongListOpen(true)}
           onOpenHistory={() => setHistoryOpen(true)}
           onOpenSettings={() => setSettingsOpen(true)}
           onStart={startSort}
@@ -492,6 +617,16 @@ function scoresRecordFromSheet(sheetScores: Map<number, string>): SongScoresById
   for (const [songId, rawScore] of sheetScores.entries()) {
     normalizeScore(rawScore);
     scores[songId] = rawScore;
+  }
+
+  return scores;
+}
+
+function scoresRecordFromNumericScores(sheetScores: Map<number, number>): SongScoresById {
+  const scores: SongScoresById = {};
+
+  for (const [songId, score] of sheetScores.entries()) {
+    scores[songId] = String(score);
   }
 
   return scores;

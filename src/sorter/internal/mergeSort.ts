@@ -97,28 +97,66 @@ export function currentBattle(sort: SortState): [number, number] | null {
 }
 
 export function currentSongSortInfo(sort: SortState, songIndex: number): CurrentSongSortInfo | null {
+  return songSortInfo(sort, songIndex);
+}
+
+export function songSortInfo(sort: SortState, songIndex: number): CurrentSongSortInfo | null {
+  if (isComplete(sort)) {
+    const rank = sort.groups[0].indexOf(songIndex) + 1;
+    return rank > 0 ? { minRank: rank, maxRank: rank, songCount: sort.groups[0].length } : null;
+  }
+
   const merge = sort.current;
-  if (!merge) {
-    return null;
+  const activeMergeSize = merge ? merge.left.length + merge.right.length : 0;
+
+  if (merge) {
+    const activeRange = songRangeInMerge(merge, songIndex);
+    if (activeRange) {
+      return wholeSetEstimateFromQueue(
+        [
+          ...sort.groups.map((group) => ({ size: group.length, range: null })),
+          { size: activeMergeSize, range: activeRange },
+        ],
+      );
+    }
   }
 
-  if (merge.left[merge.leftPos] === songIndex) {
-    return wholeSetEstimate(sort, songRangeInActiveMerge(merge, "left"));
-  }
+  for (const group of sort.groups) {
+    const position = group.indexOf(songIndex);
+    if (position === -1) {
+      continue;
+    }
 
-  if (merge.right[merge.rightPos] === songIndex) {
-    return wholeSetEstimate(sort, songRangeInActiveMerge(merge, "right"));
+    return wholeSetEstimateFromQueue(
+      [
+        ...sort.groups.map((candidate) => ({
+          size: candidate.length,
+          range: candidate === group
+            ? { minRank: position + 1, maxRank: position + 1, songCount: candidate.length }
+            : null,
+        })),
+        ...(merge ? [{ size: activeMergeSize, range: null }] : []),
+      ],
+    );
   }
 
   return null;
 }
 
 function wholeSetEstimate(sort: SortState, activeRange: CurrentSongSortInfo): CurrentSongSortInfo {
-  const queue = [
-    ...sort.groups.map((group) => ({ size: group.length, containsCurrentMerge: false })),
-    { size: activeRange.songCount, containsCurrentMerge: true },
-  ];
-  let maxRank = activeRange.maxRank;
+  return wholeSetEstimateFromQueue([
+    ...sort.groups.map((group) => ({ size: group.length, range: null })),
+    { size: activeRange.songCount, range: activeRange },
+  ]) ?? activeRange;
+}
+
+function wholeSetEstimateFromQueue(
+  initialQueue: Array<{ size: number; range: CurrentSongSortInfo | null }>,
+): CurrentSongSortInfo | null {
+  const queue = initialQueue.map((entry) => ({
+    size: entry.size,
+    range: entry.range ? { ...entry.range } : null,
+  }));
 
   while (queue.length > 1) {
     const left = queue.shift();
@@ -128,21 +166,28 @@ function wholeSetEstimate(sort: SortState, activeRange: CurrentSongSortInfo): Cu
     }
 
     const mergeSize = left.size + right.size;
-    if (left.containsCurrentMerge || right.containsCurrentMerge) {
-      const oppositeGroupSize = left.containsCurrentMerge ? right.size : left.size;
-      maxRank += oppositeGroupSize;
-      queue.push({ size: mergeSize, containsCurrentMerge: true });
+    if (left.range || right.range) {
+      const range = left.range ?? right.range;
+      if (!range) {
+        break;
+      }
+
+      const oppositeGroupSize = left.range ? right.size : left.size;
+      queue.push({
+        size: mergeSize,
+        range: {
+          minRank: range.minRank,
+          maxRank: range.maxRank + oppositeGroupSize,
+          songCount: mergeSize,
+        },
+      });
       continue;
     }
 
-    queue.push({ size: mergeSize, containsCurrentMerge: false });
+    queue.push({ size: mergeSize, range: null });
   }
 
-  return {
-    minRank: activeRange.minRank,
-    maxRank,
-    songCount: queue[0]?.size ?? activeRange.songCount,
-  };
+  return queue.find((entry) => entry.range)?.range ?? null;
 }
 
 function songRangeInActiveMerge(merge: Merge, side: SortChoice): CurrentSongSortInfo {
@@ -155,6 +200,47 @@ function songRangeInActiveMerge(merge: Merge, side: SortChoice): CurrentSongSort
     maxRank: minRank + opposite.length - oppositePos,
     songCount: merge.left.length + merge.right.length,
   };
+}
+
+function songRangeInMerge(merge: Merge, songIndex: number): CurrentSongSortInfo | null {
+  const mergedPosition = merge.merged.indexOf(songIndex);
+  if (mergedPosition !== -1) {
+    return {
+      minRank: mergedPosition + 1,
+      maxRank: mergedPosition + 1,
+      songCount: merge.left.length + merge.right.length,
+    };
+  }
+
+  if (merge.left[merge.leftPos] === songIndex) {
+    return songRangeInActiveMerge(merge, "left");
+  }
+
+  if (merge.right[merge.rightPos] === songIndex) {
+    return songRangeInActiveMerge(merge, "right");
+  }
+
+  const leftPosition = merge.left.indexOf(songIndex);
+  if (leftPosition >= merge.leftPos) {
+    const minRank = merge.merged.length + (leftPosition - merge.leftPos) + 1;
+    return {
+      minRank,
+      maxRank: minRank + merge.right.length - merge.rightPos,
+      songCount: merge.left.length + merge.right.length,
+    };
+  }
+
+  const rightPosition = merge.right.indexOf(songIndex);
+  if (rightPosition >= merge.rightPos) {
+    const minRank = merge.merged.length + (rightPosition - merge.rightPos) + 1;
+    return {
+      minRank,
+      maxRank: minRank + merge.left.length - merge.leftPos,
+      songCount: merge.left.length + merge.right.length,
+    };
+  }
+
+  return null;
 }
 
 export function choose(sort: SortState, choice: SortChoice): SortState {
@@ -216,7 +302,19 @@ export function undo(sort: SortState): SortState {
     };
   }
 
-  return sort;
+  const firstAutomatic = sort.history[0];
+  if (!firstAutomatic) {
+    return sort;
+  }
+
+  return {
+    ...firstAutomatic,
+    history: [],
+  };
+}
+
+export function canUndo(sort: SortState): boolean {
+  return sort.history.length > 0;
 }
 
 export const sortedSongIndexes = (sort: SortState): number[] =>

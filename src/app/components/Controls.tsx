@@ -7,7 +7,9 @@ type ControlsProps = {
   googleSheetsDisabledReason: string | null;
   googleSheetsSetupReason: string | null;
   isWritingSheet: boolean;
+  canUndo: boolean;
   onOpenSettings(): void;
+  onOpenSongList(): void;
   onOpenHistory(): void;
   onStart(): void;
   onLoad(): void;
@@ -24,7 +26,9 @@ export function Controls({
   googleSheetsDisabledReason,
   googleSheetsSetupReason,
   isWritingSheet,
+  canUndo,
   onOpenSettings,
+  onOpenSongList,
   onOpenHistory,
   onStart,
   onLoad,
@@ -35,6 +39,11 @@ export function Controls({
 }: ControlsProps) {
   return (
     <div className="button-container">
+      {screen === "sorting" ? (
+        <button className="basic-button" type="button" onClick={onOpenSongList}>
+          Songlist
+        </button>
+      ) : null}
       {screen === "sorting" ? (
         <button className="basic-button" type="button" onClick={onOpenHistory}>
           History
@@ -53,7 +62,7 @@ export function Controls({
           {savedKind === "complete" ? "Show Results" : "Continue"}
         </button>
       ) : null}
-      {screen === "sorting" ? (
+      {screen === "sorting" && canUndo ? (
         <button className="basic-button" type="button" onClick={onUndo}>
           Undo
         </button>
