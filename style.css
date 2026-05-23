@@ -349,10 +349,25 @@ body {
 }
 
 .music-card .song {
-  align-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   font-size: 2vh;
   color: #fcffef;
   height: 10%;
+  min-width: 0;
+}
+
+.song__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.song__sort-help {
+  flex: 0 0 auto;
+  margin-left: 0;
 }
 
 .score-field {

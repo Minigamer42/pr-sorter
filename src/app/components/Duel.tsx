@@ -1,4 +1,4 @@
-import { currentBattle, type SortChoice, type SortState } from "../../sorter";
+import { currentBattle, currentSongSortInfo, type SortChoice, type SortState } from "../../sorter";
 import type { ResolvedSong } from "../../songs";
 import type { Settings, SongScoresById } from "../types";
 import { SongCard } from "./SongCard";
@@ -34,6 +34,7 @@ export function Duel({ songs, sort, settings, scoreEnabled, scoresBySongId, onPi
         settings={settings}
         scoreEnabled={scoreEnabled}
         score={scoresBySongId[leftSong.id] ?? ""}
+        sortInfo={currentSongSortInfo(sort, leftIndex)}
         onPick={onPick}
         onScoreChange={(score) => onScoreChange(leftSong.id, score)}
       />
@@ -43,6 +44,7 @@ export function Duel({ songs, sort, settings, scoreEnabled, scoresBySongId, onPi
         settings={settings}
         scoreEnabled={scoreEnabled}
         score={scoresBySongId[rightSong.id] ?? ""}
+        sortInfo={currentSongSortInfo(sort, rightIndex)}
         onPick={onPick}
         onScoreChange={(score) => onScoreChange(rightSong.id, score)}
       />

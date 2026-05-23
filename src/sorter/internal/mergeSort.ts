@@ -27,6 +27,12 @@ export type SortState = {
   history: Snapshot[];
 };
 
+export type CurrentSongSortInfo = {
+  minRank: number;
+  maxRank: number;
+  songCount: number;
+};
+
 type Snapshot = Omit<SortState, "history"> & {
   historyEntryKind?: SortPickKind;
   historyEntryChoice?: SortChoice;
@@ -88,6 +94,67 @@ function nextBattle(state: SortState): SortState {
 export function currentBattle(sort: SortState): [number, number] | null {
   const merge = sort.current;
   return merge ? [merge.left[merge.leftPos], merge.right[merge.rightPos]] : null;
+}
+
+export function currentSongSortInfo(sort: SortState, songIndex: number): CurrentSongSortInfo | null {
+  const merge = sort.current;
+  if (!merge) {
+    return null;
+  }
+
+  if (merge.left[merge.leftPos] === songIndex) {
+    return wholeSetEstimate(sort, songRangeInActiveMerge(merge, "left"));
+  }
+
+  if (merge.right[merge.rightPos] === songIndex) {
+    return wholeSetEstimate(sort, songRangeInActiveMerge(merge, "right"));
+  }
+
+  return null;
+}
+
+function wholeSetEstimate(sort: SortState, activeRange: CurrentSongSortInfo): CurrentSongSortInfo {
+  const queue = [
+    ...sort.groups.map((group) => ({ size: group.length, containsCurrentMerge: false })),
+    { size: activeRange.songCount, containsCurrentMerge: true },
+  ];
+  let maxRank = activeRange.maxRank;
+
+  while (queue.length > 1) {
+    const left = queue.shift();
+    const right = queue.shift();
+    if (!left || !right) {
+      break;
+    }
+
+    const mergeSize = left.size + right.size;
+    if (left.containsCurrentMerge || right.containsCurrentMerge) {
+      const oppositeGroupSize = left.containsCurrentMerge ? right.size : left.size;
+      maxRank += oppositeGroupSize;
+      queue.push({ size: mergeSize, containsCurrentMerge: true });
+      continue;
+    }
+
+    queue.push({ size: mergeSize, containsCurrentMerge: false });
+  }
+
+  return {
+    minRank: activeRange.minRank,
+    maxRank,
+    songCount: queue[0]?.size ?? activeRange.songCount,
+  };
+}
+
+function songRangeInActiveMerge(merge: Merge, side: SortChoice): CurrentSongSortInfo {
+  const opposite = side === "left" ? merge.right : merge.left;
+  const oppositePos = side === "left" ? merge.rightPos : merge.leftPos;
+  const minRank = merge.merged.length + 1;
+
+  return {
+    minRank,
+    maxRank: minRank + opposite.length - oppositePos,
+    songCount: merge.left.length + merge.right.length,
+  };
 }
 
 export function choose(sort: SortState, choice: SortChoice): SortState {
