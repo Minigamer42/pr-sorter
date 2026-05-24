@@ -2,6 +2,7 @@ import { loadGoogleApis, loadGoogleIdentityServices } from "./googleApiLoader";
 import { readScoresFromFirstSheet, writeRanksToFirstSheet, writeScoresToFirstSheet } from "./sheetsClient";
 import {
   GooglePickerCanceledError,
+  GoogleAuthenticationRequiredError,
   GoogleWritebackError,
   type GoogleSheetsAccessConfig,
   type GoogleIdentityServices,
@@ -130,6 +131,7 @@ export async function writeScoresToGoogleSheet(
   config: GoogleSheetsWritebackConfig,
   spreadsheet: PickedSpreadsheet,
   scoresBySongId: Map<number, number>,
+  options: { allowAuthPrompt?: boolean } = {},
 ): Promise<number> {
   if (!config.clientId || !config.appId || !config.apiKey || !config.rankColumnHeader || !config.scoreColumnHeader) {
     throw new GoogleWritebackError("Google integration is not configured.");
@@ -137,7 +139,7 @@ export async function writeScoresToGoogleSheet(
 
   try {
     const { google } = await loadGoogleApis();
-    const token = await getToken(google, config);
+    const token = await getToken(google, config, options);
 
     return await writeScoresToFirstSheet({
       spreadsheetId: spreadsheet.id,
@@ -154,7 +156,11 @@ export async function writeScoresToGoogleSheet(
   }
 }
 
-async function getToken(google: GoogleIdentityServices, config: GoogleSheetsAccessConfig): Promise<string> {
+async function getToken(
+  google: GoogleIdentityServices,
+  config: GoogleSheetsAccessConfig,
+  options: { allowAuthPrompt?: boolean } = { allowAuthPrompt: true },
+): Promise<string> {
   if (sessionToken && (await isStoredTokenValid(sessionToken))) {
     return sessionToken;
   }
@@ -166,6 +172,10 @@ async function getToken(google: GoogleIdentityServices, config: GoogleSheetsAcce
     return storedToken;
   }
   localStorage.removeItem(config.tokenStorageKey);
+
+  if (options.allowAuthPrompt === false) {
+    throw new GoogleAuthenticationRequiredError();
+  }
 
   tokenClient ??= google.accounts.oauth2.initTokenClient({
     client_id: config.clientId,

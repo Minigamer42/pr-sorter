@@ -13,7 +13,7 @@ import {
   type SortChoice,
   type SortState,
 } from "../sorter";
-import { GooglePickerCanceledError, GoogleWritebackError } from "../google/types";
+import { GoogleAuthenticationRequiredError, GooglePickerCanceledError, GoogleWritebackError } from "../google/types";
 import { chooseGoogleSpreadsheet, loadScoresFromGoogleSheet, writeRanksToGoogleSheet, writeScoresToGoogleSheet } from "../google/googleSheetsWriteback";
 import { resolveSongAnime, type Song } from "../songs";
 import { Controls } from "./components/Controls";
@@ -218,13 +218,18 @@ export function App({ config, songs }: AppProps) {
   }
 
   function nextPlaylistSong(): void {
-    flushPendingScoreWriteback();
+    flushPendingScoreWriteback({ allowAuthPrompt: true });
     setPlaylistPosition((current) => (playlistOrder.length === 0 ? 0 : (current + 1) % playlistOrder.length));
   }
 
   function previousPlaylistSong(): void {
-    flushPendingScoreWriteback();
+    flushPendingScoreWriteback({ allowAuthPrompt: true });
     setPlaylistPosition((current) => (playlistOrder.length === 0 ? 0 : (current - 1 + playlistOrder.length) % playlistOrder.length));
+  }
+
+  function autoNextPlaylistSong(): void {
+    flushPendingScoreWriteback({ allowAuthPrompt: false });
+    setPlaylistPosition((current) => (playlistOrder.length === 0 ? 0 : (current + 1) % playlistOrder.length));
   }
 
   function updateScore(songId: number, score: string): void {
@@ -246,7 +251,7 @@ export function App({ config, songs }: AppProps) {
     }
   }
 
-  function flushPendingScoreWriteback(): void {
+  function flushPendingScoreWriteback(options: { allowAuthPrompt?: boolean } = { allowAuthPrompt: true }): void {
     if (!scoreEnabled || pendingScoreWritebackRef.current.size === 0) {
       return;
     }
@@ -263,10 +268,16 @@ export function App({ config, songs }: AppProps) {
       .catch(() => undefined)
       .then(async () => {
         try {
-          await writeScoresToGoogleSheet(writebackConfig, googleSpreadsheetSelection, scoresToWrite);
+          await writeScoresToGoogleSheet(writebackConfig, googleSpreadsheetSelection, scoresToWrite, {
+            allowAuthPrompt: options.allowAuthPrompt ?? true,
+          });
         } catch (error) {
           for (const [songId, score] of scoresToWrite.entries()) {
             pendingScoreWritebackRef.current.set(songId, score);
+          }
+
+          if (options.allowAuthPrompt === false && isAuthenticationWritebackError(error)) {
+            return;
           }
 
           console.error("Error writing scores to Google Sheet:", error);
@@ -644,6 +655,7 @@ export function App({ config, songs }: AppProps) {
             onModeChange={changePlaylistMode}
             onPrevious={previousPlaylistSong}
             onNext={nextPlaylistSong}
+            onAutoNext={autoNextPlaylistSong}
             onScoreChange={updateScore}
           />
         ) : screen !== "landing" && sort ? (
@@ -728,6 +740,13 @@ function landingTitle(savedKind: SavedProgressKind): string {
 
 function fallbackAnimeName(config: AppConfig): string {
   return config.fallbackAnimeName?.trim() || config.title.replace(/\s+Sorter$/i, "").trim() || config.title;
+}
+
+function isAuthenticationWritebackError(error: unknown): boolean {
+  return (
+    error instanceof GoogleAuthenticationRequiredError ||
+    (error instanceof GoogleWritebackError && error.message === "OAuth token expired or was rejected.")
+  );
 }
 
 function createPlaylistOrder(songCount: number, mode: PlaylistMode): number[] {

@@ -16,6 +16,7 @@ type PlaylistProps = {
   onModeChange(mode: PlaylistMode): void;
   onPrevious(): void;
   onNext(): void;
+  onAutoNext(): void;
   onScoreChange(songId: number, score: string): void;
 };
 
@@ -31,6 +32,7 @@ export function Playlist({
   onModeChange,
   onPrevious,
   onNext,
+  onAutoNext,
   onScoreChange,
 }: PlaylistProps) {
   if (songs.length === 0 || !currentSong) {
@@ -72,7 +74,7 @@ export function Playlist({
             song={currentSong}
             settings={settings}
             autoPlay
-            onEnded={onNext}
+            onEnded={onAutoNext}
           />
         </div>
         <div className="playlist-song-meta">

@@ -26,6 +26,13 @@ export class GooglePickerCanceledError extends Error {
   }
 }
 
+export class GoogleAuthenticationRequiredError extends Error {
+  constructor() {
+    super("Google authentication is required.");
+    this.name = "GoogleAuthenticationRequiredError";
+  }
+}
+
 export type TokenResponse = {
   access_token?: string;
   error?: string;
