@@ -529,9 +529,12 @@ export function App({ config, songs }: AppProps) {
         if (scoreEnabled) {
           try {
             const sheetScores = await loadScoresFromGoogleSheet(writebackConfig, spreadsheet, songIds);
-            const nextScores = scoresRecordFromSheet(sheetScores);
-            setScoresBySongId(nextScores);
-            storage.saveScores(nextScores);
+            const loadedScores = scoresRecordFromSheet(sheetScores);
+            setScoresBySongId((currentScores) => {
+              const nextScores = mergeLoadedScores(currentScores, loadedScores);
+              storage.saveScores(nextScores);
+              return nextScores;
+            });
           } catch (error) {
             console.error("Error loading scores from Google Sheet:", error);
             alert(`Selected ${spreadsheet.name}, but could not load scores. ${messageFromError(error)}`);
@@ -711,6 +714,13 @@ function scoresRecordFromNumericScores(sheetScores: Map<number, number>): SongSc
   }
 
   return scores;
+}
+
+function mergeLoadedScores(currentScores: SongScoresById, loadedScores: SongScoresById): SongScoresById {
+  return {
+    ...currentScores,
+    ...loadedScores,
+  };
 }
 
 function normalizedScoresForWriteback(scoresBySongId: SongScoresById): Map<number, number> | undefined {
