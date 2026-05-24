@@ -10,19 +10,34 @@ export function normalizeAmqUrl(url: string, settings: Settings): string {
 }
 
 export function mediaType(url: string, fallback: string): string {
-  if (url.endsWith(".mp4")) {
+  const extension = urlExtension(url);
+  if (extension === ".mp4") {
     return "video/mp4";
   }
 
-  if (url.endsWith(".webm")) {
+  if (extension === ".webm") {
     return "video/webm";
   }
 
-  if (url.endsWith(".mp3")) {
+  if (extension === ".mp3") {
     return "audio/mp3";
   }
 
   return fallback;
+}
+
+export function urlExtension(url: string): string {
+  const path = urlPath(url).toLowerCase();
+  const dotIndex = path.lastIndexOf(".");
+  return dotIndex === -1 ? "" : path.slice(dotIndex);
+}
+
+function urlPath(url: string): string {
+  try {
+    return new URL(url).pathname;
+  } catch {
+    return url.split(/[?#]/, 1)[0];
+  }
 }
 
 export function youtubeEmbedUrl(url: string): string | null {

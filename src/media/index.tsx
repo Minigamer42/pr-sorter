@@ -1,51 +1,34 @@
 import type { ReactElement } from "react";
-import type { Settings } from "../app/types";
+import type { MediaFormat, Settings } from "../app/types";
 import type { Song } from "../songs";
-import { mediaType, normalizeAmqUrl, youtubeEmbedUrl } from "./internal/urls";
+import { mediaType, normalizeAmqUrl, urlExtension, youtubeEmbedUrl } from "./internal/urls";
+
+type MediaField = "video" | "mp3" | "full";
+
+const mediaPriorities: Record<MediaFormat, MediaField[]> = {
+  video: ["video", "mp3", "full"],
+  audio: ["mp3", "video", "full"],
+  full: ["full", "video", "mp3"],
+};
 
 export function Media({ song, settings }: { song: Song; settings: Settings }): ReactElement {
   if (!song.video && !song.mp3 && !song.full) {
     return <div>Media not available</div>;
   }
 
-  if (settings.mediaFormat === "full") {
-    return song.full ? renderMedia(song.full, song, settings) ?? <div>Full song not available</div> : renderVideoPreference(song, settings);
+  for (const field of mediaPriorities[settings.mediaFormat]) {
+    const url = song[field];
+    if (!url) {
+      continue;
+    }
+
+    const media = renderMedia(url, song, settings);
+    if (media !== null) {
+      return media;
+    }
   }
 
-  if (settings.mediaFormat === "video") {
-    return renderVideoPreference(song, settings);
-  }
-
-  return renderAudioPreference(song, settings);
-}
-
-function renderVideoPreference(song: Song, settings: Settings): ReactElement {
-  if (song.video) {
-    return renderVideo(song.video, song, settings);
-  }
-
-  if (song.mp3) {
-    return renderAudio(song.mp3, song, settings);
-  }
-
-  return <div>Video not available</div>;
-}
-
-function renderAudioPreference(song: Song, settings: Settings): ReactElement {
-  if (song.mp3) {
-    return renderAudio(song.mp3, song, settings);
-  }
-
-  if (song.video) {
-    return renderVideo(song.video, song, settings);
-  }
-
-  return <div>Audio not available</div>;
-}
-
-function renderVideo(url: string, song: Song, settings: Settings): ReactElement {
-  const media = renderMedia(url, song, settings);
-  return media ?? <div>Video not available</div>;
+  return <div>Media not available</div>;
 }
 
 function renderMedia(url: string, song: Song, settings: Settings): ReactElement | null {
@@ -54,7 +37,8 @@ function renderMedia(url: string, song: Song, settings: Settings): ReactElement 
     return <iframe src={youtubeUrl} allowFullScreen title={`${song.name} video`} />;
   }
 
-  if (url.endsWith(".webm") || url.endsWith(".mp4")) {
+  const extension = urlExtension(url);
+  if (extension === ".webm" || extension === ".mp4") {
     const src = normalizeAmqUrl(url, settings);
     return (
       <video controls>
@@ -63,18 +47,14 @@ function renderMedia(url: string, song: Song, settings: Settings): ReactElement 
     );
   }
 
-  if (url.endsWith(".mp3")) {
-    return renderAudio(url, song, settings);
+  if (extension === ".mp3") {
+    const src = normalizeAmqUrl(url, settings);
+    return (
+      <audio controls title={`${song.name} audio`}>
+        <source src={src} type={mediaType(src, "audio/mp3")} />
+      </audio>
+    );
   }
 
   return null;
-}
-
-function renderAudio(url: string, song: Song, settings: Settings): ReactElement {
-  const src = normalizeAmqUrl(url, settings);
-  return (
-    <audio controls title={`${song.name} audio`}>
-      <source src={src} type={mediaType(src, "audio/mp3")} />
-    </audio>
-  );
 }
