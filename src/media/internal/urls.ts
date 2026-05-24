@@ -41,16 +41,30 @@ function urlPath(url: string): string {
 }
 
 export function youtubeEmbedUrl(url: string): string | null {
+  const id = youtubeVideoId(url);
+  return id ? `https://www.youtube-nocookie.com/embed/${id}` : null;
+}
+
+export function visibleUrl(url: string): string {
+  const id = youtubeVideoId(url);
+  return id ? `https://music.youtube.com/watch?v=${id}` : url;
+}
+
+function youtubeVideoId(url: string): string | null {
   try {
     const parsed = new URL(url);
-    if (parsed.hostname === "youtu.be") {
-      const id = parsed.pathname.slice(1).split("/")[0];
-      return id ? `https://www.youtube-nocookie.com/embed/${id}` : null;
+    const hostname = parsed.hostname.replace(/^www\./, "");
+
+    if (hostname === "youtu.be") {
+      return parsed.pathname.slice(1).split("/")[0] || null;
     }
 
-    if (parsed.hostname.endsWith("youtube.com")) {
-      const id = parsed.searchParams.get("v");
-      return id ? `https://www.youtube-nocookie.com/embed/${id}` : null;
+    if (hostname.endsWith("youtube.com")) {
+      if (parsed.pathname.startsWith("/shorts/") || parsed.pathname.startsWith("/embed/")) {
+        return parsed.pathname.split("/")[2] || null;
+      }
+
+      return parsed.searchParams.get("v");
     }
   } catch {
     return null;

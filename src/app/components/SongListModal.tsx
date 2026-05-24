@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { visibleUrl } from "../../media/internal/urls";
 import { songSortInfo, type SortState } from "../../sorter";
 import type { ResolvedSong } from "../../songs";
 import type { GoogleSpreadsheetSelection, SongScoresById } from "../types";
@@ -295,7 +296,7 @@ function SongLinks({ song }: { song: ResolvedSong }) {
   return (
     <div className="song-list-links">
       {links.map((link) => (
-        <a key={link.label} href={link.href} target="_blank" rel="noreferrer">
+        <a key={link.label} href={visibleUrl(link.href)} target="_blank" rel="noreferrer">
           {link.label}
         </a>
       ))}
