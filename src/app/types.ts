@@ -28,7 +28,7 @@ export type Settings = {
   autoSkipScoreDifference: number;
 };
 
-export type Screen = "landing" | "sorting" | "complete";
+export type Screen = "landing" | "sorting" | "complete" | "playlist";
 
 export type SavedProgressKind = "none" | "in-progress" | "complete";
 

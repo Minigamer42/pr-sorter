@@ -19,6 +19,7 @@ import { resolveSongAnime, type Song } from "../songs";
 import { Controls } from "./components/Controls";
 import { Duel } from "./components/Duel";
 import { HistoryModal } from "./components/HistoryModal";
+import { Playlist, type PlaylistMode } from "./components/Playlist";
 import { Progress } from "./components/Progress";
 import { Results } from "./components/Results";
 import { SettingsModal } from "./components/SettingsModal";
@@ -51,6 +52,9 @@ export function App({ config, songs }: AppProps) {
   const [screen, setScreen] = useState<Screen>("landing");
   const [settings, setSettings] = useState<Settings>(() => storage.loadSettings());
   const [scoresBySongId, setScoresBySongId] = useState<SongScoresById>(() => storage.loadScores());
+  const [playlistMode, setPlaylistMode] = useState<PlaylistMode>("in-order");
+  const [playlistOrder, setPlaylistOrder] = useState<number[]>(() => createPlaylistOrder(resolvedSongs.length, "in-order"));
+  const [playlistPosition, setPlaylistPosition] = useState(0);
   const [sort, setSort] = useState<SortState | null>(null);
   const [isHistoryOpen, setHistoryOpen] = useState(false);
   const [isSongListOpen, setSongListOpen] = useState(false);
@@ -76,6 +80,11 @@ export function App({ config, songs }: AppProps) {
     document.querySelector('meta[name="og:site_name"]')?.setAttribute("content", config.title);
     document.querySelector('meta[name="og:description"]')?.setAttribute("content", config.description);
   }, [config.description, config.title]);
+
+  useEffect(() => {
+    setPlaylistOrder(createPlaylistOrder(resolvedSongs.length, playlistMode));
+    setPlaylistPosition(0);
+  }, [playlistMode, resolvedSongs.length]);
 
   useEffect(() => {
     if (!isSongListOpen) {
@@ -187,6 +196,35 @@ export function App({ config, songs }: AppProps) {
   function updateSettings(nextSettings: Settings): void {
     setSettings(nextSettings);
     storage.saveSettings(nextSettings);
+  }
+
+  function openPlaylist(): void {
+    if (playlistOrder.length !== resolvedSongs.length) {
+      setPlaylistOrder(createPlaylistOrder(resolvedSongs.length, playlistMode));
+      setPlaylistPosition(0);
+    }
+
+    setScreen("playlist");
+  }
+
+  function exitPlaylist(): void {
+    setScreen(screenFor(sort));
+  }
+
+  function changePlaylistMode(nextMode: PlaylistMode): void {
+    setPlaylistMode(nextMode);
+    setPlaylistOrder(createPlaylistOrder(resolvedSongs.length, nextMode));
+    setPlaylistPosition(0);
+  }
+
+  function nextPlaylistSong(): void {
+    flushPendingScoreWriteback();
+    setPlaylistPosition((current) => (playlistOrder.length === 0 ? 0 : (current + 1) % playlistOrder.length));
+  }
+
+  function previousPlaylistSong(): void {
+    flushPendingScoreWriteback();
+    setPlaylistPosition((current) => (playlistOrder.length === 0 ? 0 : (current - 1 + playlistOrder.length) % playlistOrder.length));
   }
 
   function updateScore(songId: number, score: string): void {
@@ -525,6 +563,9 @@ export function App({ config, songs }: AppProps) {
         ? progressPercentage(sort, resolvedSongs.length)
         : 0;
 
+  const currentPlaylistSongIndex = playlistOrder[playlistPosition] ?? 0;
+  const currentPlaylistSong = resolvedSongs[currentPlaylistSongIndex] ?? null;
+
   return (
     <>
       <SettingsModal
@@ -565,7 +606,7 @@ export function App({ config, songs }: AppProps) {
       <div className={`main-page ${screen === "landing" ? "main-page--landing" : ""}`}>
         {screen !== "sorting" ? (
           <div className="title" style={screen === "complete" ? { height: "3%" } : undefined}>
-            {screen === "complete" ? "Results" : landingTitle(savedKind)}
+            {screen === "complete" ? "Results" : screen === "playlist" ? "Playlist" : landingTitle(savedKind)}
           </div>
         ) : null}
 
@@ -580,6 +621,8 @@ export function App({ config, songs }: AppProps) {
           onOpenSongList={() => setSongListOpen(true)}
           onOpenHistory={() => setHistoryOpen(true)}
           onOpenSettings={() => setSettingsOpen(true)}
+          onOpenPlaylist={openPlaylist}
+          onExitPlaylist={exitPlaylist}
           onStart={startSort}
           onLoad={loadSort}
           onUndo={undoPick}
@@ -588,7 +631,22 @@ export function App({ config, songs }: AppProps) {
           onSetupGoogleSheet={() => setSettingsOpen(true)}
         />
 
-        {screen !== "landing" && sort ? (
+        {screen === "playlist" ? (
+          <Playlist
+            songs={resolvedSongs}
+            currentSong={currentPlaylistSong}
+            currentPosition={playlistPosition}
+            orderLength={playlistOrder.length}
+            mode={playlistMode}
+            settings={settings}
+            scoreEnabled={scoreEnabled}
+            scoresBySongId={scoresBySongId}
+            onModeChange={changePlaylistMode}
+            onPrevious={previousPlaylistSong}
+            onNext={nextPlaylistSong}
+            onScoreChange={updateScore}
+          />
+        ) : screen !== "landing" && sort ? (
           <>
             <div className="duel-container">
               {screen === "sorting" ? (
@@ -670,4 +728,18 @@ function landingTitle(savedKind: SavedProgressKind): string {
 
 function fallbackAnimeName(config: AppConfig): string {
   return config.fallbackAnimeName?.trim() || config.title.replace(/\s+Sorter$/i, "").trim() || config.title;
+}
+
+function createPlaylistOrder(songCount: number, mode: PlaylistMode): number[] {
+  const order = Array.from({ length: songCount }, (_, index) => index);
+  if (mode === "in-order") {
+    return order;
+  }
+
+  for (let index = order.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [order[index], order[swapIndex]] = [order[swapIndex], order[index]];
+  }
+
+  return order;
 }

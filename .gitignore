@@ -6,3 +6,4 @@ pages-dist/
 .idea/
 .env.local
 .vite-import-server*.log
+.vite-playlist*.log

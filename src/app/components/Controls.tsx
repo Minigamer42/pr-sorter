@@ -11,6 +11,8 @@ type ControlsProps = {
   onOpenSettings(): void;
   onOpenSongList(): void;
   onOpenHistory(): void;
+  onOpenPlaylist(): void;
+  onExitPlaylist(): void;
   onStart(): void;
   onLoad(): void;
   onUndo(): void;
@@ -30,6 +32,8 @@ export function Controls({
   onOpenSettings,
   onOpenSongList,
   onOpenHistory,
+  onOpenPlaylist,
+  onExitPlaylist,
   onStart,
   onLoad,
   onUndo,
@@ -39,7 +43,16 @@ export function Controls({
 }: ControlsProps) {
   return (
     <div className="button-container">
-      {screen === "sorting" ? (
+      {screen === "playlist" ? (
+        <button className="basic-button" type="button" onClick={onExitPlaylist}>
+          Sorter
+        </button>
+      ) : (
+        <button className="basic-button" type="button" onClick={onOpenPlaylist}>
+          Playlist
+        </button>
+      )}
+      {screen === "sorting" || screen === "playlist" ? (
         <button className="basic-button" type="button" onClick={onOpenSongList}>
           Songlist
         </button>

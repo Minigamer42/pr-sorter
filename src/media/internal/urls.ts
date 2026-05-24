@@ -40,9 +40,19 @@ function urlPath(url: string): string {
   }
 }
 
-export function youtubeEmbedUrl(url: string): string | null {
+export function youtubeEmbedUrl(url: string, options?: { autoplay?: boolean }): string | null {
   const id = youtubeVideoId(url);
-  return id ? `https://www.youtube-nocookie.com/embed/${id}` : null;
+  if (!id) {
+    return null;
+  }
+
+  const params = new URLSearchParams();
+  if (options?.autoplay) {
+    params.set("autoplay", "1");
+  }
+
+  const query = params.toString();
+  return `https://www.youtube-nocookie.com/embed/${id}${query ? `?${query}` : ""}`;
 }
 
 export function visibleUrl(url: string): string {
@@ -50,7 +60,7 @@ export function visibleUrl(url: string): string {
   return id ? `https://music.youtube.com/watch?v=${id}` : url;
 }
 
-function youtubeVideoId(url: string): string | null {
+export function youtubeVideoId(url: string): string | null {
   try {
     const parsed = new URL(url);
     const hostname = parsed.hostname.replace(/^www\./, "");
