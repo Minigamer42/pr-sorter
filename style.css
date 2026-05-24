@@ -540,6 +540,13 @@ body.sorter-index-body {
   text-align: center;
 }
 
+.main-page--landing .title {
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.85),
+    0 0 8px rgba(0, 0, 0, 0.55);
+  -webkit-text-stroke: 0.35px rgba(0, 0, 0, 0.45);
+}
+
 .button-container {
   height: 5%;
   box-sizing: border-box;
