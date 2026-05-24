@@ -1,9 +1,9 @@
 export type Song = {
   id: number;
-  anime: string | null;
+  anime?: string | null;
   name: string;
-  video: string | null;
-  mp3: string | null;
+  video?: string | null;
+  mp3?: string | null;
   full?: string | null;
 };
 
