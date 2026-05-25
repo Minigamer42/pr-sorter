@@ -19,7 +19,7 @@ import { resolveSongAnime, type Song } from "../songs";
 import { Controls } from "./components/Controls";
 import { Duel } from "./components/Duel";
 import { HistoryModal } from "./components/HistoryModal";
-import { Playlist, type PlaylistMode } from "./components/Playlist";
+import { Playlist, type PlaylistMode, type PlaylistScoreFilter } from "./components/Playlist";
 import { Progress } from "./components/Progress";
 import { Results } from "./components/Results";
 import { SettingsModal } from "./components/SettingsModal";
@@ -53,6 +53,7 @@ export function App({ config, songs }: AppProps) {
   const [settings, setSettings] = useState<Settings>(() => storage.loadSettings());
   const [scoresBySongId, setScoresBySongId] = useState<SongScoresById>(() => storage.loadScores());
   const [playlistMode, setPlaylistMode] = useState<PlaylistMode>("in-order");
+  const [playlistScoreFilter, setPlaylistScoreFilter] = useState<PlaylistScoreFilter>("all");
   const [playlistOrder, setPlaylistOrder] = useState<number[]>(() => createPlaylistOrder(resolvedSongs.length, "in-order"));
   const [playlistPosition, setPlaylistPosition] = useState(0);
   const [sort, setSort] = useState<SortState | null>(null);
@@ -82,9 +83,9 @@ export function App({ config, songs }: AppProps) {
   }, [config.description, config.title]);
 
   useEffect(() => {
-    setPlaylistOrder(createPlaylistOrder(resolvedSongs.length, playlistMode));
+    setPlaylistOrder(createPlaylistOrder(resolvedSongs.length, playlistMode, playlistEligibleIndexes()));
     setPlaylistPosition(0);
-  }, [playlistMode, resolvedSongs.length]);
+  }, [playlistMode, playlistScoreFilter, resolvedSongs.length]);
 
   useEffect(() => {
     if (!isSongListOpen) {
@@ -199,10 +200,9 @@ export function App({ config, songs }: AppProps) {
   }
 
   function openPlaylist(): void {
-    if (playlistOrder.length !== resolvedSongs.length) {
-      setPlaylistOrder(createPlaylistOrder(resolvedSongs.length, playlistMode));
-      setPlaylistPosition(0);
-    }
+    const eligibleIndexes = playlistEligibleIndexes();
+    setPlaylistOrder(createPlaylistOrder(resolvedSongs.length, playlistMode, eligibleIndexes));
+    setPlaylistPosition(0);
 
     setScreen("playlist");
   }
@@ -213,23 +213,53 @@ export function App({ config, songs }: AppProps) {
 
   function changePlaylistMode(nextMode: PlaylistMode): void {
     setPlaylistMode(nextMode);
-    setPlaylistOrder(createPlaylistOrder(resolvedSongs.length, nextMode));
+    setPlaylistOrder(createPlaylistOrder(resolvedSongs.length, nextMode, playlistEligibleIndexes()));
+    setPlaylistPosition(0);
+  }
+
+  function changePlaylistScoreFilter(nextFilter: PlaylistScoreFilter): void {
+    setPlaylistScoreFilter(nextFilter);
+    setPlaylistOrder(createPlaylistOrder(resolvedSongs.length, playlistMode, playlistEligibleIndexes(nextFilter)));
     setPlaylistPosition(0);
   }
 
   function nextPlaylistSong(): void {
     flushPendingScoreWriteback({ allowAuthPrompt: true });
-    setPlaylistPosition((current) => (playlistOrder.length === 0 ? 0 : (current + 1) % playlistOrder.length));
+    movePlaylistSong(1);
   }
 
   function previousPlaylistSong(): void {
     flushPendingScoreWriteback({ allowAuthPrompt: true });
-    setPlaylistPosition((current) => (playlistOrder.length === 0 ? 0 : (current - 1 + playlistOrder.length) % playlistOrder.length));
+    movePlaylistSong(-1);
   }
 
   function autoNextPlaylistSong(): void {
     flushPendingScoreWriteback({ allowAuthPrompt: false });
-    setPlaylistPosition((current) => (playlistOrder.length === 0 ? 0 : (current + 1) % playlistOrder.length));
+    movePlaylistSong(1);
+  }
+
+  function movePlaylistSong(direction: 1 | -1): void {
+    if (playlistScoreFilter === "all") {
+      setPlaylistPosition((current) => (playlistOrder.length === 0 ? 0 : (current + direction + playlistOrder.length) % playlistOrder.length));
+      return;
+    }
+
+    const currentSongIndex = playlistOrder[playlistPosition] ?? null;
+    const nextOrder = filteredPlaylistOrder(playlistOrder, playlistEligibleIndexes(), playlistMode);
+    if (nextOrder.length === 0) {
+      setPlaylistOrder(nextOrder);
+      setPlaylistPosition(0);
+      return;
+    }
+
+    const currentPositionInNextOrder = currentSongIndex === null ? -1 : nextOrder.indexOf(currentSongIndex);
+    const nextPosition =
+      currentPositionInNextOrder >= 0
+        ? (currentPositionInNextOrder + direction + nextOrder.length) % nextOrder.length
+        : positiveModulo(playlistPosition + (direction > 0 ? 0 : -1), nextOrder.length);
+
+    setPlaylistOrder(nextOrder);
+    setPlaylistPosition(nextPosition);
   }
 
   function updateScore(songId: number, score: string): void {
@@ -559,6 +589,16 @@ export function App({ config, songs }: AppProps) {
     storage.clearGoogleSpreadsheetSelection();
   }
 
+  function playlistEligibleIndexes(nextFilter: PlaylistScoreFilter = playlistScoreFilter): number[] {
+    if (!scoreEnabled || nextFilter === "all") {
+      return Array.from({ length: resolvedSongs.length }, (_, index) => index);
+    }
+
+    return resolvedSongs
+      .map((song, index) => (hasMemoryScore(song.id, scoresBySongId) ? null : index))
+      .filter((index): index is number => index !== null);
+  }
+
   const googleSheetsDisabledReason = config.googleSheets && !import.meta.env.VITE_GOOGLE_API_KEY
     ? "Google API key is not configured."
     : null;
@@ -578,7 +618,8 @@ export function App({ config, songs }: AppProps) {
         : 0;
 
   const currentPlaylistSongIndex = playlistOrder[playlistPosition] ?? 0;
-  const currentPlaylistSong = resolvedSongs[currentPlaylistSongIndex] ?? null;
+  const currentPlaylistSong = playlistOrder.length > 0 ? resolvedSongs[currentPlaylistSongIndex] ?? null : null;
+  const scoredPlaylistSongCount = countScoredSongs(resolvedSongs, scoresBySongId);
 
   return (
     <>
@@ -651,11 +692,15 @@ export function App({ config, songs }: AppProps) {
             currentSong={currentPlaylistSong}
             currentPosition={playlistPosition}
             orderLength={playlistOrder.length}
+            scoredSongCount={scoredPlaylistSongCount}
+            totalSongCount={resolvedSongs.length}
             mode={playlistMode}
+            scoreFilter={playlistScoreFilter}
             settings={settings}
             scoreEnabled={scoreEnabled}
             scoresBySongId={scoresBySongId}
             onModeChange={changePlaylistMode}
+            onScoreFilterChange={changePlaylistScoreFilter}
             onPrevious={previousPlaylistSong}
             onNext={nextPlaylistSong}
             onAutoNext={autoNextPlaylistSong}
@@ -759,16 +804,49 @@ function isAuthenticationWritebackError(error: unknown): boolean {
   );
 }
 
-function createPlaylistOrder(songCount: number, mode: PlaylistMode): number[] {
-  const order = Array.from({ length: songCount }, (_, index) => index);
+function createPlaylistOrder(songCount: number, mode: PlaylistMode, eligibleIndexes?: number[]): number[] {
+  const order = eligibleIndexes ?? Array.from({ length: songCount }, (_, index) => index);
   if (mode === "in-order") {
     return order;
   }
 
-  for (let index = order.length - 1; index > 0; index -= 1) {
-    const swapIndex = Math.floor(Math.random() * (index + 1));
-    [order[index], order[swapIndex]] = [order[swapIndex], order[index]];
+  return shuffledPlaylistOrder(order);
+}
+
+function filteredPlaylistOrder(currentOrder: number[], eligibleIndexes: number[], mode: PlaylistMode): number[] {
+  if (mode === "in-order") {
+    return eligibleIndexes;
   }
 
-  return order;
+  const eligibleSet = new Set(eligibleIndexes);
+  const currentSet = new Set(currentOrder);
+  const retainedOrder = currentOrder.filter((index) => eligibleSet.has(index));
+  const missingOrder = shuffledPlaylistOrder(eligibleIndexes.filter((index) => !currentSet.has(index)));
+  return [...retainedOrder, ...missingOrder];
+}
+
+function shuffledPlaylistOrder(order: number[]): number[] {
+  const shuffled = [...order];
+  for (let index = order.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+  }
+
+  return shuffled;
+}
+
+function positiveModulo(value: number, divisor: number): number {
+  return ((value % divisor) + divisor) % divisor;
+}
+
+function countScoredSongs(songs: { id: number }[], scoresBySongId: SongScoresById): number {
+  return songs.filter((song) => hasMemoryScore(song.id, scoresBySongId)).length;
+}
+
+function hasMemoryScore(songId: number, scoresBySongId: SongScoresById): boolean {
+  try {
+    return normalizeScore(scoresBySongId[songId] ?? "") !== null;
+  } catch {
+    return false;
+  }
 }

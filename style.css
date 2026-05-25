@@ -735,6 +735,14 @@ body.sorter-index-body {
   font-weight: bold;
 }
 
+.playlist-toolbar-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  min-width: 0;
+}
+
 .playlist-mode {
   display: inline-flex;
   overflow: hidden;
@@ -1085,6 +1093,11 @@ table td {
     flex-direction: column;
     height: auto;
     margin-bottom: 10px;
+  }
+
+  .playlist-toolbar-controls {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .playlist-mode,
