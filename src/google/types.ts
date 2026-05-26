@@ -35,12 +35,14 @@ export class GoogleAuthenticationRequiredError extends Error {
 
 export type TokenResponse = {
   access_token?: string;
+  expires_in?: number;
+  scope?: string;
   error?: string;
   error_description?: string;
 };
 
 export type TokenClient = {
-  requestAccessToken(options: { prompt: "" | "consent" }): void;
+  requestAccessToken(options: { prompt: "" | "consent" | "select_account" }): void;
   callback?: (response: TokenResponse) => void;
 };
 
