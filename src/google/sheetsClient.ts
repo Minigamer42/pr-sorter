@@ -140,11 +140,7 @@ export async function writeScoresToFirstSheet({
 export async function readFirstSheetGrid(spreadsheetId: string, token: string): Promise<FirstSheetGrid> {
   const sheet = await fetchFirstUsableSheet(spreadsheetId, token);
   const range = encodeURIComponent(quoteSheetName(sheet.title));
-  const metadata = await fetchJson<SpreadsheetGridResponse>(
-    `${SHEETS_API_BASE}/${encodeURIComponent(spreadsheetId)}?includeGridData=true&ranges=${range}&fields=sheets(properties(title,index,sheetType,hidden),data(rowData(values(formattedValue,hyperlink,userEnteredValue,userEnteredFormat/textFormat/link,textFormatRuns(format/link)))))`,
-    token,
-    "Sheets API read failed.",
-  );
+  const metadata = await fetchSheetGrid(spreadsheetId, range, token);
 
   const sheetGrid = (metadata.sheets ?? []).find((candidate) => candidate.properties?.title === sheet.title);
   const rowData = sheetGrid?.data?.[0]?.rowData ?? [];
@@ -153,6 +149,26 @@ export async function readFirstSheetGrid(spreadsheetId: string, token: string): 
     title: sheet.title,
     rows: rowData.map((row) => (row.values ?? []).map(gridCellFromCellData)),
   };
+}
+
+async function fetchSheetGrid(spreadsheetId: string, encodedRange: string, token: string): Promise<SpreadsheetGridResponse> {
+  const baseUrl = `${SHEETS_API_BASE}/${encodeURIComponent(spreadsheetId)}?includeGridData=true&ranges=${encodedRange}`;
+  const fields =
+    "sheets(properties(title,index,sheetType,hidden),data(rowData(values(formattedValue,hyperlink,userEnteredValue,userEnteredFormat/textFormat/link,textFormatRuns(format/link)))))";
+
+  try {
+    return await fetchJson<SpreadsheetGridResponse>(
+      `${baseUrl}&fields=${encodeURIComponent(fields)}`,
+      token,
+      "Sheets API read failed.",
+    );
+  } catch (error) {
+    if (!isRetryableSheetsReadError(error)) {
+      throw error;
+    }
+
+    return await fetchJson<SpreadsheetGridResponse>(baseUrl, token, "Sheets API read failed.");
+  }
 }
 
 async function fetchFirstUsableSheet(spreadsheetId: string, token: string): Promise<SheetProperties> {
@@ -511,10 +527,40 @@ async function fetchJson<T>(url: string, token: string, failureMessage: string):
   }
 
   if (!response.ok) {
-    throw new GoogleWritebackError(failureMessage);
+    throw new GoogleWritebackError(await formatFetchFailure(response, failureMessage));
   }
 
   return (await response.json()) as T;
+}
+
+async function formatFetchFailure(response: Response, failureMessage: string): Promise<string> {
+  const detail = await googleApiErrorDetail(response);
+  return detail ? `${failureMessage} ${detail}` : failureMessage;
+}
+
+async function googleApiErrorDetail(response: Response): Promise<string | null> {
+  try {
+    const payload = (await response.clone().json()) as { error?: { message?: unknown; status?: unknown } };
+    const message = typeof payload.error?.message === "string" ? payload.error.message.trim() : "";
+    const status = typeof payload.error?.status === "string" ? payload.error.status.trim() : "";
+
+    if (message && status) {
+      return `${status}: ${message}`;
+    }
+
+    return message || status || null;
+  } catch {
+    const text = (await response.text()).trim();
+    return text ? text.slice(0, 500) : null;
+  }
+}
+
+function isRetryableSheetsReadError(error: unknown): boolean {
+  if (!(error instanceof GoogleWritebackError)) {
+    return false;
+  }
+
+  return /Sheets API read failed\./.test(error.message) && !/OAuth token expired or was rejected/.test(error.message);
 }
 
 function quoteSheetName(sheetTitle: string): string {
