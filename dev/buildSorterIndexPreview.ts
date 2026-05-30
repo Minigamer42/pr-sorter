@@ -1,8 +1,11 @@
 import { spawn } from "node:child_process";
-import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
+import { copyFile, cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 const generatedModulePath = path.resolve(process.cwd(), "src", "sorterIndex", "sorters.generated.ts");
+const previewSlug = "test";
+const sorterPreviewDist = path.resolve(process.cwd(), ".pages-tools", "local-sorter-dist");
+const finalDist = path.resolve(process.cwd(), "dist");
 
 void main().catch((error: unknown) => {
   console.error(error instanceof Error ? error.message : error);
@@ -10,17 +13,23 @@ void main().catch((error: unknown) => {
 });
 
 async function main(): Promise<void> {
+  await rm(sorterPreviewDist, { recursive: true, force: true });
+
+  await runNodeBin("node_modules/typescript/bin/tsc", ["--noEmit"], childEnv());
+  await runNodeBin("node_modules/vite/bin/vite.js", ["build", "--outDir", sorterPreviewDist, "--emptyOutDir"], childEnv());
+  await copyLocalFavicon(sorterPreviewDist);
+
   await writeLocalSorterIndex();
-  await runNodeBin("node_modules/typescript/bin/tsc", ["--noEmit"], withEnv({ VITE_SORTER_INDEX: "true" }));
-  await runNodeBin("node_modules/vite/bin/vite.js", ["build"], withEnv({ VITE_SORTER_INDEX: "true" }));
-  await copyLocalFavicon();
+  await runNodeBin("node_modules/vite/bin/vite.js", ["build", "--outDir", finalDist, "--emptyOutDir"], withEnv({ VITE_SORTER_INDEX: "true" }));
+
+  await cp(sorterPreviewDist, path.join(finalDist, previewSlug), { recursive: true });
 }
 
 async function writeLocalSorterIndex(): Promise<void> {
   const configSource = await readFile(path.resolve(process.cwd(), "customize", "config.ts"), "utf8");
   const title = readStringProperty(configSource, "title") ?? "Local Sorter";
   const description = readStringProperty(configSource, "description") ?? "Open this sorter.";
-  const localSorter = [{ slug: ".", title, description }];
+  const localSorter = [{ slug: previewSlug, title, description }];
 
   await mkdir(path.dirname(generatedModulePath), { recursive: true });
   await writeFile(
@@ -30,8 +39,8 @@ async function writeLocalSorterIndex(): Promise<void> {
   );
 }
 
-async function copyLocalFavicon(): Promise<void> {
-  const outputDir = path.resolve(process.cwd(), "dist", "customize");
+async function copyLocalFavicon(outputRoot: string): Promise<void> {
+  const outputDir = path.join(outputRoot, "customize");
   await mkdir(outputDir, { recursive: true });
   await copyFile(path.resolve(process.cwd(), "customize", "favicon.ico"), path.join(outputDir, "favicon.ico"));
 }
@@ -59,6 +68,10 @@ function withEnv(overrides: Record<string, string>): Record<string, string> {
   }
 
   return { ...env, ...overrides };
+}
+
+function childEnv(): Record<string, string> {
+  return withEnv({});
 }
 
 function run(command: string, args: string[], env: Record<string, string>): Promise<void> {

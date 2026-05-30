@@ -3,8 +3,7 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "build:index": "tsc dev/buildSorterIndexPreview.ts --outDir .pages-tools --module NodeNext --target ES2022 --moduleResolution NodeNext --skipLibCheck --types node --ignoreConfig && node .pages-tools/buildSorterIndexPreview.js",
-    "preview": "vite preview",
-    "preview:index": "npm run build:index && vite preview"
+    "preview": "npm run build:index && vite preview"
   },
   "engines": {
     "node": ">=24"

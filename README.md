@@ -236,17 +236,13 @@ Run the production build:
 npm run build
 ```
 
-Preview the generated `dist/` output locally:
+Build and preview the local Pages-style output:
 
 ```bash
 npm run preview
 ```
 
-Preview the generated sorter index:
-
-```bash
-npm run preview:index
-```
+This serves the sorter index at `/` and the local sorter at `/test/`.
 
 ## 10. Deploy To GitHub Pages
 
