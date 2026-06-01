@@ -6,4 +6,4 @@ pages-dist/
 .idea/
 .env.local
 .logs/
-public/sorters.json
+public/sorter-index.json

@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import externalSorterSources from "./externalSorterSources.json";
 import { sorters } from "./sorters.generated";
 import type { SorterIndexEntry } from "./types";
 
@@ -7,6 +6,11 @@ type ExternalSorterSource = {
   title: string;
   indexUrl: string;
   catalogUrl?: string;
+};
+
+type SorterIndexCatalog = {
+  sorters: SorterIndexEntry[];
+  externalSources: ExternalSorterSource[];
 };
 
 export function SorterIndex() {
@@ -26,7 +30,7 @@ export function SorterIndex() {
   useEffect(() => {
     let cancelled = false;
 
-    void readExternalSorters(externalSorterSources).then((nextExternalSorters) => {
+    void discoverExternalSorters().then((nextExternalSorters) => {
       if (!cancelled) {
         setExternalSorters(nextExternalSorters);
       }
@@ -102,31 +106,83 @@ function groupSorters(entries: SorterIndexEntry[]): { title: string; sorters: So
   return groups;
 }
 
-async function readExternalSorters(sources: ExternalSorterSource[]): Promise<SorterIndexEntry[]> {
-  const sortersBySource = await Promise.all(
-    sources
-      .filter((source) => source.title && source.indexUrl && !isCurrentCollectionSource(source))
-      .map((source) => readExternalSourceSorters(source)),
-  );
+async function discoverExternalSorters(): Promise<SorterIndexEntry[]> {
+  const currentCollectionUrl = new URL(".", window.location.href);
+  const currentCatalog = await readSorterIndexCatalog(currentCollectionUrl);
+  const pendingSources = [...currentCatalog.externalSources];
+  const visitedSourceUrls = new Set<string>();
+  const visitedCatalogUrls = new Set<string>();
+  const seenSorterUrls = new Set(sorters.map((sorter) => new URL(`${sorter.slug}/`, currentCollectionUrl).toString()));
+  const discoveredSorters: SorterIndexEntry[] = [];
 
-  return sortersBySource.flat();
+  for (let index = 0; index < pendingSources.length; index += 1) {
+    const source = pendingSources[index];
+    const sourceUrl = normalizeCollectionUrl(new URL(source.indexUrl, currentCollectionUrl));
+    const sourceKey = sourceUrl.toString();
+    if (visitedSourceUrls.has(sourceKey) || sameCollectionUrl(sourceUrl, currentCollectionUrl)) {
+      continue;
+    }
+
+    visitedSourceUrls.add(sourceKey);
+
+    const sourceCatalog = await readExternalSourceCatalog(source, sourceUrl, visitedCatalogUrls);
+    const sourceSorters = sourceCatalog.sorters
+      .map((entry) => externalizeEntry(entry, sourceUrl, source.title))
+      .filter((entry) => {
+        const key = entry.url ?? entry.slug;
+        if (seenSorterUrls.has(key)) {
+          return false;
+        }
+
+        seenSorterUrls.add(key);
+        return true;
+      });
+    discoveredSorters.push(...sourceSorters);
+
+    pendingSources.push(...sourceCatalog.externalSources);
+  }
+
+  return discoveredSorters;
 }
 
-async function readExternalSourceSorters(source: ExternalSorterSource): Promise<SorterIndexEntry[]> {
+async function readSorterIndexCatalog(collectionUrl: URL): Promise<SorterIndexCatalog> {
   try {
-    const indexUrl = new URL(source.indexUrl);
-    const catalogUrl = source.catalogUrl ? new URL(source.catalogUrl, indexUrl) : new URL("sorters.json", indexUrl);
+    const catalogUrl = new URL("sorter-index.json", collectionUrl);
     const response = await fetch(catalogUrl);
     if (!response.ok) {
       throw new Error(`${catalogUrl.toString()} returned ${response.status}.`);
     }
 
-    const catalog = parseCatalog(await response.json());
+    return parseSorterIndexCatalog(await response.json());
+  } catch (error) {
+    console.warn(`Skipping sorter index catalog: ${error instanceof Error ? error.message : error}`);
+    return { sorters: [], externalSources: [] };
+  }
+}
 
-    return uniqueEntries(catalog.map((entry) => externalizeEntry(entry, indexUrl, source.title)));
+async function readExternalSourceCatalog(
+  source: ExternalSorterSource,
+  sourceUrl: URL,
+  visitedCatalogUrls: Set<string>,
+): Promise<SorterIndexCatalog> {
+  try {
+    const catalogUrl = source.catalogUrl ? new URL(source.catalogUrl, sourceUrl) : new URL("sorter-index.json", sourceUrl);
+    const catalogKey = catalogUrl.toString();
+    if (visitedCatalogUrls.has(catalogKey)) {
+      return { sorters: [], externalSources: [] };
+    }
+
+    visitedCatalogUrls.add(catalogKey);
+
+    const response = await fetch(catalogUrl);
+    if (!response.ok) {
+      throw new Error(`${catalogUrl.toString()} returned ${response.status}.`);
+    }
+
+    return parseSorterIndexCatalog(await response.json());
   } catch (error) {
     console.warn(`Skipping external sorter source "${source.title}": ${error instanceof Error ? error.message : error}`);
-    return [];
+    return { sorters: [], externalSources: [] };
   }
 }
 
@@ -146,6 +202,33 @@ function parseCatalog(value: unknown): SorterIndexEntry[] {
   });
 }
 
+function parseSorterIndexCatalog(value: unknown): SorterIndexCatalog {
+  if (typeof value !== "object" || value === null) {
+    return { sorters: [], externalSources: [] };
+  }
+
+  return {
+    sorters: parseCatalog((value as { sorters?: unknown }).sorters),
+    externalSources: parseExternalSources((value as { externalSources?: unknown }).externalSources),
+  };
+}
+
+function parseExternalSources(value: unknown): ExternalSorterSource[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.filter((source): source is ExternalSorterSource => {
+    return (
+      typeof source === "object" &&
+      source !== null &&
+      typeof (source as ExternalSorterSource).title === "string" &&
+      typeof (source as ExternalSorterSource).indexUrl === "string" &&
+      ((source as ExternalSorterSource).catalogUrl === undefined || typeof (source as ExternalSorterSource).catalogUrl === "string")
+    );
+  });
+}
+
 function externalizeEntry(entry: SorterIndexEntry, indexUrl: URL, sourceTitle: string): SorterIndexEntry {
   const url = entry.url ? new URL(entry.url, indexUrl) : new URL(`${entry.slug}/`, indexUrl);
   const iconUrl = entry.iconUrl ? new URL(entry.iconUrl, indexUrl) : new URL(`${entry.slug}/customize/favicon.ico`, indexUrl);
@@ -159,25 +242,10 @@ function externalizeEntry(entry: SorterIndexEntry, indexUrl: URL, sourceTitle: s
   };
 }
 
-function uniqueEntries(entries: SorterIndexEntry[]): SorterIndexEntry[] {
-  const seen = new Set<string>();
-
-  return entries.filter((entry) => {
-    const key = entry.url ?? entry.slug;
-    if (seen.has(key)) {
-      return false;
-    }
-
-    seen.add(key);
-    return true;
-  });
+function normalizeCollectionUrl(url: URL): URL {
+  return new URL(".", url.pathname.endsWith("/") ? url : new URL(`${url.href}/`));
 }
 
-function isCurrentCollectionSource(source: ExternalSorterSource): boolean {
-  const sourceUrl = new URL(source.indexUrl);
-  const currentUrl = new URL(".", window.location.href);
-  const sourcePath = sourceUrl.pathname.endsWith("/") ? sourceUrl.pathname : `${sourceUrl.pathname}/`;
-  const currentPath = currentUrl.pathname.endsWith("/") ? currentUrl.pathname : `${currentUrl.pathname}/`;
-
-  return sourceUrl.origin === currentUrl.origin && sourcePath === currentPath;
+function sameCollectionUrl(left: URL, right: URL): boolean {
+  return normalizeCollectionUrl(left).toString() === normalizeCollectionUrl(right).toString();
 }

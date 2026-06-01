@@ -1,9 +1,9 @@
 import { spawn } from "node:child_process";
 import { copyFile, cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { writePublicSorterIndexCatalog } from "./sorterIndexCatalog.js";
 
 const generatedModulePath = path.resolve(process.cwd(), "src", "sorterIndex", "sorters.generated.ts");
-const publicCatalogPath = path.resolve(process.cwd(), "public", "sorters.json");
 const previewSlug = "test";
 const sorterPreviewDist = path.resolve(process.cwd(), ".pages-tools", "local-sorter-dist");
 const finalDist = path.resolve(process.cwd(), "dist");
@@ -38,8 +38,7 @@ async function writePreviewSorterIndex(): Promise<void> {
     `import type { SorterIndexEntry } from "./types";\n\nexport const sorters: SorterIndexEntry[] = ${JSON.stringify(localSorter, null, 2)};\n`,
     "utf8",
   );
-  await mkdir(path.dirname(publicCatalogPath), { recursive: true });
-  await writeFile(publicCatalogPath, `${JSON.stringify(localSorter, null, 2)}\n`, "utf8");
+  await writePublicSorterIndexCatalog(localSorter);
 }
 
 async function copyLocalFavicon(outputRoot: string): Promise<void> {

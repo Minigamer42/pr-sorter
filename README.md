@@ -266,15 +266,22 @@ pr-sorter/group/my-sorter -> group-my-sorter
 
 Pushing to `main` rebuilds the sorter index page and all remote `pr-sorter/*` branches. Pushing to a single `pr-sorter/*` branch rebuilds that sorter and refreshes the index while keeping the other published sorter files.
 
-The Pages index also publishes a machine-readable sorter catalog at:
+The Pages index also publishes a machine-readable catalog at:
 
 ```text
-https://YOUR_USERNAME.github.io/pr-sorter/sorters.json
+https://YOUR_USERNAME.github.io/pr-sorter/sorter-index.json
 ```
 
-That catalog contains the sorters hosted by that repository. To include another repository that uses the same template, add its Pages index to `src/sorterIndex/externalSorterSources.json`:
+That catalog contains both the sorters hosted by that repository and the external sorter collections it links to:
 
-When the index page loads, it reads `sorters.json` from each configured source and adds those sorters as external links. If this repository's own GitHub Pages URL is listed there, the page ignores it at runtime so the collection is not duplicated.
+```json
+{
+  "sorters": [],
+  "externalSources": []
+}
+```
+
+To include another repository that uses the same template, add its Pages index to `src/sorterIndex/externalSorterSources.json`. When the index page loads, it reads `sorter-index.json` from each configured source. This lets collections discover other collections through each other without rebuilding every site. Already visited collections and already found sorter URLs are ignored, and if this repository's own GitHub Pages URL is listed, the page skips it so the collection is not duplicated.
 
 In repository settings:
 
