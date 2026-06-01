@@ -3,6 +3,7 @@ import { copyFile, cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 const generatedModulePath = path.resolve(process.cwd(), "src", "sorterIndex", "sorters.generated.ts");
+const publicCatalogPath = path.resolve(process.cwd(), "public", "sorters.json");
 const previewSlug = "test";
 const sorterPreviewDist = path.resolve(process.cwd(), ".pages-tools", "local-sorter-dist");
 const finalDist = path.resolve(process.cwd(), "dist");
@@ -19,13 +20,13 @@ async function main(): Promise<void> {
   await runNodeBin("node_modules/vite/bin/vite.js", ["build", "--outDir", sorterPreviewDist, "--emptyOutDir"], childEnv());
   await copyLocalFavicon(sorterPreviewDist);
 
-  await writeLocalSorterIndex();
+  await writePreviewSorterIndex();
   await runNodeBin("node_modules/vite/bin/vite.js", ["build", "--outDir", finalDist, "--emptyOutDir"], withEnv({ VITE_SORTER_INDEX: "true" }));
 
   await cp(sorterPreviewDist, path.join(finalDist, previewSlug), { recursive: true });
 }
 
-async function writeLocalSorterIndex(): Promise<void> {
+async function writePreviewSorterIndex(): Promise<void> {
   const configSource = await readFile(path.resolve(process.cwd(), "customize", "config.ts"), "utf8");
   const title = readStringProperty(configSource, "title") ?? "Local Sorter";
   const description = readStringProperty(configSource, "description") ?? "Open this sorter.";
@@ -37,6 +38,8 @@ async function writeLocalSorterIndex(): Promise<void> {
     `import type { SorterIndexEntry } from "./types";\n\nexport const sorters: SorterIndexEntry[] = ${JSON.stringify(localSorter, null, 2)};\n`,
     "utf8",
   );
+  await mkdir(path.dirname(publicCatalogPath), { recursive: true });
+  await writeFile(publicCatalogPath, `${JSON.stringify(localSorter, null, 2)}\n`, "utf8");
 }
 
 async function copyLocalFavicon(outputRoot: string): Promise<void> {

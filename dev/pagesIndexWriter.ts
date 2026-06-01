@@ -9,6 +9,7 @@ type SorterIndexEntry = {
 
 const manifestPath = path.resolve(process.cwd(), ".pages-tools", "sorters.json");
 const generatedModulePath = path.resolve(process.cwd(), "src", "sorterIndex", "sorters.generated.ts");
+const publicCatalogPath = path.resolve(process.cwd(), "public", "sorters.json");
 const command = process.argv[2];
 
 void main().catch((error: unknown) => {
@@ -43,7 +44,8 @@ async function main(): Promise<void> {
   }
 
   if (command === "write") {
-    const manifest = await readManifest();
+    const manifest = sortIndexEntries(await readManifest());
+    await writePublicCatalog(manifest);
     await writeGeneratedModule(manifest);
     return;
   }
@@ -71,6 +73,15 @@ async function writeGeneratedModule(manifest: SorterIndexEntry[]): Promise<void>
     `import type { SorterIndexEntry } from "./types";\n\nexport const sorters: SorterIndexEntry[] = ${JSON.stringify(manifest, null, 2)};\n`,
     "utf8",
   );
+}
+
+async function writePublicCatalog(manifest: SorterIndexEntry[]): Promise<void> {
+  await mkdir(path.dirname(publicCatalogPath), { recursive: true });
+  await writeFile(publicCatalogPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
+}
+
+function sortIndexEntries(entries: SorterIndexEntry[]): SorterIndexEntry[] {
+  return entries.sort((left, right) => left.title.localeCompare(right.title, undefined, { sensitivity: "base" }));
 }
 
 function readStringProperty(source: string, propertyName: string): string | null {

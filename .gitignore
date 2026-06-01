@@ -5,5 +5,5 @@ pages-dist/
 .vite/
 .idea/
 .env.local
-.vite-import-server*.log
-.vite-playlist*.log
+.logs/
+public/sorters.json
