@@ -1,0 +1,49 @@
+{
+  "sorters": [
+    {
+      "slug": "ayase",
+      "title": "Ayase Sorter",
+      "description": "Party rank sorter for Ayase"
+    },
+    {
+      "slug": "co-shu-nie",
+      "title": "Cö shu Nie Sorter",
+      "description": "Party rank sorter for Cö shu Nie"
+    },
+    {
+      "slug": "hasunosora-105",
+      "title": "Hasunosora 105th",
+      "description": "Party rank sorter for Hasunosora 105th"
+    },
+    {
+      "slug": "mili",
+      "title": "Mili Sorter",
+      "description": "Party rank sorter for Mili"
+    },
+    {
+      "slug": "princession",
+      "title": "Princession Orchestra",
+      "description": "Party rank sorter for Princession Orchestra songs."
+    },
+    {
+      "slug": "symphogear",
+      "title": "Symphogear Sorter",
+      "description": "Party rank sorter for your custom list of songs."
+    },
+    {
+      "slug": "wuwa",
+      "title": "WuWa OST",
+      "description": "Party rank sorter for WuWa OST"
+    }
+  ],
+  "externalSources": [
+    {
+      "title": "Minigamer42",
+      "indexUrl": "https://minigamer42.github.io/pr-sorter/"
+    },
+    {
+      "title": "Tutti",
+      "indexUrl": "https://amq-tutti.github.io/pr-sorter/"
+    }
+  ]
+}
