@@ -24,13 +24,19 @@ npm ci
 
 If you do not use `nvm`, install Node `24` or newer before running the npm commands.
 
-Start the local Vite dev server:
+Start the default local Pages preview dev server:
 
 ```bash
 npm run dev
 ```
 
 Open `http://localhost:5173/`.
+
+For the plain Vite sorter app route, use:
+
+```bash
+npm run dev:sorter
+```
 
 For a normal custom sorter, the files you usually edit are:
 
@@ -247,15 +253,15 @@ npm run build
 Preview that same output:
 
 ```bash
-npm run preview
+npm run dev
 ```
 
 This serves the sorter index at `/` and the local sorter at `/test/`.
 
-For CI/deployment jobs that need a direct sorter build at the output root, use:
+For local checks or CI/deployment jobs that need a direct Vite build at the output root, use:
 
 ```bash
-npm run build:ci
+npm run build:app
 ```
 
 ## 10. Deploy To GitHub Pages

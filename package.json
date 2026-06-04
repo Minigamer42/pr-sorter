@@ -1,9 +1,9 @@
 {
   "scripts": {
-    "dev": "vite",
+    "dev": "tsc dev/servePagesPreview.ts --outDir .pages-tools --module NodeNext --target ES2022 --moduleResolution NodeNext --skipLibCheck --types node --ignoreConfig && node .pages-tools/dev/servePagesPreview.js",
+    "dev:sorter": "vite",
     "build": "tsc dev/buildSorterIndexPreview.ts --outDir .pages-tools --module NodeNext --target ES2022 --moduleResolution NodeNext --skipLibCheck --types node --ignoreConfig && node .pages-tools/dev/buildSorterIndexPreview.js",
-    "build:ci": "tsc --noEmit && vite build",
-    "preview": "tsc dev/servePagesPreview.ts --outDir .pages-tools --module NodeNext --target ES2022 --moduleResolution NodeNext --skipLibCheck --types node --ignoreConfig && node .pages-tools/dev/servePagesPreview.js"
+    "build:app": "tsc --noEmit && vite build"
   },
   "engines": {
     "node": ">=24"
