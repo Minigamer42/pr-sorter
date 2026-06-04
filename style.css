@@ -75,6 +75,18 @@ body.sorter-index-body {
   text-align: left;
 }
 
+.sorter-index-section__title-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.sorter-index-section__title-link:hover,
+.sorter-index-section__title-link:focus-visible {
+  color: #dfffe4;
+  text-decoration: underline;
+  outline: none;
+}
+
 .sorter-index-subsection {
   margin: 0 0 20px;
 }

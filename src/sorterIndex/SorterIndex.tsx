@@ -20,6 +20,7 @@ type LegacyCatalogSorterIndexEntry = SorterIndexEntry & {
 
 type SorterIndexGroup = {
   title: string;
+  url?: string;
   subgroups: SorterIndexSubgroup[];
 };
 
@@ -106,7 +107,15 @@ export function SorterIndex() {
             <div className="sorter-index-sections">
               {sorterGroups.map((group) => (
                 <section className="sorter-index-section" key={group.title}>
-                  <h2 className="sorter-index-section__title">{group.title}</h2>
+                  <h2 className="sorter-index-section__title">
+                    {group.url ? (
+                      <a className="sorter-index-section__title-link" href={group.url}>
+                        {group.title}
+                      </a>
+                    ) : (
+                      group.title
+                    )}
+                  </h2>
                   {group.subgroups.map((subgroup) => (
                     <section className="sorter-index-subsection" key={`${group.title}:${subgroup.title}`}>
                       <h3 className="sorter-index-subsection__title">{subgroup.title}</h3>
@@ -268,7 +277,7 @@ function isStoredSortState(value: unknown): value is {
 
 function groupSorters(entries: SorterIndexEntry[]): SorterIndexGroup[] {
   const localSorters = entries.filter((sorter) => !sorter.sourceTitle);
-  const groups = localSorters.length ? [{ title: "This Collection", subgroups: groupSorterEntries(localSorters, true) }] : [];
+  const groups: SorterIndexGroup[] = localSorters.length ? [{ title: "This Collection", subgroups: groupSorterEntries(localSorters, true) }] : [];
   const externalGroups = new Map<string, SorterIndexEntry[]>();
 
   for (const sorter of entries) {
@@ -282,7 +291,7 @@ function groupSorters(entries: SorterIndexEntry[]): SorterIndexGroup[] {
   }
 
   for (const [title, group] of externalGroups) {
-    groups.push({ title, subgroups: groupSorterEntries(group, false) });
+    groups.push({ title, url: group.find((sorter) => sorter.sourceIndexUrl)?.sourceIndexUrl, subgroups: groupSorterEntries(group, false) });
   }
 
   return groups;
@@ -512,6 +521,7 @@ function externalizeEntry(entry: LegacyCatalogSorterIndexEntry, indexUrl: URL, s
     url: url.toString(),
     iconUrl: iconUrl.toString(),
     sourceTitle: entry.sourceTitle ?? sourceTitle,
+    sourceIndexUrl: indexUrl.toString(),
   };
 }
 

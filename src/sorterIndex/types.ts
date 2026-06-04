@@ -8,5 +8,6 @@ export type SorterIndexEntry = {
   url?: string;
   iconUrl?: string;
   sourceTitle?: string;
+  sourceIndexUrl?: string;
   hide?: boolean;
 };
