@@ -7,7 +7,6 @@
       "tags": [
         "Artist"
       ],
-      "localStoragePrefix": "ayase",
       "deadline": "2026-06-11T03:59:00.000Z"
     },
     {
@@ -17,7 +16,6 @@
       "tags": [
         "Artist"
       ],
-      "localStoragePrefix": "co-shu-nie",
       "deadline": "2026-06-05T21:59:00.000Z"
     },
     {
@@ -27,7 +25,6 @@
       "tags": [
         "Franchise"
       ],
-      "localStoragePrefix": "hasunosora-105th-pr",
       "deadline": "2026-06-11T21:59:00.000Z"
     },
     {
@@ -37,7 +34,6 @@
       "tags": [
         "Franchise"
       ],
-      "localStoragePrefix": "princession-orchestra-pr",
       "deadline": "2026-06-11T21:59:00.000Z"
     },
     {
@@ -47,7 +43,6 @@
       "tags": [
         "Franchise"
       ],
-      "localStoragePrefix": "symphogear-anisong",
       "deadline": "2026-06-14T10:00:00.000Z"
     },
     {
@@ -57,7 +52,6 @@
       "tags": [
         "Franchise"
       ],
-      "localStoragePrefix": "wuwa-ost",
       "deadline": "2026-05-31T10:00:00.000Z"
     }
   ],
