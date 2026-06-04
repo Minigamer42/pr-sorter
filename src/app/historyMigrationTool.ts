@@ -40,6 +40,7 @@ function fillAutomaticPickHistory(prefix: string, songs: Song[]): MigrationRepor
   const settings = readJson<Settings>(`${prefix}:settings`) ?? {
     mediaFormat: "video",
     region: "eu",
+    sorterAutoPlayMode: "off",
     autoSkipScoreDifference: 10,
   };
   const sort = readJson<SortState>(sortKey);

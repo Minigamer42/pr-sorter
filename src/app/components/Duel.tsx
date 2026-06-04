@@ -9,11 +9,25 @@ type DuelProps = {
   settings: Settings;
   scoreEnabled: boolean;
   scoresBySongId: SongScoresById;
+  autoPlaySide: SortChoice | null;
+  autoPlayKey: number;
+  onAutoPlayEnded(side: SortChoice): void;
   onPick(choice: SortChoice): void;
   onScoreChange(songId: number, score: string): void;
 };
 
-export function Duel({ songs, sort, settings, scoreEnabled, scoresBySongId, onPick, onScoreChange }: DuelProps) {
+export function Duel({
+  songs,
+  sort,
+  settings,
+  scoreEnabled,
+  scoresBySongId,
+  autoPlaySide,
+  autoPlayKey,
+  onAutoPlayEnded,
+  onPick,
+  onScoreChange,
+}: DuelProps) {
   const battle = currentBattle(sort);
   if (battle === null) {
     return null;
@@ -35,6 +49,9 @@ export function Duel({ songs, sort, settings, scoreEnabled, scoresBySongId, onPi
         scoreEnabled={scoreEnabled}
         score={scoresBySongId[leftSong.id] ?? ""}
         sortInfo={currentSongSortInfo(sort, leftIndex)}
+        autoPlay={autoPlaySide === "left"}
+        autoPlayKey={autoPlayKey}
+        onAutoPlayEnded={onAutoPlayEnded}
         onPick={onPick}
         onScoreChange={(score) => onScoreChange(leftSong.id, score)}
       />
@@ -45,6 +62,9 @@ export function Duel({ songs, sort, settings, scoreEnabled, scoresBySongId, onPi
         scoreEnabled={scoreEnabled}
         score={scoresBySongId[rightSong.id] ?? ""}
         sortInfo={currentSongSortInfo(sort, rightIndex)}
+        autoPlay={autoPlaySide === "right"}
+        autoPlayKey={autoPlayKey}
+        onAutoPlayEnded={onAutoPlayEnded}
         onPick={onPick}
         onScoreChange={(score) => onScoreChange(rightSong.id, score)}
       />

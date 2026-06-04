@@ -23,9 +23,12 @@ export type Region = "eu" | "naw" | "nae";
 
 export type MediaFormat = "video" | "audio" | "full";
 
+export type SorterAutoPlayMode = "off" | "left" | "right" | "both" | "picked" | "higher-score";
+
 export type Settings = {
   mediaFormat: MediaFormat;
   region: Region;
+  sorterAutoPlayMode: SorterAutoPlayMode;
   autoSkipScoreDifference: number;
 };
 

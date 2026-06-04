@@ -34,6 +34,7 @@ export type SorterStorageImportResult = {
 const settingsSchema = z.object({
   mediaFormat: z.enum(["video", "audio", "full"]),
   region: z.enum(["eu", "naw", "nae"]),
+  sorterAutoPlayMode: z.enum(["off", "left", "right", "both", "picked", "higher-score"]).default("off"),
   autoSkipScoreDifference: z.number().min(0).max(10).default(10),
 });
 
@@ -125,7 +126,12 @@ export function createStorage(config: AppConfig, songIds: number[]): StorageFaca
   }
 
   function loadSettings(): Settings {
-    const fallback: Settings = { mediaFormat: "video", region: "eu", autoSkipScoreDifference: 10 };
+    const fallback: Settings = {
+      mediaFormat: "video",
+      region: "eu",
+      sorterAutoPlayMode: "off",
+      autoSkipScoreDifference: 10,
+    };
     const raw = localStorage.getItem(settingsKey);
     if (!raw) {
       return fallback;

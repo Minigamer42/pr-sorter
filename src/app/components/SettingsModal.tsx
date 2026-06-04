@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import type { GoogleSpreadsheetSelection, MediaFormat, Region, Settings } from '../types';
+import type { GoogleSpreadsheetSelection, MediaFormat, Region, Settings, SorterAutoPlayMode } from '../types';
 
 type SettingsModalProps = {
     open: boolean;
@@ -27,6 +27,15 @@ const mediaFormats: { value: MediaFormat; label: string }[] = [
     {value: 'video', label: 'Video'},
     {value: 'audio', label: 'Audio'},
     {value: 'full', label: 'Full songs'}
+];
+
+const sorterAutoPlayModes: { value: SorterAutoPlayMode; label: string }[] = [
+    {value: 'off', label: 'Off'},
+    {value: 'left', label: 'Left'},
+    {value: 'right', label: 'Right'},
+    {value: 'both', label: 'Both'},
+    {value: 'picked', label: 'Picked side'},
+    {value: 'higher-score', label: 'Higher score first'}
 ];
 
 export function SettingsModal({
@@ -106,6 +115,19 @@ export function SettingsModal({
                         />
                     </div>
                 ) : null}
+                <div className="option-group">
+                    <p>Sorter autoplay:</p>
+                    {sorterAutoPlayModes.map((mode) => (
+                        <button
+                            key={mode.value}
+                            className={`option-button${settings.sorterAutoPlayMode === mode.value ? ' active' : ''}`}
+                            type="button"
+                            onClick={() => onChange({...settings, sorterAutoPlayMode: mode.value})}
+                        >
+                            {mode.label}
+                        </button>
+                    ))}
+                </div>
                 {googleSheetsConfigured ? (
                     <div className="option-group">
                         <p>Google Sheet:</p>

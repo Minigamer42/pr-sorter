@@ -10,15 +10,36 @@ type SongCardProps = {
   scoreEnabled: boolean;
   score: string;
   sortInfo: CurrentSongSortInfo | null;
+  autoPlay: boolean;
+  autoPlayKey: number;
+  onAutoPlayEnded(side: SortChoice): void;
   onPick(choice: SortChoice): void;
   onScoreChange(score: string): void;
 };
 
-export function SongCard({ song, side, settings, scoreEnabled, score, sortInfo, onPick, onScoreChange }: SongCardProps) {
+export function SongCard({
+  song,
+  side,
+  settings,
+  scoreEnabled,
+  score,
+  sortInfo,
+  autoPlay,
+  autoPlayKey,
+  onAutoPlayEnded,
+  onPick,
+  onScoreChange,
+}: SongCardProps) {
   return (
     <div className={`music-card${scoreEnabled ? " music-card--scored" : ""}`}>
       <div data-slot="media">
-        <Media key={`${song.id}:${settings.mediaFormat}:${settings.region}`} song={song} settings={settings} />
+        <Media
+          key={`${song.id}:${settings.mediaFormat}:${settings.region}:${autoPlay ? autoPlayKey : 0}`}
+          song={song}
+          settings={settings}
+          autoPlay={autoPlay}
+          onEnded={autoPlay ? () => onAutoPlayEnded(side) : undefined}
+        />
       </div>
       <div className="anime">{song.anime}</div>
       <div className="song">

@@ -26,7 +26,7 @@ import { SettingsModal } from "./components/SettingsModal";
 import { SongListModal } from "./components/SongListModal";
 import { isScoreEnabled, normalizeScore } from "./internal/songScores";
 import { createStorage, parseSorterStorageSnapshot } from "./storage";
-import type { AppConfig, GoogleSpreadsheetSelection, SavedProgressKind, Screen, Settings, SongScoresById } from "./types";
+import type { AppConfig, GoogleSpreadsheetSelection, SavedProgressKind, Screen, Settings, SongScoresById, SorterAutoPlayMode } from "./types";
 
 type AppProps = {
   config: AppConfig;
@@ -55,6 +55,8 @@ export function App({ config, songs }: AppProps) {
   const [screen, setScreen] = useState<Screen>("landing");
   const [settings, setSettings] = useState<Settings>(() => storage.loadSettings());
   const [scoresBySongId, setScoresBySongId] = useState<SongScoresById>(() => storage.loadScores());
+  const [sorterAutoPlaySide, setSorterAutoPlaySide] = useState<SortChoice | null>(null);
+  const [sorterAutoPlayKey, setSorterAutoPlayKey] = useState(0);
   const [playlistMode, setPlaylistMode] = useState<PlaylistMode>("in-order");
   const [playlistScoreFilter, setPlaylistScoreFilter] = useState<PlaylistScoreFilter>("all");
   const [playlistOrder, setPlaylistOrder] = useState<number[]>(() => createPlaylistOrder(resolvedSongs.length, "in-order"));
@@ -161,6 +163,7 @@ export function App({ config, songs }: AppProps) {
     setSort(nextSort);
     setScreen(screenFor(nextSort));
     storage.saveSort(nextSort);
+    setSorterAutoPlayForSort(nextSort, settings, scoresBySongId);
   }
 
   function loadSort(): void {
@@ -177,6 +180,7 @@ export function App({ config, songs }: AppProps) {
     setSort(nextSort);
     setScreen(screenFor(nextSort));
     storage.saveSort(nextSort);
+    setSorterAutoPlayForSort(nextSort, settings, savedScores);
   }
 
   function pick(choice: SortChoice): void {
@@ -184,10 +188,12 @@ export function App({ config, songs }: AppProps) {
       return;
     }
 
+    const previousBattle = currentBattle(sort);
     const nextSort = resolveAutoSkips(choose(sort, choice), scoresBySongId, settings);
     setSort(nextSort);
     setScreen(screenFor(nextSort));
     storage.saveSort(nextSort);
+    setSorterAutoPlayForSort(nextSort, settings, scoresBySongId, { previousBattle, choice });
     flushPendingScoreWriteback();
   }
 
@@ -200,14 +206,19 @@ export function App({ config, songs }: AppProps) {
     setSort(nextSort);
     setScreen(screenFor(nextSort));
     storage.saveSort(nextSort);
+    setSorterAutoPlayForSort(nextSort, settings, scoresBySongId);
   }
 
   function updateSettings(nextSettings: Settings): void {
     setSettings(nextSettings);
     storage.saveSettings(nextSettings);
+    if (screen === "sorting") {
+      setSorterAutoPlayForSort(sort, nextSettings, scoresBySongId);
+    }
   }
 
   function openPlaylist(): void {
+    clearSorterAutoPlay();
     const eligibleIndexes = playlistEligibleIndexes();
     setPlaylistOrder(createPlaylistOrder(resolvedSongs.length, playlistMode, eligibleIndexes));
     setPlaylistPosition(0);
@@ -216,7 +227,14 @@ export function App({ config, songs }: AppProps) {
   }
 
   function exitPlaylist(): void {
-    setScreen(screenFor(sort));
+    const nextScreen = screenFor(sort);
+    setScreen(nextScreen);
+    if (nextScreen === "sorting") {
+      setSorterAutoPlayForSort(sort, settings, scoresBySongId);
+      return;
+    }
+
+    clearSorterAutoPlay();
   }
 
   function changePlaylistMode(nextMode: PlaylistMode): void {
@@ -244,6 +262,49 @@ export function App({ config, songs }: AppProps) {
   function autoNextPlaylistSong(): void {
     flushPendingScoreWriteback({ allowAuthPrompt: false });
     movePlaylistSong(1);
+  }
+
+  function sorterAutoPlayEnded(side: SortChoice): void {
+    if (screen !== "sorting" || !sort) {
+      clearSorterAutoPlay();
+      return;
+    }
+
+    const nextSide = sorterAutoPlaySideAfterEnded(settings.sorterAutoPlayMode, side);
+    if (!nextSide) {
+      clearSorterAutoPlay();
+      return;
+    }
+
+    setSorterAutoPlaySide(nextSide);
+    setSorterAutoPlayKey((current) => current + 1);
+  }
+
+  function setSorterAutoPlayForSort(
+    currentSort: SortState | null,
+    currentSettings: Settings,
+    currentScoresBySongId: SongScoresById,
+    context?: { previousBattle: [number, number] | null; choice: SortChoice },
+  ): void {
+    const nextSide = initialSorterAutoPlaySide(
+      currentSort,
+      currentSettings,
+      currentScoresBySongId,
+      resolvedSongs,
+      scoreEnabled,
+      context,
+    );
+    if (!nextSide) {
+      clearSorterAutoPlay();
+      return;
+    }
+
+    setSorterAutoPlaySide(nextSide);
+    setSorterAutoPlayKey((current) => current + 1);
+  }
+
+  function clearSorterAutoPlay(): void {
+    setSorterAutoPlaySide(null);
   }
 
   function movePlaylistSong(direction: 1 | -1): void {
@@ -655,6 +716,11 @@ export function App({ config, songs }: AppProps) {
     setPlaylistPosition(0);
     setHistoryOpen(false);
     setSongListOpen(false);
+    setSorterAutoPlayForSort(
+      importedSort && hasSavedSortProgress(importedSort) ? importedSort : null,
+      importedSettings,
+      importedScores,
+    );
   }
 
   function playlistEligibleIndexes(nextFilter: PlaylistScoreFilter = playlistScoreFilter): number[] {
@@ -786,6 +852,9 @@ export function App({ config, songs }: AppProps) {
                   settings={settings}
                   scoreEnabled={scoreEnabled}
                   scoresBySongId={scoresBySongId}
+                  autoPlaySide={sorterAutoPlaySide}
+                  autoPlayKey={sorterAutoPlayKey}
+                  onAutoPlayEnded={sorterAutoPlayEnded}
                   onPick={pick}
                   onScoreChange={updateScore}
                 />
@@ -872,6 +941,105 @@ function isAuthenticationWritebackError(error: unknown): boolean {
     error instanceof GoogleAuthenticationRequiredError ||
     (error instanceof GoogleWritebackError && error.message === "OAuth token expired or was rejected.")
   );
+}
+
+function initialSorterAutoPlaySide(
+  sort: SortState | null,
+  settings: Settings,
+  scoresBySongId: SongScoresById,
+  songs: { id: number }[],
+  scoreEnabled: boolean,
+  context?: { previousBattle: [number, number] | null; choice: SortChoice },
+): SortChoice | null {
+  if (settings.sorterAutoPlayMode === "off") {
+    return null;
+  }
+
+  const battle = sort ? currentBattle(sort) : null;
+  if (!battle) {
+    return null;
+  }
+
+  if (settings.sorterAutoPlayMode === "left" || settings.sorterAutoPlayMode === "right") {
+    return settings.sorterAutoPlayMode;
+  }
+
+  if (settings.sorterAutoPlayMode === "picked") {
+    return changedSideForBattleTransition(context?.previousBattle ?? null, battle) ?? context?.choice ?? "left";
+  }
+
+  if (settings.sorterAutoPlayMode === "higher-score") {
+    return higherScoredBattleSide(battle, scoresBySongId, songs, scoreEnabled) ?? "left";
+  }
+
+  return "left";
+}
+
+function sorterAutoPlaySideAfterEnded(mode: SorterAutoPlayMode, side: SortChoice): SortChoice | null {
+  if (mode === "off") {
+    return null;
+  }
+
+  if (mode === "left" || mode === "right") {
+    return mode;
+  }
+
+  if (mode === "picked") {
+    return side;
+  }
+
+  return side === "left" ? "right" : "left";
+}
+
+function changedSideForBattleTransition(
+  previousBattle: [number, number] | null,
+  nextBattle: [number, number],
+): SortChoice | null {
+  if (!previousBattle) {
+    return null;
+  }
+
+  const leftChanged = previousBattle[0] !== nextBattle[0];
+  const rightChanged = previousBattle[1] !== nextBattle[1];
+  if (leftChanged && !rightChanged) {
+    return "left";
+  }
+
+  if (rightChanged && !leftChanged) {
+    return "right";
+  }
+
+  return null;
+}
+
+function higherScoredBattleSide(
+  battle: [number, number],
+  scoresBySongId: SongScoresById,
+  songs: { id: number }[],
+  scoreEnabled: boolean,
+): SortChoice | null {
+  if (!scoreEnabled) {
+    return null;
+  }
+
+  const [leftIndex, rightIndex] = battle;
+  const leftSong = songs[leftIndex];
+  const rightSong = songs[rightIndex];
+  if (!leftSong || !rightSong) {
+    return null;
+  }
+
+  try {
+    const leftScore = normalizeScore(scoresBySongId[leftSong.id] ?? "");
+    const rightScore = normalizeScore(scoresBySongId[rightSong.id] ?? "");
+    if (leftScore === null || rightScore === null || leftScore === rightScore) {
+      return null;
+    }
+
+    return leftScore > rightScore ? "left" : "right";
+  } catch {
+    return null;
+  }
 }
 
 function createPlaylistOrder(songCount: number, mode: PlaylistMode, eligibleIndexes?: number[]): number[] {
