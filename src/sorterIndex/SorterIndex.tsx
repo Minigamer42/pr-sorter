@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import externalSorterSources from "./externalSorterSources.json";
 import { sorters } from "./sorters.generated";
 import type { SorterIndexEntry } from "./types";
 
@@ -386,8 +387,7 @@ function compareClassifiedSorters(
 
 async function discoverExternalSorters(): Promise<SorterIndexEntry[]> {
   const currentCollectionUrl = new URL(".", window.location.href);
-  const currentCatalog = await readSorterIndexCatalog(currentCollectionUrl);
-  const pendingSources = [...currentCatalog.externalSources];
+  const pendingSources = [...parseExternalSources(externalSorterSources)];
   const visitedSourceUrls = new Set<string>();
   const visitedCatalogUrls = new Set<string>();
   const seenSorterUrls = new Set(sorters.map((sorter) => new URL(`${sorter.slug}/`, currentCollectionUrl).toString()));
@@ -421,21 +421,6 @@ async function discoverExternalSorters(): Promise<SorterIndexEntry[]> {
   }
 
   return discoveredSorters;
-}
-
-async function readSorterIndexCatalog(collectionUrl: URL): Promise<SorterIndexCatalog> {
-  try {
-    const catalogUrl = new URL("sorter-index.json", collectionUrl);
-    const response = await fetch(catalogUrl);
-    if (!response.ok) {
-      throw new Error(`${catalogUrl.toString()} returned ${response.status}.`);
-    }
-
-    return parseSorterIndexCatalog(await response.json());
-  } catch (error) {
-    console.warn(`Skipping sorter index catalog: ${error instanceof Error ? error.message : error}`);
-    return { sorters: [], externalSources: [] };
-  }
 }
 
 async function readExternalSourceCatalog(
