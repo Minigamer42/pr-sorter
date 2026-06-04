@@ -10,15 +10,17 @@ const generatedModulePath = path.resolve(process.cwd(), "src", "sorterIndex", "s
 export async function writeLocalPreviewSorterIndex(): Promise<void> {
   const config = await loadCustomizeConfig();
   const deadline = serializedDeadline(config);
-  const localSorter = Array.from({ length: 3 }, (_, index) => ({
-    slug: index === 0 ? previewSlug : `${previewSlug}-${index + 1}`,
-    title: `${config.title} ${index + 1}`,
-    description: config.description,
-    localStoragePrefix: config.localStoragePrefix,
-    ...(deadline ? { deadline } : {}),
-    url: `${previewSlug}/`,
-    iconUrl: `${previewSlug}/customize/favicon.ico`,
-  }));
+  const localSorter = config.hide
+    ? []
+    : Array.from({ length: 3 }, (_, index) => ({
+        slug: index === 0 ? previewSlug : `${previewSlug}-${index + 1}`,
+        title: `${config.title} ${index + 1}`,
+        description: config.description,
+        localStoragePrefix: config.localStoragePrefix,
+        ...(deadline ? { deadline } : {}),
+        url: `${previewSlug}/`,
+        iconUrl: `${previewSlug}/customize/favicon.ico`,
+      }));
 
   await mkdir(path.dirname(generatedModulePath), { recursive: true });
   await writeFile(

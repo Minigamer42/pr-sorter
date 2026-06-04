@@ -1,7 +1,13 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { loadCustomizeConfig, serializedDeadline } from "./configLoader.js";
-import { sortIndexEntries, type SorterIndexEntry, writePublicSorterIndexCatalog } from "./sorterIndexCatalog.js";
+import {
+  sortIndexEntries,
+  type SorterIndexEntry,
+  type SorterIndexManifestEntry,
+  visibleIndexEntries,
+  writePublicSorterIndexCatalog,
+} from "./sorterIndexCatalog.js";
 
 const manifestPath = path.resolve(process.cwd(), ".pages-tools", "sorters.json");
 const generatedModulePath = path.resolve(process.cwd(), "src", "sorterIndex", "sorters.generated.ts");
@@ -33,6 +39,7 @@ async function main(): Promise<void> {
       title: config.title,
       description: config.description,
       localStoragePrefix: config.localStoragePrefix,
+      ...(config.hide ? { hide: true } : {}),
       ...(deadline ? { deadline } : {}),
     };
     const nextManifest = [...manifest.filter((entry) => entry.slug !== slug), nextEntry].sort((left, right) =>
@@ -45,23 +52,24 @@ async function main(): Promise<void> {
 
   if (command === "write") {
     const manifest = sortIndexEntries(await readManifest());
+    const visibleManifest = visibleIndexEntries(manifest);
     await writePublicSorterIndexCatalog(manifest);
-    await writeGeneratedModule(manifest);
+    await writeGeneratedModule(visibleManifest);
     return;
   }
 
   throw new Error(`Unknown command: ${command ?? "(none)"}`);
 }
 
-async function readManifest(): Promise<SorterIndexEntry[]> {
+async function readManifest(): Promise<SorterIndexManifestEntry[]> {
   try {
-    return JSON.parse(await readFile(manifestPath, "utf8")) as SorterIndexEntry[];
+    return JSON.parse(await readFile(manifestPath, "utf8")) as SorterIndexManifestEntry[];
   } catch {
     return [];
   }
 }
 
-async function writeManifest(manifest: SorterIndexEntry[]): Promise<void> {
+async function writeManifest(manifest: SorterIndexManifestEntry[]): Promise<void> {
   await mkdir(path.dirname(manifestPath), { recursive: true });
   await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
 }

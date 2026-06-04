@@ -57,6 +57,8 @@ Change `localStoragePrefix` for each hosted sorter. Browser storage is shared by
 
 `deadline` is optional. When set, collection index cards show the resolved local date/time and the remaining difference as days, hours, and minutes.
 
+Set `hide: true` to publish the sorter route without listing it on the collection index or in the public `sorter-index.json` catalog.
+
 Replace `customize/favicon.ico` if you want a custom browser icon.
 
 ## 3. Add Songs

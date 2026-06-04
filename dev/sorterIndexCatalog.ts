@@ -9,6 +9,10 @@ export type SorterIndexEntry = {
   deadline?: string;
 };
 
+export type SorterIndexManifestEntry = SorterIndexEntry & {
+  hide?: boolean;
+};
+
 type ExternalSorterSource = {
   title: string;
   indexUrl: string;
@@ -18,15 +22,22 @@ type ExternalSorterSource = {
 const externalSourcesPath = path.resolve(process.cwd(), "src", "sorterIndex", "externalSorterSources.json");
 const publicCatalogPath = path.resolve(process.cwd(), "public", "sorter-index.json");
 
-export async function writePublicSorterIndexCatalog(sorters: SorterIndexEntry[]): Promise<void> {
+export async function writePublicSorterIndexCatalog(sorters: SorterIndexManifestEntry[]): Promise<void> {
   const externalSources = await readExternalSources();
+  const visibleSorters = visibleIndexEntries(sorters);
 
   await mkdir(path.dirname(publicCatalogPath), { recursive: true });
-  await writeFile(publicCatalogPath, `${JSON.stringify({ sorters, externalSources }, null, 2)}\n`, "utf8");
+  await writeFile(publicCatalogPath, `${JSON.stringify({ sorters: visibleSorters, externalSources }, null, 2)}\n`, "utf8");
 }
 
-export function sortIndexEntries(entries: SorterIndexEntry[]): SorterIndexEntry[] {
+export function sortIndexEntries<T extends SorterIndexEntry>(entries: T[]): T[] {
   return entries.sort((left, right) => left.title.localeCompare(right.title, undefined, { sensitivity: "base" }));
+}
+
+export function visibleIndexEntries(entries: SorterIndexManifestEntry[]): SorterIndexEntry[] {
+  return entries
+    .filter((entry) => entry.hide !== true)
+    .map(({ hide: _hide, ...entry }) => entry);
 }
 
 async function readExternalSources(): Promise<ExternalSorterSource[]> {
