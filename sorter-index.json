@@ -22,12 +22,6 @@
       "deadline": "2026-06-11T21:59:00.000Z"
     },
     {
-      "slug": "mili",
-      "title": "Mili Sorter",
-      "description": "Party rank sorter for Mili",
-      "localStoragePrefix": "mili"
-    },
-    {
       "slug": "princession",
       "title": "Princession Orchestra",
       "description": "Party rank sorter for Princession Orchestra songs.",
