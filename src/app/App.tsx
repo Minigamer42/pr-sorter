@@ -980,14 +980,6 @@ function sorterAutoPlaySideAfterEnded(mode: SorterAutoPlayMode, side: SortChoice
     return null;
   }
 
-  if (mode === "left" || mode === "right") {
-    return mode;
-  }
-
-  if (mode === "picked") {
-    return side;
-  }
-
   return side === "left" ? "right" : "left";
 }
 

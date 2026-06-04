@@ -141,7 +141,10 @@ export function createStorage(config: AppConfig, songIds: number[]): StorageFaca
       const parsed: unknown = JSON.parse(raw);
       const result = settingsSchema.safeParse(parsed);
       if (result.success) {
-        return result.data;
+        return {
+          ...result.data,
+          sorterAutoPlayMode: result.data.sorterAutoPlayMode === "both" ? "left" : result.data.sorterAutoPlayMode,
+        };
       }
     } catch {
       // Invalid settings fall back to defaults.

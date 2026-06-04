@@ -33,9 +33,8 @@ const sorterAutoPlayModes: { value: SorterAutoPlayMode; label: string }[] = [
     {value: 'off', label: 'Off'},
     {value: 'left', label: 'Left'},
     {value: 'right', label: 'Right'},
-    {value: 'both', label: 'Both'},
     {value: 'picked', label: 'Picked side'},
-    {value: 'higher-score', label: 'Higher score first'}
+    {value: 'higher-score', label: 'Higher score'}
 ];
 
 export function SettingsModal({
@@ -116,7 +115,12 @@ export function SettingsModal({
                     </div>
                 ) : null}
                 <div className="option-group">
-                    <p>Sorter autoplay:</p>
+                    <p>
+                        Sorter autoplay:
+                        <span className="help-icon" data-tooltip="Chooses which song starts autoplay for each comparison. After that, autoplay swaps between the two songs until sorting moves to another comparison."
+                              aria-label="Sorter autoplay help"
+                        >?</span>
+                    </p>
                     {sorterAutoPlayModes.map((mode) => (
                         <button
                             key={mode.value}
