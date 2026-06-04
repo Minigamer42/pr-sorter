@@ -20,12 +20,14 @@ type ExternalSorterSource = {
   catalogUrl?: string;
 };
 
+type PublicSorterIndexEntry = Omit<SorterIndexEntry, "localStoragePrefix">;
+
 const externalSourcesPath = path.resolve(process.cwd(), "src", "sorterIndex", "externalSorterSources.json");
 const publicCatalogPath = path.resolve(process.cwd(), "public", "sorter-index.json");
 
 export async function writePublicSorterIndexCatalog(sorters: SorterIndexManifestEntry[]): Promise<void> {
   const externalSources = await readExternalSources();
-  const visibleSorters = visibleIndexEntries(sorters);
+  const visibleSorters = publicIndexEntries(sorters);
 
   await mkdir(path.dirname(publicCatalogPath), { recursive: true });
   await writeFile(publicCatalogPath, `${JSON.stringify({ sorters: visibleSorters, externalSources }, null, 2)}\n`, "utf8");
@@ -39,6 +41,10 @@ export function visibleIndexEntries(entries: SorterIndexManifestEntry[]): Sorter
   return entries
     .filter((entry) => entry.hide !== true)
     .map(({ hide: _hide, ...entry }) => entry);
+}
+
+function publicIndexEntries(entries: SorterIndexManifestEntry[]): PublicSorterIndexEntry[] {
+  return visibleIndexEntries(entries).map(({ localStoragePrefix: _localStoragePrefix, ...entry }) => entry);
 }
 
 async function readExternalSources(): Promise<ExternalSorterSource[]> {
