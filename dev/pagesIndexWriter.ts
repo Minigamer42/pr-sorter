@@ -28,7 +28,8 @@ async function main(): Promise<void> {
     const configSource = await readFile(path.resolve(process.cwd(), "customize", "config.ts"), "utf8");
     const title = readStringProperty(configSource, "title") ?? `${slug} Sorter`;
     const description = readStringProperty(configSource, "description") ?? "Open this sorter.";
-    const nextEntry = { slug, title, description };
+    const localStoragePrefix = readStringProperty(configSource, "localStoragePrefix") ?? slug;
+    const nextEntry = { slug, title, description, localStoragePrefix };
     const nextManifest = [...manifest.filter((entry) => entry.slug !== slug), nextEntry].sort((left, right) =>
       left.title.localeCompare(right.title, undefined, { sensitivity: "base" }),
     );

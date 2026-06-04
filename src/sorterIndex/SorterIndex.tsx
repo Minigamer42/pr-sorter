@@ -56,7 +56,11 @@ export function SorterIndex() {
               <h2 className="sorter-index-section__title">{group.title}</h2>
               <div className="sorter-index-grid">
                 {group.sorters.map((sorter) => (
-                  <SorterCard sorter={sorter} key={`${sorter.sourceTitle ?? "local"}:${sorter.url ?? sorter.slug}`} />
+                  <SorterCard
+                    sorter={sorter}
+                    showLocalProgress={!sorter.sourceTitle}
+                    key={`${sorter.sourceTitle ?? "local"}:${sorter.url ?? sorter.slug}`}
+                  />
                 ))}
               </div>
             </section>
@@ -69,9 +73,10 @@ export function SorterIndex() {
   );
 }
 
-function SorterCard({ sorter }: { sorter: SorterIndexEntry }) {
+function SorterCard({ sorter, showLocalProgress }: { sorter: SorterIndexEntry; showLocalProgress: boolean }) {
   const href = sorter.url ?? `${sorter.slug}/`;
   const iconUrl = sorter.iconUrl ?? `${sorter.slug}/customize/favicon.ico`;
+  const progress = showLocalProgress ? loadSorterProgress(sorter.localStoragePrefix ?? sorter.slug) : null;
 
   return (
     <a className="sorter-index-card" href={href}>
@@ -79,8 +84,64 @@ function SorterCard({ sorter }: { sorter: SorterIndexEntry }) {
       <div className="sorter-index-card__body">
         <h3>{sorter.title}</h3>
         <p>{sorter.description}</p>
+        {progress ? (
+          <div className="sorter-index-card__progress" aria-label={`${progress.label}: ${progress.percent}%`}>
+            <div className="sorter-index-card__progress-header">
+              <span>{progress.label}</span>
+              <span>{progress.percent}%</span>
+            </div>
+            <div className="sorter-index-card__progress-track">
+              <div className="sorter-index-card__progress-fill" style={{ width: `${progress.percent}%` }} />
+            </div>
+          </div>
+        ) : null}
       </div>
     </a>
+  );
+}
+
+function loadSorterProgress(localStoragePrefix: string): { percent: number; label: string } | null {
+  const raw = localStorage.getItem(`${localStoragePrefix}:sort`);
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    const value: unknown = JSON.parse(raw);
+    if (!isStoredSortState(value)) {
+      return null;
+    }
+
+    if (value.current === null && value.groups.length === 1) {
+      return { percent: 100, label: "Complete" };
+    }
+
+    if (value.pickedCount <= 0 && value.history.length === 0) {
+      return null;
+    }
+
+    const percent = Math.max(1, Math.min(99, Math.floor((value.pickedCount * 100) / Math.max(1, value.estimatedBattles))));
+    return { percent, label: "In progress" };
+  } catch {
+    return null;
+  }
+}
+
+function isStoredSortState(value: unknown): value is {
+  groups: unknown[];
+  current: unknown;
+  pickedCount: number;
+  estimatedBattles: number;
+  history: unknown[];
+} {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    Array.isArray((value as { groups?: unknown }).groups) &&
+    "current" in value &&
+    typeof (value as { pickedCount?: unknown }).pickedCount === "number" &&
+    typeof (value as { estimatedBattles?: unknown }).estimatedBattles === "number" &&
+    Array.isArray((value as { history?: unknown }).history)
   );
 }
 

@@ -30,7 +30,15 @@ async function writePreviewSorterIndex(): Promise<void> {
   const configSource = await readFile(path.resolve(process.cwd(), "customize", "config.ts"), "utf8");
   const title = readStringProperty(configSource, "title") ?? "Local Sorter";
   const description = readStringProperty(configSource, "description") ?? "Open this sorter.";
-  const localSorter = [{ slug: previewSlug, title, description }];
+  const localStoragePrefix = readStringProperty(configSource, "localStoragePrefix") ?? previewSlug;
+  const localSorter = Array.from({ length: 3 }, (_, index) => ({
+    slug: index === 0 ? previewSlug : `${previewSlug}-${index + 1}`,
+    title: `${title} ${index + 1}`,
+    description,
+    localStoragePrefix,
+    url: `${previewSlug}/`,
+    iconUrl: `${previewSlug}/customize/favicon.ico`,
+  }));
 
   await mkdir(path.dirname(generatedModulePath), { recursive: true });
   await writeFile(
