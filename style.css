@@ -584,6 +584,9 @@ body.sorter-index-body {
 }
 
 .basic-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background-color: #40ab47a6;
   color: #e5e5e5;
   border: none;
@@ -594,6 +597,8 @@ body.sorter-index-body {
   height: 2em;
   margin-left: 10px;
   margin-right: 10px;
+  text-decoration: none;
+  box-sizing: border-box;
 }
 
 .basic-button:hover {

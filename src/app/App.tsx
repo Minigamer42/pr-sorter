@@ -41,6 +41,9 @@ const screenFor = (sort: SortState | null): Screen => {
   return isComplete(sort) ? "complete" : "sorting";
 };
 
+const hasSavedSortProgress = (sort: SortState): boolean =>
+  sort.pickedCount > 0 || sort.history.length > 0 || isComplete(sort);
+
 export function App({ config, songs }: AppProps) {
   const resolvedSongs = useMemo(
     () => songs.map((song) => resolveSongAnime(song, fallbackAnimeName(config))),
@@ -141,7 +144,7 @@ export function App({ config, songs }: AppProps) {
     }
 
     const savedSort = storage.loadSort();
-    if (!savedSort) {
+    if (!savedSort || !hasSavedSortProgress(savedSort)) {
       return "none";
     }
 
@@ -149,6 +152,11 @@ export function App({ config, songs }: AppProps) {
   }, [screen, storage]);
 
   function startSort(): void {
+    const savedSort = storage.loadSort();
+    if (savedSort && hasSavedSortProgress(savedSort) && !window.confirm("Starting a new sort deletes all saved picks for this sorter. Scores are kept. Continue?")) {
+      return;
+    }
+
     const nextSort = createSort(resolvedSongs.length);
     setSort(nextSort);
     setScreen(screenFor(nextSort));
@@ -631,8 +639,8 @@ export function App({ config, songs }: AppProps) {
     pendingScoreWritebackRef.current.clear();
     setSettings(importedSettings);
     setScoresBySongId(importedScores);
-    setSort(importedSort);
-    setScreen(screenFor(importedSort));
+    setSort(importedSort && hasSavedSortProgress(importedSort) ? importedSort : null);
+    setScreen(importedSort && hasSavedSortProgress(importedSort) ? screenFor(importedSort) : "landing");
     setGoogleSpreadsheetSelection(importedGoogleSpreadsheetSelection);
     setSheetScoresBySongId({});
     setSheetScoreStatus({

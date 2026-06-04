@@ -43,6 +43,9 @@ export function Controls({
 }: ControlsProps) {
   return (
     <div className="button-container">
+      <a className="basic-button" href="../">
+        Overview
+      </a>
       {screen === "playlist" ? (
         <button className="basic-button" type="button" onClick={onExitPlaylist}>
           Sorter
