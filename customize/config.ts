@@ -4,7 +4,6 @@ export const config = {
     localStoragePrefix: 'test',
     title: 'test! Sorter',
     description: 'Party rank sorter for your custom list of songs.',
-    tags: ['test'],
     deadline: new Date('2026-06-30T23:59:00+02:00'),
     googleSheets: {
         clientId: '575550662002-hivobiln683gua375ss3b7k58afnn36t.apps.googleusercontent.com',
