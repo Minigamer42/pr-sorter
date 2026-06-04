@@ -207,6 +207,10 @@ body.sorter-index-body {
   text-align: right;
 }
 
+.state-file-input {
+  display: none;
+}
+
 .help-icon {
   position: relative;
   display: inline-flex;

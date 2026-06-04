@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import type { GoogleSpreadsheetSelection, MediaFormat, Region, Settings } from '../types';
 
 type SettingsModalProps = {
@@ -12,6 +13,8 @@ type SettingsModalProps = {
     onChange(settings: Settings): void;
     onChooseGoogleSheet(): void;
     onClearGoogleSheet(): void;
+    onExportSorterState(): void;
+    onImportSorterState(file: File): void;
 };
 
 const regions: { value: Region; label: string }[] = [
@@ -37,8 +40,12 @@ export function SettingsModal({
     onClose,
     onChange,
     onChooseGoogleSheet,
-    onClearGoogleSheet
+    onClearGoogleSheet,
+    onExportSorterState,
+    onImportSorterState
 }: SettingsModalProps) {
+    const importInputRef = useRef<HTMLInputElement | null>(null);
+
     if (!open) {
         return null;
     }
@@ -136,6 +143,28 @@ export function SettingsModal({
                         ) : null}
                     </div>
                 ) : null}
+                <div className="option-group">
+                    <p>Sorter state:</p>
+                    <button className="option-button" type="button" onClick={onExportSorterState}>
+                        Export
+                    </button>
+                    <button className="option-button" type="button" onClick={() => importInputRef.current?.click()}>
+                        Import
+                    </button>
+                    <input
+                        ref={importInputRef}
+                        className="state-file-input"
+                        type="file"
+                        accept="application/json,.json"
+                        onChange={(event) => {
+                            const file = event.currentTarget.files?.[0] ?? null;
+                            event.currentTarget.value = '';
+                            if (file) {
+                                onImportSorterState(file);
+                            }
+                        }}
+                    />
+                </div>
                 <button className="close-button" type="button" onClick={onClose}>
                     Close
                 </button>

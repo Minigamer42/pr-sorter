@@ -15,6 +15,20 @@ type StorageFacade = {
   loadGoogleSpreadsheetSelection(): GoogleSpreadsheetSelection | null;
   saveGoogleSpreadsheetSelection(selection: GoogleSpreadsheetSelection): void;
   clearGoogleSpreadsheetSelection(): void;
+  exportSorterState(): SorterStorageSnapshot;
+  importSorterState(snapshot: SorterStorageSnapshot): SorterStorageImportResult;
+};
+
+export type SorterStorageSnapshot = {
+  version: 1;
+  prefix: string;
+  exportedAt: string;
+  entries: Record<string, string>;
+};
+
+export type SorterStorageImportResult = {
+  importedKeys: string[];
+  removedKeys: string[];
 };
 
 const settingsSchema = z.object({
@@ -31,6 +45,7 @@ const googleSpreadsheetSelectionSchema = z.object({
 });
 
 export function createStorage(config: AppConfig, songIds: number[]): StorageFacade {
+  const keyPrefix = `${config.localStoragePrefix}:`;
   const sortKey = `${config.localStoragePrefix}:sort`;
   const scoresKey = `${config.localStoragePrefix}:scores`;
   const settingsKey = `${config.localStoragePrefix}:settings`;
@@ -162,6 +177,61 @@ export function createStorage(config: AppConfig, songIds: number[]): StorageFaca
     localStorage.removeItem(googleSpreadsheetSelectionKey);
   }
 
+  function exportSorterState(): SorterStorageSnapshot {
+    const entries: Record<string, string> = {};
+
+    for (const key of sorterLocalStorageKeys()) {
+      const value = localStorage.getItem(key);
+      if (value !== null) {
+        entries[key] = value;
+      }
+    }
+
+    return {
+      version: 1,
+      prefix: config.localStoragePrefix,
+      exportedAt: new Date().toISOString(),
+      entries,
+    };
+  }
+
+  function importSorterState(snapshot: SorterStorageSnapshot): SorterStorageImportResult {
+    if (snapshot.prefix !== config.localStoragePrefix) {
+      throw new Error(`This file is for sorter "${snapshot.prefix}", not "${config.localStoragePrefix}".`);
+    }
+
+    const importedKeys = Object.keys(snapshot.entries).sort();
+    for (const key of importedKeys) {
+      if (!key.startsWith(keyPrefix)) {
+        throw new Error(`Import contains a key outside this sorter: "${key}".`);
+      }
+    }
+
+    const removedKeys = sorterLocalStorageKeys();
+    for (const key of removedKeys) {
+      localStorage.removeItem(key);
+    }
+
+    for (const key of importedKeys) {
+      localStorage.setItem(key, snapshot.entries[key]);
+    }
+
+    return { importedKeys, removedKeys };
+  }
+
+  function sorterLocalStorageKeys(): string[] {
+    const keys: string[] = [];
+
+    for (let index = 0; index < localStorage.length; index += 1) {
+      const key = localStorage.key(index);
+      if (key?.startsWith(keyPrefix)) {
+        keys.push(key);
+      }
+    }
+
+    return keys.sort();
+  }
+
   return {
     loadSort,
     saveSort,
@@ -173,5 +243,49 @@ export function createStorage(config: AppConfig, songIds: number[]): StorageFaca
     loadGoogleSpreadsheetSelection,
     saveGoogleSpreadsheetSelection,
     clearGoogleSpreadsheetSelection,
+    exportSorterState,
+    importSorterState,
   };
+}
+
+export function parseSorterStorageSnapshot(snapshot: unknown): SorterStorageSnapshot {
+  if (!isRecord(snapshot)) {
+    throw new Error("Import file must contain a sorter storage snapshot.");
+  }
+
+  if (snapshot.version !== 1) {
+    throw new Error("Import file uses an unsupported sorter storage version.");
+  }
+
+  if (typeof snapshot.prefix !== "string" || snapshot.prefix.length === 0) {
+    throw new Error("Import file is missing a sorter prefix.");
+  }
+
+  if (typeof snapshot.exportedAt !== "string" || snapshot.exportedAt.length === 0) {
+    throw new Error("Import file is missing an export timestamp.");
+  }
+
+  if (!isRecord(snapshot.entries)) {
+    throw new Error("Import file is missing localStorage entries.");
+  }
+
+  const entries: Record<string, string> = {};
+  for (const [key, value] of Object.entries(snapshot.entries)) {
+    if (typeof value !== "string") {
+      throw new Error(`Import value for "${key}" must be a string.`);
+    }
+
+    entries[key] = value;
+  }
+
+  return {
+    version: 1,
+    prefix: snapshot.prefix,
+    exportedAt: snapshot.exportedAt,
+    entries,
+  };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

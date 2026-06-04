@@ -25,7 +25,7 @@ import { Results } from "./components/Results";
 import { SettingsModal } from "./components/SettingsModal";
 import { SongListModal } from "./components/SongListModal";
 import { isScoreEnabled, normalizeScore } from "./internal/songScores";
-import { createStorage } from "./storage";
+import { createStorage, parseSorterStorageSnapshot } from "./storage";
 import type { AppConfig, GoogleSpreadsheetSelection, SavedProgressKind, Screen, Settings, SongScoresById } from "./types";
 
 type AppProps = {
@@ -589,6 +589,66 @@ export function App({ config, songs }: AppProps) {
     storage.clearGoogleSpreadsheetSelection();
   }
 
+  function exportSorterState(): void {
+    const snapshot = storage.exportSorterState();
+    const blob = new Blob([`${JSON.stringify(snapshot, null, 2)}\n`], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${safeFileName(config.localStoragePrefix)}-sorter-state.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function importSorterState(file: File): void {
+    void file.text()
+      .then((text) => {
+        const snapshot = parseSorterStorageSnapshot(JSON.parse(text) as unknown);
+        if (snapshot.prefix !== config.localStoragePrefix) {
+          throw new Error(`This file is for sorter "${snapshot.prefix}", not "${config.localStoragePrefix}".`);
+        }
+
+        if (!window.confirm("Importing will replace saved state for this sorter. Continue?")) {
+          return;
+        }
+
+        const result = storage.importSorterState(snapshot);
+        reloadStateFromStorage();
+        alert(`Imported ${result.importedKeys.length} localStorage entr${result.importedKeys.length === 1 ? "y" : "ies"}.`);
+      })
+      .catch((error: unknown) => {
+        console.error("Error importing sorter state:", error);
+        alert(error instanceof Error ? error.message : "Could not import sorter state.");
+      });
+  }
+
+  function reloadStateFromStorage(): void {
+    const importedSettings = storage.loadSettings();
+    const importedScores = storage.loadScores();
+    const importedSort = storage.loadSort();
+    const importedGoogleSpreadsheetSelection = storage.loadGoogleSpreadsheetSelection();
+
+    pendingScoreWritebackRef.current.clear();
+    setSettings(importedSettings);
+    setScoresBySongId(importedScores);
+    setSort(importedSort);
+    setScreen(screenFor(importedSort));
+    setGoogleSpreadsheetSelection(importedGoogleSpreadsheetSelection);
+    setSheetScoresBySongId({});
+    setSheetScoreStatus({
+      state: "unavailable",
+      message: importedGoogleSpreadsheetSelection
+        ? "Open the song list to load live sheet scores."
+        : "Choose a Google Sheet in Settings to show live sheet scores.",
+    });
+    setPlaylistMode("in-order");
+    setPlaylistScoreFilter("all");
+    setPlaylistOrder(createPlaylistOrder(resolvedSongs.length, "in-order"));
+    setPlaylistPosition(0);
+    setHistoryOpen(false);
+    setSongListOpen(false);
+  }
+
   function playlistEligibleIndexes(nextFilter: PlaylistScoreFilter = playlistScoreFilter): number[] {
     if (!scoreEnabled || nextFilter === "all") {
       return Array.from({ length: resolvedSongs.length }, (_, index) => index);
@@ -635,6 +695,8 @@ export function App({ config, songs }: AppProps) {
         onChange={updateSettings}
         onChooseGoogleSheet={chooseSheet}
         onClearGoogleSheet={clearSheetSelection}
+        onExportSorterState={exportSorterState}
+        onImportSorterState={importSorterState}
       />
       <HistoryModal
         open={isHistoryOpen}
@@ -849,4 +911,8 @@ function hasMemoryScore(songId: number, scoresBySongId: SongScoresById): boolean
   } catch {
     return false;
   }
+}
+
+function safeFileName(value: string): string {
+  return value.replace(/[^a-z0-9._-]+/gi, "-").replace(/^-+|-+$/g, "") || "sorter";
 }
