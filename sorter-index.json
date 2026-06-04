@@ -4,6 +4,9 @@
       "slug": "ayase",
       "title": "Ayase Sorter",
       "description": "Party rank sorter for Ayase",
+      "tags": [
+        "Artist"
+      ],
       "localStoragePrefix": "ayase",
       "deadline": "2026-06-11T03:59:00.000Z"
     },
