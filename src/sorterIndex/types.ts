@@ -9,5 +9,6 @@ export type SorterIndexEntry = {
   iconUrl?: string;
   sourceTitle?: string;
   sourceIndexUrl?: string;
+  sourceSlug?: string;
   hide?: boolean;
 };
