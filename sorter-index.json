@@ -16,7 +16,8 @@
       "slug": "hasunosora-105",
       "title": "Hasunosora 105th",
       "description": "Party rank sorter for Hasunosora 105th",
-      "localStoragePrefix": "hasunosora-105th-pr"
+      "localStoragePrefix": "hasunosora-105th-pr",
+      "deadline": "2026-06-11T21:59:00.000Z"
     },
     {
       "slug": "mili",
