@@ -35,6 +35,9 @@
       "slug": "symphogear",
       "title": "Symphogear Sorter",
       "description": "Party rank sorter for your custom list of songs.",
+      "tags": [
+        "Franchise"
+      ],
       "localStoragePrefix": "symphogear-anisong",
       "deadline": "2026-06-14T10:00:00.000Z"
     },
