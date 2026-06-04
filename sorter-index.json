@@ -3,37 +3,44 @@
     {
       "slug": "ayase",
       "title": "Ayase Sorter",
-      "description": "Party rank sorter for Ayase"
+      "description": "Party rank sorter for Ayase",
+      "localStoragePrefix": "ayase"
     },
     {
       "slug": "co-shu-nie",
       "title": "Cö shu Nie Sorter",
-      "description": "Party rank sorter for Cö shu Nie"
+      "description": "Party rank sorter for Cö shu Nie",
+      "localStoragePrefix": "co-shu-nie"
     },
     {
       "slug": "hasunosora-105",
       "title": "Hasunosora 105th",
-      "description": "Party rank sorter for Hasunosora 105th"
+      "description": "Party rank sorter for Hasunosora 105th",
+      "localStoragePrefix": "hasunosora-105th-pr"
     },
     {
       "slug": "mili",
       "title": "Mili Sorter",
-      "description": "Party rank sorter for Mili"
+      "description": "Party rank sorter for Mili",
+      "localStoragePrefix": "mili"
     },
     {
       "slug": "princession",
       "title": "Princession Orchestra",
-      "description": "Party rank sorter for Princession Orchestra songs."
+      "description": "Party rank sorter for Princession Orchestra songs.",
+      "localStoragePrefix": "princession-orchestra-pr"
     },
     {
       "slug": "symphogear",
       "title": "Symphogear Sorter",
-      "description": "Party rank sorter for your custom list of songs."
+      "description": "Party rank sorter for your custom list of songs.",
+      "localStoragePrefix": "symphogear-anisong"
     },
     {
       "slug": "wuwa",
       "title": "WuWa OST",
-      "description": "Party rank sorter for WuWa OST"
+      "description": "Party rank sorter for WuWa OST",
+      "localStoragePrefix": "wuwa-ost"
     }
   ],
   "externalSources": [
