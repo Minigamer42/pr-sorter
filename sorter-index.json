@@ -40,7 +40,8 @@
       "slug": "wuwa",
       "title": "WuWa OST",
       "description": "Party rank sorter for WuWa OST",
-      "localStoragePrefix": "wuwa-ost"
+      "localStoragePrefix": "wuwa-ost",
+      "deadline": "2026-05-31T10:00:00.000Z"
     }
   ],
   "externalSources": [
