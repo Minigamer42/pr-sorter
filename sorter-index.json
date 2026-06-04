@@ -30,7 +30,8 @@
       "slug": "princession",
       "title": "Princession Orchestra",
       "description": "Party rank sorter for Princession Orchestra songs.",
-      "localStoragePrefix": "princession-orchestra-pr"
+      "localStoragePrefix": "princession-orchestra-pr",
+      "deadline": "2026-06-11T21:59:00.000Z"
     },
     {
       "slug": "symphogear",
