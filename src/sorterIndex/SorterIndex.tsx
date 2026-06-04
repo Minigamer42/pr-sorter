@@ -13,6 +13,22 @@ type SorterIndexCatalog = {
   externalSources: ExternalSorterSource[];
 };
 
+type SorterIndexGroup = {
+  title: string;
+  subgroups: SorterIndexSubgroup[];
+};
+
+type SorterIndexSubgroup = {
+  title: string;
+  sorters: SorterIndexEntry[];
+};
+
+type SorterProgress = {
+  percent: number;
+  label: string;
+  kind: "in-progress" | "complete";
+};
+
 export function SorterIndex() {
   const [externalSorters, setExternalSorters] = useState<SorterIndexEntry[]>([]);
 
@@ -54,15 +70,20 @@ export function SorterIndex() {
           {sorterGroups.map((group) => (
             <section className="sorter-index-section" key={group.title}>
               <h2 className="sorter-index-section__title">{group.title}</h2>
-              <div className="sorter-index-grid">
-                {group.sorters.map((sorter) => (
-                  <SorterCard
-                    sorter={sorter}
-                    showLocalProgress={!sorter.sourceTitle}
-                    key={`${sorter.sourceTitle ?? "local"}:${sorter.url ?? sorter.slug}`}
-                  />
-                ))}
-              </div>
+              {group.subgroups.map((subgroup) => (
+                <section className="sorter-index-subsection" key={`${group.title}:${subgroup.title}`}>
+                  <h3 className="sorter-index-subsection__title">{subgroup.title}</h3>
+                  <div className="sorter-index-grid">
+                    {subgroup.sorters.map((sorter) => (
+                      <SorterCard
+                        sorter={sorter}
+                        showLocalProgress={!sorter.sourceTitle}
+                        key={`${sorter.sourceTitle ?? "local"}:${sorter.url ?? sorter.slug}`}
+                      />
+                    ))}
+                  </div>
+                </section>
+              ))}
             </section>
           ))}
         </div>
@@ -159,7 +180,7 @@ function formatRelativeDeadline(date: Date): string {
   return `${difference} left`;
 }
 
-function loadSorterProgress(localStoragePrefix: string): { percent: number; label: string } | null {
+function loadSorterProgress(localStoragePrefix: string): SorterProgress | null {
   const raw = localStorage.getItem(`${localStoragePrefix}:sort`);
   if (!raw) {
     return null;
@@ -172,7 +193,7 @@ function loadSorterProgress(localStoragePrefix: string): { percent: number; labe
     }
 
     if (value.current === null && value.groups.length === 1) {
-      return { percent: 100, label: "Complete" };
+      return { percent: 100, label: "Complete", kind: "complete" };
     }
 
     if (value.pickedCount <= 0 && value.history.length === 0) {
@@ -180,7 +201,7 @@ function loadSorterProgress(localStoragePrefix: string): { percent: number; labe
     }
 
     const percent = Math.max(1, Math.min(99, Math.floor((value.pickedCount * 100) / Math.max(1, value.estimatedBattles))));
-    return { percent, label: "In progress" };
+    return { percent, label: "In progress", kind: "in-progress" };
   } catch {
     return null;
   }
@@ -204,9 +225,9 @@ function isStoredSortState(value: unknown): value is {
   );
 }
 
-function groupSorters(entries: SorterIndexEntry[]): { title: string; sorters: SorterIndexEntry[] }[] {
+function groupSorters(entries: SorterIndexEntry[]): SorterIndexGroup[] {
   const localSorters = entries.filter((sorter) => !sorter.sourceTitle);
-  const groups = localSorters.length ? [{ title: "This Collection", sorters: localSorters }] : [];
+  const groups = localSorters.length ? [{ title: "This Collection", subgroups: groupSorterEntries(localSorters, true) }] : [];
   const externalGroups = new Map<string, SorterIndexEntry[]>();
 
   for (const sorter of entries) {
@@ -220,10 +241,82 @@ function groupSorters(entries: SorterIndexEntry[]): { title: string; sorters: So
   }
 
   for (const [title, group] of externalGroups) {
-    groups.push({ title, sorters: group });
+    groups.push({ title, subgroups: groupSorterEntries(group, false) });
   }
 
   return groups;
+}
+
+function groupSorterEntries(entries: SorterIndexEntry[], includeLocalProgress: boolean): SorterIndexSubgroup[] {
+  const now = Date.now();
+  const classified = entries.map((sorter, index) => {
+    const deadlineTime = parsedDeadlineTime(sorter.deadline);
+    const progress = includeLocalProgress ? loadSorterProgress(sorter.localStoragePrefix ?? sorter.slug) : null;
+    const isComplete = progress?.kind === "complete";
+    const isInProgress = progress?.kind === "in-progress";
+    const hasPastDeadline = deadlineTime !== null && deadlineTime < now;
+    const isActive = isInProgress || (deadlineTime !== null && !hasPastDeadline && !isComplete);
+    const isPast = !isActive && (isComplete || hasPastDeadline);
+
+    return {
+      sorter,
+      index,
+      deadlineTime,
+      bucket: isActive ? "active" : isPast ? "past" : "no-deadline",
+    };
+  });
+
+  return [
+    {
+      title: "Active",
+      sorters: classified
+        .filter((entry) => entry.bucket === "active")
+        .sort(compareClassifiedSorters)
+        .map((entry) => entry.sorter),
+    },
+    {
+      title: "Past",
+      sorters: classified
+        .filter((entry) => entry.bucket === "past")
+        .sort(compareClassifiedSorters)
+        .map((entry) => entry.sorter),
+    },
+    {
+      title: "No Deadline",
+      sorters: classified
+        .filter((entry) => entry.bucket === "no-deadline")
+        .sort(compareClassifiedSorters)
+        .map((entry) => entry.sorter),
+    },
+  ].filter((group) => group.sorters.length > 0);
+}
+
+function parsedDeadlineTime(deadline: string | undefined): number | null {
+  if (!deadline) {
+    return null;
+  }
+
+  const time = new Date(deadline).getTime();
+  return Number.isNaN(time) ? null : time;
+}
+
+function compareClassifiedSorters(
+  left: { deadlineTime: number | null; index: number },
+  right: { deadlineTime: number | null; index: number },
+): number {
+  if (left.deadlineTime !== null && right.deadlineTime !== null) {
+    return left.deadlineTime - right.deadlineTime || left.index - right.index;
+  }
+
+  if (left.deadlineTime !== null) {
+    return -1;
+  }
+
+  if (right.deadlineTime !== null) {
+    return 1;
+  }
+
+  return left.index - right.index;
 }
 
 async function discoverExternalSorters(): Promise<SorterIndexEntry[]> {
