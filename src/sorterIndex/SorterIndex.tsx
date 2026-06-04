@@ -9,8 +9,12 @@ type ExternalSorterSource = {
 };
 
 type SorterIndexCatalog = {
-  sorters: SorterIndexEntry[];
+  sorters: LegacyCatalogSorterIndexEntry[];
   externalSources: ExternalSorterSource[];
+};
+
+type LegacyCatalogSorterIndexEntry = SorterIndexEntry & {
+  category?: string;
 };
 
 type SorterIndexGroup = {
@@ -460,13 +464,13 @@ async function readExternalSourceCatalog(
   }
 }
 
-function parseCatalog(value: unknown): SorterIndexEntry[] {
+function parseCatalog(value: unknown): LegacyCatalogSorterIndexEntry[] {
   if (!Array.isArray(value)) {
     return [];
   }
 
-  return value.filter((entry): entry is SorterIndexEntry => {
-    const candidate = entry as Partial<SorterIndexEntry>;
+  return value.filter((entry): entry is LegacyCatalogSorterIndexEntry => {
+    const candidate = entry as Partial<LegacyCatalogSorterIndexEntry>;
     const tags = candidate.tags;
 
     return (
@@ -476,6 +480,7 @@ function parseCatalog(value: unknown): SorterIndexEntry[] {
       typeof candidate.title === "string" &&
       typeof candidate.description === "string" &&
       (tags === undefined || (Array.isArray(tags) && tags.every((tag) => typeof tag === "string"))) &&
+      (candidate.category === undefined || typeof candidate.category === "string") &&
       (candidate.deadline === undefined || typeof candidate.deadline === "string") &&
       (candidate.hide === undefined || typeof candidate.hide === "boolean")
     );
@@ -509,17 +514,25 @@ function parseExternalSources(value: unknown): ExternalSorterSource[] {
   });
 }
 
-function externalizeEntry(entry: SorterIndexEntry, indexUrl: URL, sourceTitle: string): SorterIndexEntry {
+function externalizeEntry(entry: LegacyCatalogSorterIndexEntry, indexUrl: URL, sourceTitle: string): SorterIndexEntry {
+  const { category, tags, ...entryWithoutCategory } = entry;
   const url = entry.url ? new URL(entry.url, indexUrl) : new URL(`${entry.slug}/`, indexUrl);
   const iconUrl = entry.iconUrl ? new URL(entry.iconUrl, indexUrl) : new URL(`${entry.slug}/customize/favicon.ico`, indexUrl);
+  const nextTags = normalizedTags([...(tags ?? []), ...categoryTag(category)]);
 
   return {
-    ...entry,
+    ...entryWithoutCategory,
+    ...(nextTags.length ? { tags: nextTags } : {}),
     slug: `${sourceTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}-${entry.slug}`,
     url: url.toString(),
     iconUrl: iconUrl.toString(),
     sourceTitle: entry.sourceTitle ?? sourceTitle,
   };
+}
+
+function categoryTag(category: string | undefined): string[] {
+  const tag = category?.trim();
+  return tag ? [tag] : [];
 }
 
 function normalizeCollectionUrl(url: URL): URL {
