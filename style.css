@@ -20,6 +20,38 @@ body.sorter-index-body {
   overflow-y: auto;
 }
 
+.sorter-index-tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  width: min(900px, calc(100% - 40px));
+  margin: 4px auto 18px;
+}
+
+.sorter-index-tag {
+  min-height: 34px;
+  padding: 7px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  background: rgba(0, 26, 63, 0.62);
+  color: #f0fff2;
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.2;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.sorter-index-tag:hover,
+.sorter-index-tag:focus-visible,
+.sorter-index-tag--selected {
+  border-color: rgba(160, 255, 172, 0.78);
+  background: rgba(45, 106, 79, 0.82);
+  color: #ffffff;
+  outline: none;
+}
+
 .sorter-index-sections {
   width: min(900px, calc(100% - 40px));
   margin: 18px auto 40px;

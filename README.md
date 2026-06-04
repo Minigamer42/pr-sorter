@@ -49,6 +49,7 @@ export const config = {
   localStoragePrefix: "your-party-rank-sorter",
   title: "Your Custom Party Rank Sorter",
   description: "Party rank sorter for your custom list of songs.",
+  tags: ["finals", "openings"],
   deadline: new Date("2026-06-30T23:59:00+02:00"),
 } satisfies AppConfig;
 ```
@@ -56,6 +57,8 @@ export const config = {
 Change `localStoragePrefix` for each hosted sorter. Browser storage is shared by origin, so two sorters hosted under the same GitHub Pages site can collide if they use the same prefix.
 
 `deadline` is optional. When set, collection index cards show the resolved local date/time and the remaining difference as days, hours, and minutes.
+
+`tags` is optional. When set, the collection index shows clickable tag toggles above the sorter list. Selecting multiple tags filters sorters that have all selected tags.
 
 Set `hide: true` to publish the sorter route without listing it on the collection index or in the public `sorter-index.json` catalog.
 

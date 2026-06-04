@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { loadCustomizeConfig, serializedDeadline } from "./configLoader.js";
+import { loadCustomizeConfig, serializedDeadline, serializedTags } from "./configLoader.js";
 import {
   sortIndexEntries,
   type SorterIndexEntry,
@@ -34,10 +34,12 @@ async function main(): Promise<void> {
     const manifest = await readManifest();
     const config = await loadCustomizeConfig();
     const deadline = serializedDeadline(config);
+    const tags = serializedTags(config);
     const nextEntry = {
       slug,
       title: config.title,
       description: config.description,
+      ...(tags ? { tags } : {}),
       localStoragePrefix: config.localStoragePrefix,
       ...(config.hide ? { hide: true } : {}),
       ...(deadline ? { deadline } : {}),

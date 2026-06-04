@@ -31,6 +31,7 @@ type SorterProgress = {
 
 export function SorterIndex() {
   const [externalSorters, setExternalSorters] = useState<SorterIndexEntry[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   useEffect(() => {
     document.title = "PR Sorters";
@@ -57,8 +58,18 @@ export function SorterIndex() {
     };
   }, []);
 
-  const allSorters = [...sorters, ...externalSorters];
-  const sorterGroups = groupSorters(allSorters);
+  const allSorters = [...sorters, ...externalSorters].filter((sorter) => sorter.hide !== true);
+  const allTags = collectTags(allSorters);
+  const visibleSorters = selectedTags.length
+    ? allSorters.filter((sorter) => hasSelectedTags(sorter, selectedTags))
+    : allSorters;
+  const sorterGroups = groupSorters(visibleSorters);
+
+  function toggleTag(tag: string): void {
+    setSelectedTags((currentTags) =>
+      currentTags.includes(tag) ? currentTags.filter((currentTag) => currentTag !== tag) : [...currentTags, tag],
+    );
+  }
 
   return (
     <div className="main-page main-page--landing sorter-index-page">
@@ -66,27 +77,52 @@ export function SorterIndex() {
         Choose a sorter to start ranking.
       </div>
       {allSorters.length ? (
-        <div className="sorter-index-sections">
-          {sorterGroups.map((group) => (
-            <section className="sorter-index-section" key={group.title}>
-              <h2 className="sorter-index-section__title">{group.title}</h2>
-              {group.subgroups.map((subgroup) => (
-                <section className="sorter-index-subsection" key={`${group.title}:${subgroup.title}`}>
-                  <h3 className="sorter-index-subsection__title">{subgroup.title}</h3>
-                  <div className="sorter-index-grid">
-                    {subgroup.sorters.map((sorter) => (
-                      <SorterCard
-                        sorter={sorter}
-                        showLocalProgress={!sorter.sourceTitle}
-                        key={`${sorter.sourceTitle ?? "local"}:${sorter.url ?? sorter.slug}`}
-                      />
-                    ))}
-                  </div>
+        <>
+          {allTags.length ? (
+            <div className="sorter-index-tags" aria-label="Filter sorters by tag">
+              {allTags.map((tag) => {
+                const selected = selectedTags.includes(tag);
+
+                return (
+                  <button
+                    className={`sorter-index-tag${selected ? " sorter-index-tag--selected" : ""}`}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => toggleTag(tag)}
+                    key={tag}
+                  >
+                    {tag}
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+          {visibleSorters.length ? (
+            <div className="sorter-index-sections">
+              {sorterGroups.map((group) => (
+                <section className="sorter-index-section" key={group.title}>
+                  <h2 className="sorter-index-section__title">{group.title}</h2>
+                  {group.subgroups.map((subgroup) => (
+                    <section className="sorter-index-subsection" key={`${group.title}:${subgroup.title}`}>
+                      <h3 className="sorter-index-subsection__title">{subgroup.title}</h3>
+                      <div className="sorter-index-grid">
+                        {subgroup.sorters.map((sorter) => (
+                          <SorterCard
+                            sorter={sorter}
+                            showLocalProgress={!sorter.sourceTitle}
+                            key={`${sorter.sourceTitle ?? "local"}:${sorter.url ?? sorter.slug}`}
+                          />
+                        ))}
+                      </div>
+                    </section>
+                  ))}
                 </section>
               ))}
-            </section>
-          ))}
-        </div>
+            </div>
+          ) : (
+            <p className="sorter-index-empty">No sorters match the selected tags.</p>
+          )}
+        </>
       ) : (
         <p className="sorter-index-empty">No sorters have been published yet.</p>
       )}
@@ -247,6 +283,31 @@ function groupSorters(entries: SorterIndexEntry[]): SorterIndexGroup[] {
   return groups;
 }
 
+function collectTags(sorters: SorterIndexEntry[]): string[] {
+  const tags = new Set<string>();
+
+  for (const sorter of sorters) {
+    for (const tag of normalizedTags(sorter.tags)) {
+      tags.add(tag);
+    }
+  }
+
+  return [...tags].sort((left, right) => left.localeCompare(right, undefined, { sensitivity: "base" }));
+}
+
+function hasSelectedTags(sorter: SorterIndexEntry, selectedTags: string[]): boolean {
+  const sorterTags = new Set(normalizedTags(sorter.tags));
+  return selectedTags.every((tag) => sorterTags.has(tag));
+}
+
+function normalizedTags(tags: string[] | undefined): string[] {
+  if (!tags) {
+    return [];
+  }
+
+  return Array.from(new Set(tags.map((tag) => tag.trim()).filter(Boolean)));
+}
+
 function groupSorterEntries(entries: SorterIndexEntry[], includeLocalProgress: boolean): SorterIndexSubgroup[] {
   const now = Date.now();
   const classified = entries.map((sorter, index) => {
@@ -405,13 +466,18 @@ function parseCatalog(value: unknown): SorterIndexEntry[] {
   }
 
   return value.filter((entry): entry is SorterIndexEntry => {
+    const candidate = entry as Partial<SorterIndexEntry>;
+    const tags = candidate.tags;
+
     return (
       typeof entry === "object" &&
       entry !== null &&
-      typeof (entry as SorterIndexEntry).slug === "string" &&
-      typeof (entry as SorterIndexEntry).title === "string" &&
-      typeof (entry as SorterIndexEntry).description === "string" &&
-      ((entry as SorterIndexEntry).deadline === undefined || typeof (entry as SorterIndexEntry).deadline === "string")
+      typeof candidate.slug === "string" &&
+      typeof candidate.title === "string" &&
+      typeof candidate.description === "string" &&
+      (tags === undefined || (Array.isArray(tags) && tags.every((tag) => typeof tag === "string"))) &&
+      (candidate.deadline === undefined || typeof candidate.deadline === "string") &&
+      (candidate.hide === undefined || typeof candidate.hide === "boolean")
     );
   });
 }

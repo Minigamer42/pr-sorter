@@ -2,6 +2,7 @@ export type AppConfig = {
   localStoragePrefix: string;
   title: string;
   description: string;
+  tags?: string[];
   hide?: boolean;
   deadline?: Date;
   fallbackAnimeName?: string;

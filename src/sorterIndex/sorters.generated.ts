@@ -5,6 +5,10 @@ export const sorters: SorterIndexEntry[] = [
     "slug": "test",
     "title": "test! Sorter 1",
     "description": "Party rank sorter for your custom list of songs.",
+    "tags": [
+      "test",
+      "test 1"
+    ],
     "localStoragePrefix": "test",
     "deadline": "2026-06-30T21:59:00.000Z",
     "url": "test/",
@@ -14,6 +18,10 @@ export const sorters: SorterIndexEntry[] = [
     "slug": "test-2",
     "title": "test! Sorter 2",
     "description": "Party rank sorter for your custom list of songs.",
+    "tags": [
+      "test",
+      "test 2"
+    ],
     "localStoragePrefix": "test",
     "deadline": "2026-06-30T21:59:00.000Z",
     "url": "test/",
@@ -23,6 +31,10 @@ export const sorters: SorterIndexEntry[] = [
     "slug": "test-3",
     "title": "test! Sorter 3",
     "description": "Party rank sorter for your custom list of songs.",
+    "tags": [
+      "test",
+      "test 3"
+    ],
     "localStoragePrefix": "test",
     "deadline": "2026-06-30T21:59:00.000Z",
     "url": "test/",

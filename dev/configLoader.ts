@@ -16,3 +16,12 @@ export function serializedDeadline(config: AppConfig): string | undefined {
 
   return config.deadline.toISOString();
 }
+
+export function serializedTags(config: AppConfig): string[] | undefined {
+  if (!config.tags) {
+    return undefined;
+  }
+
+  const tags = Array.from(new Set(config.tags.map((tag) => tag.trim()).filter(Boolean)));
+  return tags.length ? tags : undefined;
+}
