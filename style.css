@@ -107,6 +107,35 @@ body.sorter-index-body {
   margin: 0;
 }
 
+.sorter-index-card__deadline {
+  display: grid;
+  gap: 3px;
+  margin-top: 12px;
+  color: #f0fff2;
+  font-size: 1.5vh;
+  line-height: 1.25;
+}
+
+.sorter-index-card__deadline-label {
+  color: #a0ffac;
+  font-weight: bold;
+}
+
+.sorter-index-card__deadline--future,
+.sorter-index-card__deadline--future .sorter-index-card__deadline-label {
+  color: #b8ffbf;
+}
+
+.sorter-index-card__deadline--soon,
+.sorter-index-card__deadline--soon .sorter-index-card__deadline-label {
+  color: #ffd166;
+}
+
+.sorter-index-card__deadline--past,
+.sorter-index-card__deadline--past .sorter-index-card__deadline-label {
+  color: #ff9b9b;
+}
+
 .sorter-index-card__progress {
   margin-top: 14px;
 }

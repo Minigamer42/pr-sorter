@@ -3,6 +3,7 @@ export type SorterIndexEntry = {
   title: string;
   description: string;
   localStoragePrefix?: string;
+  deadline?: string;
   url?: string;
   iconUrl?: string;
   sourceTitle?: string;

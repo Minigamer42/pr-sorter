@@ -77,6 +77,7 @@ function SorterCard({ sorter, showLocalProgress }: { sorter: SorterIndexEntry; s
   const href = sorter.url ?? `${sorter.slug}/`;
   const iconUrl = sorter.iconUrl ?? `${sorter.slug}/customize/favicon.ico`;
   const progress = showLocalProgress ? loadSorterProgress(sorter.localStoragePrefix ?? sorter.slug) : null;
+  const deadline = formatDeadline(sorter.deadline);
 
   return (
     <a className="sorter-index-card" href={href}>
@@ -84,6 +85,13 @@ function SorterCard({ sorter, showLocalProgress }: { sorter: SorterIndexEntry; s
       <div className="sorter-index-card__body">
         <h3>{sorter.title}</h3>
         <p>{sorter.description}</p>
+        {deadline ? (
+          <div className={`sorter-index-card__deadline sorter-index-card__deadline--${deadline.kind}`}>
+            <span className="sorter-index-card__deadline-label">Deadline</span>
+            <time dateTime={deadline.iso}>{deadline.absolute}</time>
+            <span>{deadline.relative}</span>
+          </div>
+        ) : null}
         {progress ? (
           <div className="sorter-index-card__progress" aria-label={`${progress.label}: ${progress.percent}%`}>
             <div className="sorter-index-card__progress-header">
@@ -98,6 +106,57 @@ function SorterCard({ sorter, showLocalProgress }: { sorter: SorterIndexEntry; s
       </div>
     </a>
   );
+}
+
+function formatDeadline(deadline: string | undefined): {
+  iso: string;
+  absolute: string;
+  relative: string;
+  kind: "future" | "soon" | "past";
+} | null {
+  if (!deadline) {
+    return null;
+  }
+
+  const date = new Date(deadline);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  const diffMs = date.getTime() - Date.now();
+
+  return {
+    iso: date.toISOString(),
+    absolute: new Intl.DateTimeFormat(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    }).format(date),
+    relative: formatRelativeDeadline(date),
+    kind: diffMs < 0 ? "past" : diffMs < 7 * 24 * 60 * 60 * 1000 ? "soon" : "future",
+  };
+}
+
+function formatRelativeDeadline(date: Date): string {
+  const diffMs = date.getTime() - Date.now();
+  const absMinutes = Math.floor(Math.abs(diffMs) / (60 * 1000));
+  const days = Math.floor(absMinutes / (24 * 60));
+  const hours = Math.floor((absMinutes % (24 * 60)) / 60);
+  const minutes = absMinutes % 60;
+  const parts = [
+    days > 0 ? `${days}d` : null,
+    days > 0 || hours > 0 ? `${hours}h` : null,
+    `${minutes}m`,
+  ];
+  const difference = parts.filter((part): part is string => part !== null).join(" ");
+
+  if (diffMs < 0) {
+    return `${difference} ago`;
+  }
+
+  return `${difference} left`;
 }
 
 function loadSorterProgress(localStoragePrefix: string): { percent: number; label: string } | null {
@@ -258,7 +317,8 @@ function parseCatalog(value: unknown): SorterIndexEntry[] {
       entry !== null &&
       typeof (entry as SorterIndexEntry).slug === "string" &&
       typeof (entry as SorterIndexEntry).title === "string" &&
-      typeof (entry as SorterIndexEntry).description === "string"
+      typeof (entry as SorterIndexEntry).description === "string" &&
+      ((entry as SorterIndexEntry).deadline === undefined || typeof (entry as SorterIndexEntry).deadline === "string")
     );
   });
 }

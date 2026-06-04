@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
-import { copyFile, cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { copyFile, cp, mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { loadCustomizeConfig, serializedDeadline } from "./configLoader.js";
 import { writePublicSorterIndexCatalog } from "./sorterIndexCatalog.js";
 
 const generatedModulePath = path.resolve(process.cwd(), "src", "sorterIndex", "sorters.generated.ts");
@@ -27,15 +28,14 @@ async function main(): Promise<void> {
 }
 
 async function writePreviewSorterIndex(): Promise<void> {
-  const configSource = await readFile(path.resolve(process.cwd(), "customize", "config.ts"), "utf8");
-  const title = readStringProperty(configSource, "title") ?? "Local Sorter";
-  const description = readStringProperty(configSource, "description") ?? "Open this sorter.";
-  const localStoragePrefix = readStringProperty(configSource, "localStoragePrefix") ?? previewSlug;
+  const config = await loadCustomizeConfig();
+  const deadline = serializedDeadline(config);
   const localSorter = Array.from({ length: 3 }, (_, index) => ({
     slug: index === 0 ? previewSlug : `${previewSlug}-${index + 1}`,
-    title: `${title} ${index + 1}`,
-    description,
-    localStoragePrefix,
+    title: `${config.title} ${index + 1}`,
+    description: config.description,
+    localStoragePrefix: config.localStoragePrefix,
+    ...(deadline ? { deadline } : {}),
     url: `${previewSlug}/`,
     iconUrl: `${previewSlug}/customize/favicon.ico`,
   }));
@@ -53,19 +53,6 @@ async function copyLocalFavicon(outputRoot: string): Promise<void> {
   const outputDir = path.join(outputRoot, "customize");
   await mkdir(outputDir, { recursive: true });
   await copyFile(path.resolve(process.cwd(), "customize", "favicon.ico"), path.join(outputDir, "favicon.ico"));
-}
-
-function readStringProperty(source: string, propertyName: string): string | null {
-  const match = new RegExp(`${propertyName}\\s*:\\s*(['"])((?:\\\\.|(?!\\1).)*)\\1`, "s").exec(source);
-  if (!match) {
-    return null;
-  }
-
-  return match[2]
-    .replace(/\\'/g, "'")
-    .replace(/\\"/g, '"')
-    .replace(/\\n/g, "\n")
-    .replace(/\\\\/g, "\\");
 }
 
 function withEnv(overrides: Record<string, string>): Record<string, string> {

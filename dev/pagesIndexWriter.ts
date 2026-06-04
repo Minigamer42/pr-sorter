@@ -1,5 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { loadCustomizeConfig, serializedDeadline } from "./configLoader.js";
 import { sortIndexEntries, type SorterIndexEntry, writePublicSorterIndexCatalog } from "./sorterIndexCatalog.js";
 
 const manifestPath = path.resolve(process.cwd(), ".pages-tools", "sorters.json");
@@ -25,11 +26,15 @@ async function main(): Promise<void> {
     }
 
     const manifest = await readManifest();
-    const configSource = await readFile(path.resolve(process.cwd(), "customize", "config.ts"), "utf8");
-    const title = readStringProperty(configSource, "title") ?? `${slug} Sorter`;
-    const description = readStringProperty(configSource, "description") ?? "Open this sorter.";
-    const localStoragePrefix = readStringProperty(configSource, "localStoragePrefix") ?? slug;
-    const nextEntry = { slug, title, description, localStoragePrefix };
+    const config = await loadCustomizeConfig();
+    const deadline = serializedDeadline(config);
+    const nextEntry = {
+      slug,
+      title: config.title,
+      description: config.description,
+      localStoragePrefix: config.localStoragePrefix,
+      ...(deadline ? { deadline } : {}),
+    };
     const nextManifest = [...manifest.filter((entry) => entry.slug !== slug), nextEntry].sort((left, right) =>
       left.title.localeCompare(right.title, undefined, { sensitivity: "base" }),
     );
@@ -68,17 +73,4 @@ async function writeGeneratedModule(manifest: SorterIndexEntry[]): Promise<void>
     `import type { SorterIndexEntry } from "./types";\n\nexport const sorters: SorterIndexEntry[] = ${JSON.stringify(manifest, null, 2)};\n`,
     "utf8",
   );
-}
-
-function readStringProperty(source: string, propertyName: string): string | null {
-  const match = new RegExp(`${propertyName}\\s*:\\s*(['"])((?:\\\\.|(?!\\1).)*)\\1`, "s").exec(source);
-  if (!match) {
-    return null;
-  }
-
-  return match[2]
-    .replace(/\\'/g, "'")
-    .replace(/\\"/g, '"')
-    .replace(/\\n/g, "\n")
-    .replace(/\\\\/g, "\\");
 }
