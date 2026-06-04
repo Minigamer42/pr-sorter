@@ -58,7 +58,7 @@ jobs:
             git checkout "origin/$branch" -- customize
             node .pages-tools/pagesIndexWriter.js add "$slug"
 
-            npm run build
+            npm run build:ci
             mkdir -p "pages-dist/$slug"
             cp -a dist/. "pages-dist/$slug/"
             mkdir -p "pages-dist/$slug/customize"
@@ -68,7 +68,7 @@ jobs:
           node .pages-tools/pagesIndexWriter.js write
           git checkout HEAD -- customize
           rm -rf dist
-          VITE_SORTER_INDEX=true npm run build
+          VITE_SORTER_INDEX=true npm run build:ci
           cp -a dist/. pages-dist/
 
       - name: Deploy all builds
@@ -114,7 +114,7 @@ jobs:
           rm -rf customize dist pages-dist
           git checkout "origin/$branch" -- customize
 
-          npm run build
+          npm run build:ci
           mkdir -p "pages-dist/$slug"
           cp -a dist/. "pages-dist/$slug/"
           mkdir -p "pages-dist/$slug/customize"
@@ -134,7 +134,7 @@ jobs:
 
           git checkout HEAD -- customize
           rm -rf dist
-          VITE_SORTER_INDEX=true npm run build
+          VITE_SORTER_INDEX=true npm run build:ci
           cp -a dist/. pages-dist/
 
       - name: Deploy sorter build

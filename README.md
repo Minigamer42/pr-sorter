@@ -230,19 +230,25 @@ Refreshing the page keeps both the selected spreadsheet and the stored OAuth acc
 
 ## 9. Build And Preview
 
-Run the production build:
+Build the local Pages-style output:
 
 ```bash
 npm run build
 ```
 
-Build and preview the local Pages-style output:
+Preview that same output:
 
 ```bash
 npm run preview
 ```
 
 This serves the sorter index at `/` and the local sorter at `/test/`.
+
+For CI/deployment jobs that need a direct sorter build at the output root, use:
+
+```bash
+npm run build:ci
+```
 
 ## 10. Deploy To GitHub Pages
 
