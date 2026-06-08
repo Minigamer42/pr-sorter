@@ -62,6 +62,15 @@
         "Franchise"
       ],
       "deadline": "2026-05-31T10:00:00.000Z"
+    },
+    {
+      "slug": "yorushika",
+      "title": "Yorushika",
+      "description": "Party rank sorter for Yorushika anime songs",
+      "tags": [
+        "Artist"
+      ],
+      "deadline": "2026-06-09T21:59:00.000Z"
     }
   ],
   "externalSources": [
