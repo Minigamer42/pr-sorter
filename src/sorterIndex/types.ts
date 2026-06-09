@@ -1,20 +1,20 @@
 export type SorterIndexEntry = {
-  slug: string;
-  title: string;
-  description: string;
-  tags?: string[];
-  localStoragePrefix?: string;
-  deadline?: string;
-  url?: string;
-  iconUrl?: string;
-  sourceTitle?: string;
-  sourceIndexUrl?: string;
-  sourceSlug?: string;
-  hide?: boolean;
+    slug: string;
+    title: string;
+    description: string;
+    tags?: string[];
+    localStoragePrefix?: string;
+    deadline?: string;
+    url?: string;
+    iconUrl?: string;
+    sourceTitle?: string;
+    sourceIndexUrl?: string;
+    sourceSlug?: string;
+    hide?: boolean;
 };
 
 export type ExternalSorterSource = {
-  title: string;
-  indexUrl: string;
-  excludedSorterSlugs?: string[];
+    title: string;
+    indexUrl: string;
+    excludedSorterSlugs?: string[];
 };

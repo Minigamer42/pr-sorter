@@ -20,13 +20,13 @@ type SettingsModalProps = {
 const regions: { value: Region; label: string }[] = [
     {value: 'eu', label: 'Europe'},
     {value: 'naw', label: 'NA West'},
-    {value: 'nae', label: 'NA East'}
+    {value: 'nae', label: 'NA East'},
 ];
 
 const mediaFormats: { value: MediaFormat; label: string }[] = [
     {value: 'video', label: 'Video'},
     {value: 'audio', label: 'Audio'},
-    {value: 'full', label: 'Full songs'}
+    {value: 'full', label: 'Full songs'},
 ];
 
 const sorterAutoPlayModes: { value: SorterAutoPlayMode; label: string }[] = [
@@ -34,7 +34,7 @@ const sorterAutoPlayModes: { value: SorterAutoPlayMode; label: string }[] = [
     {value: 'left', label: 'Left'},
     {value: 'right', label: 'Right'},
     {value: 'picked', label: 'Picked side'},
-    {value: 'higher-score', label: 'Higher score'}
+    {value: 'higher-score', label: 'Higher score'},
 ];
 
 export function SettingsModal({
@@ -50,7 +50,7 @@ export function SettingsModal({
     onChooseGoogleSheet,
     onClearGoogleSheet,
     onExportSorterState,
-    onImportSorterState
+    onImportSorterState,
 }: SettingsModalProps) {
     const importInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -108,7 +108,7 @@ export function SettingsModal({
                                 const value = event.currentTarget.valueAsNumber;
                                 onChange({
                                     ...settings,
-                                    autoSkipScoreDifference: Number.isFinite(value) ? Math.min(10, Math.max(0, value)) : 10
+                                    autoSkipScoreDifference: Number.isFinite(value) ? Math.min(10, Math.max(0, value)) : 10,
                                 });
                             }}
                         />
@@ -117,7 +117,8 @@ export function SettingsModal({
                 <div className="option-group">
                     <p>
                         Sorter autoplay:
-                        <span className="help-icon" data-tooltip="Chooses which song starts autoplay for each comparison. After that, autoplay swaps between the two songs until sorting moves to another comparison."
+                        <span className="help-icon"
+                              data-tooltip="Chooses which song starts autoplay for each comparison. After that, autoplay swaps between the two songs until sorting moves to another comparison."
                               aria-label="Sorter autoplay help"
                         >?</span>
                     </p>
