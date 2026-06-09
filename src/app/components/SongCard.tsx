@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Media } from "../../media";
 import type { CurrentSongSortInfo, SortChoice } from "../../sorter";
 import type { ResolvedSong } from "../../songs";
@@ -30,16 +31,27 @@ export function SongCard({
   onPick,
   onScoreChange,
 }: SongCardProps) {
+  const [mediaRemountKey, setMediaRemountKey] = useState(0);
+
   return (
     <div className={`music-card${scoreEnabled ? " music-card--scored" : ""}`}>
       <div data-slot="media">
         <Media
-          key={`${song.id}:${settings.mediaFormat}:${settings.region}:${autoPlay ? autoPlayKey : 0}`}
+          key={`${song.id}:${settings.mediaFormat}:${settings.region}:${autoPlay ? autoPlayKey : 0}:${mediaRemountKey}`}
           song={song}
           settings={settings}
           autoPlay={autoPlay}
           onEnded={autoPlay ? () => onAutoPlayEnded(side) : undefined}
         />
+        <button
+          type="button"
+          className="media-remount-button"
+          onClick={() => setMediaRemountKey((key) => key + 1)}
+          aria-label={`Remount ${song.name} media player`}
+          title="Remount player"
+        >
+          &#8635;
+        </button>
       </div>
       <div className="anime">{song.anime}</div>
       <div className="song">

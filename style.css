@@ -833,7 +833,28 @@ body.sorter-index-body {
   background-color: #45a049;
 }
 
+.music-card .media-remount-button {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 1;
+  width: 24px;
+  height: 24px;
+  min-height: 24px;
+  padding: 0;
+  background-color: transparent;
+  color: #fcffef;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.music-card .media-remount-button:hover,
+.music-card .media-remount-button:focus-visible {
+  background-color: rgba(255, 255, 255, 0.14);
+}
+
 .music-card [data-slot="media"] {
+  position: relative;
   height: 70%;
 }
 
