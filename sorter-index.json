@@ -80,7 +80,11 @@
     },
     {
       "title": "Tutti",
-      "indexUrl": "https://amq-tutti.github.io/pr-sorter/"
+      "indexUrl": "https://amq-tutti.github.io/pr-sorter/",
+      "excludedSorterSlugs": [
+        "yorushika",
+        "princession-orchestra"
+      ]
     }
   ]
 }
