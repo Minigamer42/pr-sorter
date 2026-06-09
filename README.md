@@ -301,7 +301,7 @@ That catalog contains both the sorters hosted by that repository and the externa
 }
 ```
 
-To include another repository that uses the same template, add its Pages index to `src/sorterIndex/externalSorterSources.json`. When the index page loads, it reads `sorter-index.json` from each configured source. This lets collections discover other collections through each other without rebuilding every site. Already visited collections and already found sorter URLs are ignored, and if this repository's own GitHub Pages URL is listed, the page skips it so the collection is not duplicated.
+To include another repository that uses the same template, add its Pages index to `src/sorterIndex/externalSorterSources.ts`. When the index page loads, it reads `sorter-index.json` from each configured source. This lets collections discover other collections through each other without rebuilding every site. Already visited collections and already found sorter URLs are ignored, and if this repository's own GitHub Pages URL is listed, the page skips it so the collection is not duplicated.
 
 In repository settings:
 

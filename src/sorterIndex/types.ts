@@ -12,3 +12,9 @@ export type SorterIndexEntry = {
   sourceSlug?: string;
   hide?: boolean;
 };
+
+export type ExternalSorterSource = {
+  title: string;
+  indexUrl: string;
+  excludedSorterSlugs?: string[];
+};

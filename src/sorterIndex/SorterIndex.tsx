@@ -1,13 +1,7 @@
 import { useEffect, useState } from "react";
-import externalSorterSources from "./externalSorterSources.json";
+import { externalSorterSources } from "./externalSorterSources";
 import { sorters } from "./sorters.generated";
-import type { SorterIndexEntry } from "./types";
-
-type ExternalSorterSource = {
-  title: string;
-  indexUrl: string;
-  catalogUrl?: string;
-};
+import type { ExternalSorterSource, SorterIndexEntry } from "./types";
 
 type SorterIndexCatalog = {
   sorters: LegacyCatalogSorterIndexEntry[];
@@ -478,7 +472,9 @@ async function discoverExternalSorters(): Promise<SorterIndexEntry[]> {
     visitedSourceUrls.add(sourceKey);
 
     const sourceCatalog = await readExternalSourceCatalog(source, sourceUrl, visitedCatalogUrls);
+    const excludedSorterSlugs = new Set(source.excludedSorterSlugs ?? []);
     const sourceSorters = sourceCatalog.sorters
+      .filter((entry) => !excludedSorterSlugs.has(entry.slug))
       .map((entry) => externalizeEntry(entry, sourceUrl, source.title))
       .filter((entry) => {
         const key = entry.url ?? entry.slug;
@@ -503,17 +499,17 @@ async function readExternalSourceCatalog(
   visitedCatalogUrls: Set<string>,
 ): Promise<SorterIndexCatalog> {
   try {
-    const catalogUrl = source.catalogUrl ? new URL(source.catalogUrl, sourceUrl) : new URL("sorter-index.json", sourceUrl);
-    const catalogKey = catalogUrl.toString();
+    const sorterIndexUrl = new URL("sorter-index.json", sourceUrl);
+    const catalogKey = sorterIndexUrl.toString();
     if (visitedCatalogUrls.has(catalogKey)) {
       return { sorters: [], externalSources: [] };
     }
 
     visitedCatalogUrls.add(catalogKey);
 
-    const response = await fetch(catalogUrl);
+    const response = await fetch(sorterIndexUrl);
     if (!response.ok) {
-      throw new Error(`${catalogUrl.toString()} returned ${response.status}.`);
+      throw new Error(`${sorterIndexUrl.toString()} returned ${response.status}.`);
     }
 
     return parseSorterIndexCatalog(await response.json());
@@ -563,12 +559,18 @@ function parseExternalSources(value: unknown): ExternalSorterSource[] {
   }
 
   return value.filter((source): source is ExternalSorterSource => {
+    if (typeof source !== "object" || source === null) {
+      return false;
+    }
+
+    const candidate = source as ExternalSorterSource;
+    const excludedSorterSlugs = candidate.excludedSorterSlugs;
+
     return (
-      typeof source === "object" &&
-      source !== null &&
-      typeof (source as ExternalSorterSource).title === "string" &&
-      typeof (source as ExternalSorterSource).indexUrl === "string" &&
-      ((source as ExternalSorterSource).catalogUrl === undefined || typeof (source as ExternalSorterSource).catalogUrl === "string")
+      typeof candidate.title === "string" &&
+      typeof candidate.indexUrl === "string" &&
+      (excludedSorterSlugs === undefined ||
+        (Array.isArray(excludedSorterSlugs) && excludedSorterSlugs.every((slug) => typeof slug === "string")))
     );
   });
 }

@@ -1,5 +1,7 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { externalSorterSources } from "../src/sorterIndex/externalSorterSources.js";
+import type { ExternalSorterSource } from "../src/sorterIndex/types.js";
 
 export type SorterIndexEntry = {
   slug: string;
@@ -14,19 +16,12 @@ export type SorterIndexManifestEntry = SorterIndexEntry & {
   hide?: boolean;
 };
 
-type ExternalSorterSource = {
-  title: string;
-  indexUrl: string;
-  catalogUrl?: string;
-};
-
 type PublicSorterIndexEntry = Omit<SorterIndexEntry, "localStoragePrefix">;
 
-const externalSourcesPath = path.resolve(process.cwd(), "src", "sorterIndex", "externalSorterSources.json");
 const publicCatalogPath = path.resolve(process.cwd(), "public", "sorter-index.json");
 
 export async function writePublicSorterIndexCatalog(sorters: SorterIndexManifestEntry[]): Promise<void> {
-  const externalSources = await readExternalSources();
+  const externalSources = readExternalSources();
   const visibleSorters = publicIndexEntries(sorters);
 
   await mkdir(path.dirname(publicCatalogPath), { recursive: true });
@@ -47,12 +42,6 @@ function publicIndexEntries(entries: SorterIndexManifestEntry[]): PublicSorterIn
   return visibleIndexEntries(entries).map(({ localStoragePrefix: _localStoragePrefix, ...entry }) => entry);
 }
 
-async function readExternalSources(): Promise<ExternalSorterSource[]> {
-  try {
-    const parsed = JSON.parse(await readFile(externalSourcesPath, "utf8")) as ExternalSorterSource[];
-
-    return parsed.filter((source) => source.title && source.indexUrl);
-  } catch {
-    return [];
-  }
+function readExternalSources(): ExternalSorterSource[] {
+  return externalSorterSources.filter((source) => source.title && source.indexUrl);
 }

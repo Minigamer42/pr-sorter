@@ -1,9 +1,8 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { localCustomizeWriter } from './dev/localCustomizeWriter';
+import { externalSorterSources } from './src/sorterIndex/externalSorterSources';
 import type { Plugin } from 'vite';
-import { readFileSync } from 'node:fs';
-import path from 'node:path';
 
 const activeRoute = process.env.VITE_PAGES_PREVIEW === 'true'
     ? '/src/routes/PagesPreviewRoute.tsx'
@@ -42,29 +41,15 @@ function externalSorterSourceFrameSrc(): Plugin {
 }
 
 function externalSorterSourceOrigins(): string[] {
-    try {
-        const sourcesPath = path.resolve(process.cwd(), 'src', 'sorterIndex', 'externalSorterSources.json');
-        const parsed = JSON.parse(readFileSync(sourcesPath, 'utf8')) as unknown;
-        if (!Array.isArray(parsed)) {
-            return [];
-        }
-
-        return parsed
-            .map((source) => {
-                if (typeof source !== 'object' || source === null || typeof (source as { indexUrl?: unknown }).indexUrl !== 'string') {
-                    return null;
-                }
-
-                try {
-                    return new URL((source as { indexUrl: string }).indexUrl).origin;
-                } catch {
-                    return null;
-                }
-            })
-            .filter((origin): origin is string => origin !== null);
-    } catch {
-        return [];
-    }
+    return externalSorterSources
+        .map((source) => {
+            try {
+                return new URL(source.indexUrl).origin;
+            } catch {
+                return null;
+            }
+        })
+        .filter((origin): origin is string => origin !== null);
 }
 
 function pagesPreviewAssetRewrite(): Plugin {
