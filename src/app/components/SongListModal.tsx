@@ -179,7 +179,7 @@ export function SongListModal({
                         onClick={onWriteSheetScores}
                         disabled={!canWriteSheetScores || isWritingSheetScores}
                     >
-                        {isWritingSheetScores ? 'Writing sheet scores...' : 'Write sheet scores'}
+                        {isWritingSheetScores ? 'Writing to spreadsheet...' : 'Write to spreadsheet'}
                     </button>
                     <button className="close-button" type="button" onClick={onClose}>
                         Close

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { canUndo, choose, chooseAutomatic, createSort, currentBattle, isComplete, pickHistory, progressPercentage, ranksBySongId, type SortChoice, type SortState, undo } from '../sorter';
 import { GoogleAuthenticationRequiredError, GooglePickerCanceledError, GoogleWritebackError } from '../google/types';
-import { chooseGoogleSpreadsheet, loadScoresFromGoogleSheet, writeRanksToGoogleSheet, writeScoresToGoogleSheet } from '../google/googleSheetsWriteback';
+import { chooseGoogleSpreadsheet, loadScoresFromGoogleSheet, writePartialRanksToGoogleSheet, writeRanksToGoogleSheet, writeScoresToGoogleSheet } from '../google/googleSheetsWriteback';
 import { resolveSongAnime, type Song } from '../songs';
 import { Controls } from './components/Controls';
 import { Duel } from './components/Duel';
@@ -12,6 +12,7 @@ import { Results } from './components/Results';
 import { SettingsModal } from './components/SettingsModal';
 import { SongListModal } from './components/SongListModal';
 import { automaticChoiceForCurrentBattle } from './internal/automaticChoice';
+import { projectedSongSortInfos } from './internal/projectedSortInfo';
 import { isScoreEnabled, normalizeScore } from './internal/songScores';
 import { createStorage, parseSorterStorageSnapshot } from './storage';
 import type { AppConfig, GoogleSpreadsheetSelection, SavedProgressKind, Screen, Settings, SongScoresById, SorterAutoPlayMode } from './types';
@@ -68,6 +69,9 @@ export function App({config, songs}: AppProps) {
     );
     const pendingScoreWritebackRef = useRef<Map<number, number>>(new Map());
     const scoreWritebackQueueRef = useRef<Promise<void>>(Promise.resolve());
+    const lastEagerRankWritebackRef = useRef<Map<number, number>>(new Map());
+    const lastEagerRankSpreadsheetIdRef = useRef<string | null>(null);
+    const eagerRankWritebackQueueRef = useRef<Promise<void>>(Promise.resolve());
 
     useEffect(() => {
         document.title = config.title;
@@ -183,6 +187,7 @@ export function App({config, songs}: AppProps) {
         storage.saveSort(nextSort);
         setSorterAutoPlayForSort(nextSort, settings, scoresBySongId, {previousBattle, choice});
         flushPendingScoreWriteback();
+        void queueFixedRankWriteback(nextSort, scoresBySongId, settings);
     }
 
     function undoPick(): void {
@@ -372,6 +377,62 @@ export function App({config, songs}: AppProps) {
             });
     }
 
+    function queueFixedRankWriteback(
+        currentSort: SortState | null,
+        currentScoresBySongId: SongScoresById,
+        currentSettings: Settings,
+        options: { allowAuthPrompt?: boolean; reportErrors?: boolean } = {},
+    ): Promise<number> {
+        const writebackConfig = googleWritebackConfig();
+        if (!currentSort || !writebackConfig || !googleSpreadsheetSelection) {
+            return Promise.resolve(0);
+        }
+
+        const spreadsheet = googleSpreadsheetSelection;
+        if (lastEagerRankSpreadsheetIdRef.current !== spreadsheet.id) {
+            lastEagerRankWritebackRef.current.clear();
+            lastEagerRankSpreadsheetIdRef.current = spreadsheet.id;
+        }
+
+        const fixedRanks = fixedProjectedRanksBySongId(currentSort, resolvedSongs, currentScoresBySongId, currentSettings, scoreEnabled);
+        const ranksToWrite = changedRanks(fixedRanks, lastEagerRankWritebackRef.current);
+        if (ranksToWrite.size === 0) {
+            return Promise.resolve(0);
+        }
+
+        const queuedWrite = eagerRankWritebackQueueRef.current
+            .catch(() => undefined)
+            .then(async () => {
+                try {
+                    const writtenCount = await writePartialRanksToGoogleSheet(writebackConfig, ranksToWrite, songIds, spreadsheet, {
+                        allowAuthPrompt: options.allowAuthPrompt ?? false,
+                    });
+
+                    if (lastEagerRankSpreadsheetIdRef.current === spreadsheet.id) {
+                        for (const [songId, rank] of ranksToWrite.entries()) {
+                            lastEagerRankWritebackRef.current.set(songId, rank);
+                        }
+                    }
+
+                    return writtenCount;
+                } catch (error) {
+                    if (options.allowAuthPrompt === false && isAuthenticationWritebackError(error)) {
+                        return 0;
+                    }
+
+                    console.error('Error writing fixed ranks to Google Sheet:', error);
+                    if (options.reportErrors) {
+                        throw error;
+                    }
+
+                    return 0;
+                }
+            });
+
+        eagerRankWritebackQueueRef.current = queuedWrite.then(() => undefined, () => undefined);
+        return queuedWrite;
+    }
+
     function resolveAutoSkips(
         currentSort: SortState,
         currentScoresBySongId: SongScoresById,
@@ -513,48 +574,67 @@ export function App({config, songs}: AppProps) {
     }
 
     function writeSongListScoresToSheet(): void {
-        if (!scoreEnabled) {
-            alert('Score support is disabled for this sorter.');
-            return;
-        }
-
         const writebackConfig = googleWritebackConfig();
-        if (!writebackConfig?.scoreColumnHeader) {
-            alert('Google score writeback is not configured.');
+        if (!writebackConfig) {
+            alert('Google integration is not configured.');
             return;
         }
 
         if (!googleSpreadsheetSelection) {
-            alert('Choose a Google Sheet in Settings before writing scores.');
+            alert('Choose a Google Sheet in Settings before writing to the spreadsheet.');
             return;
         }
 
         let normalizedScoresBySongId: Map<number, number> | undefined;
-        try {
-            normalizedScoresBySongId = normalizedScoresForWriteback(scoresBySongId);
-        } catch (error) {
-            alert(error instanceof Error ? error.message : 'Scores must be numbers from 0 to 10.');
-            return;
-        }
+        if (scoreEnabled) {
+            if (!writebackConfig.scoreColumnHeader) {
+                alert('Google score writeback is not configured.');
+                return;
+            }
 
-        if (!normalizedScoresBySongId) {
-            alert('There are no scores to write.');
-            return;
+            try {
+                normalizedScoresBySongId = normalizedScoresForWriteback(scoresBySongId);
+            } catch (error) {
+                alert(error instanceof Error ? error.message : 'Scores must be numbers from 0 to 10.');
+                return;
+            }
         }
 
         setWritingSheetScores(true);
-        void writeScoresToGoogleSheet(writebackConfig, googleSpreadsheetSelection, normalizedScoresBySongId)
-            .then(() => {
-                pendingScoreWritebackRef.current.clear();
-                setSheetScoresBySongId((current) => ({
-                    ...current,
-                    ...scoresRecordFromNumericScores(normalizedScoresBySongId),
-                }));
-                setSheetScoreStatus({state: 'ready', message: `Updated sheet scores in ${googleSpreadsheetSelection.name}.`});
+        const scoreWrite = normalizedScoresBySongId && writebackConfig.scoreColumnHeader
+            ? writeScoresToGoogleSheet(writebackConfig, googleSpreadsheetSelection, normalizedScoresBySongId)
+            : Promise.resolve(0);
+
+        void scoreWrite
+            .then(async () => {
+                if (normalizedScoresBySongId) {
+                    pendingScoreWritebackRef.current.clear();
+                    setSheetScoresBySongId((current) => ({
+                        ...current,
+                        ...scoresRecordFromNumericScores(normalizedScoresBySongId),
+                    }));
+                }
+
+                const fixedRankWriteCount = await queueFixedRankWriteback(sort, scoresBySongId, settings, {
+                    allowAuthPrompt: true,
+                    reportErrors: true,
+                });
+
+                if (normalizedScoresBySongId) {
+                    setSheetScoreStatus({state: 'ready', message: `Updated sheet scores in ${googleSpreadsheetSelection.name}.`});
+                    return;
+                }
+
+                if (fixedRankWriteCount > 0) {
+                    setSheetScoreStatus({state: 'ready', message: `Updated fixed ranks in ${googleSpreadsheetSelection.name}.`});
+                    return;
+                }
+
+                alert('There are no scores or fixed ranks to write.');
             })
             .catch((error: unknown) => {
-                console.error('Error writing scores to Google Sheet:', error);
-                alert(error instanceof GoogleWritebackError ? error.message : 'Could not write scores to Google Sheet.');
+                console.error('Error writing to Google Sheet:', error);
+                alert(error instanceof GoogleWritebackError ? error.message : 'Could not write to Google Sheet.');
             })
             .finally(() => {
                 setWritingSheetScores(false);
@@ -738,7 +818,7 @@ export function App({config, songs}: AppProps) {
                 sheetScoresBySongId={sheetScoresBySongId}
                 sheetScoreStatus={sheetScoreStatus}
                 googleSpreadsheetSelection={googleSpreadsheetSelection}
-                canWriteSheetScores={Boolean(scoreEnabled && googleWritebackConfig()?.scoreColumnHeader && googleSpreadsheetSelection)}
+                canWriteSheetScores={Boolean(googleWritebackConfig() && googleSpreadsheetSelection)}
                 isWritingSheetScores={isWritingSheetScores}
                 onScoreChange={updateScore}
                 onWriteSheetScores={writeSongListScoresToSheet}
@@ -868,6 +948,32 @@ function normalizedScoresForWriteback(scoresBySongId: SongScoresById): Map<numbe
     }
 
     return normalizedScores.size > 0 ? normalizedScores : undefined;
+}
+
+function fixedProjectedRanksBySongId(
+    sort: SortState,
+    songs: Array<{ id: number }>,
+    scoresBySongId: SongScoresById,
+    settings: Settings,
+    scoreEnabled: boolean,
+): Map<number, number> {
+    const projectedInfos = projectedSongSortInfos(sort, songs.length, {songs, scoresBySongId, settings, scoreEnabled});
+    const ranks = new Map<number, number>();
+
+    songs.forEach((song, index) => {
+        const info = projectedInfos.get(index);
+        if (info && info.minRank === info.maxRank) {
+            ranks.set(song.id, info.minRank);
+        }
+    });
+
+    return ranks;
+}
+
+function changedRanks(currentRanks: Map<number, number>, lastWrittenRanks: Map<number, number>): Map<number, number> {
+    return new Map(
+        [...currentRanks.entries()].filter(([songId, rank]) => lastWrittenRanks.get(songId) !== rank),
+    );
 }
 
 function landingTitle(savedKind: SavedProgressKind): string {

@@ -1,5 +1,5 @@
 import { loadGoogleApis, loadGoogleIdentityServices } from './googleApiLoader';
-import { readScoresFromFirstSheet, writeRanksToFirstSheet, writeScoresToFirstSheet } from './sheetsClient';
+import { readScoresFromFirstSheet, writePartialRanksToFirstSheet, writeRanksToFirstSheet, writeScoresToFirstSheet } from './sheetsClient';
 import {
     GoogleAuthenticationRequiredError,
     type GoogleIdentityServices,
@@ -80,6 +80,37 @@ export async function writeRanksToGoogleSheet(
         });
 
         return spreadsheet;
+    } catch (error) {
+        if (isAuthError(error)) {
+            clearStoredToken(config);
+        }
+
+        throw error;
+    }
+}
+
+export async function writePartialRanksToGoogleSheet(
+    config: GoogleSheetsWritebackConfig,
+    ranksBySongId: Map<number, number>,
+    expectedSongIds: number[],
+    spreadsheet: PickedSpreadsheet,
+    options: { allowAuthPrompt?: boolean } = {},
+): Promise<number> {
+    if (!config.clientId || !config.appId || !config.apiKey || !config.rankColumnHeader) {
+        throw new GoogleWritebackError('Google integration is not configured.');
+    }
+
+    try {
+        const {google} = await loadGoogleApis();
+        const token = await getToken(google, config, options);
+
+        return await writePartialRanksToFirstSheet({
+            spreadsheetId: spreadsheet.id,
+            token,
+            ranksBySongId,
+            expectedSongIds,
+            rankColumnHeader: config.rankColumnHeader,
+        });
     } catch (error) {
         if (isAuthError(error)) {
             clearStoredToken(config);

@@ -72,6 +72,14 @@ type WriteRanksOptions = {
     scoresBySongId?: Map<number, number>;
 };
 
+type WritePartialRanksOptions = {
+    spreadsheetId: string;
+    token: string;
+    ranksBySongId: Map<number, number>;
+    expectedSongIds: number[];
+    rankColumnHeader: string;
+};
+
 type ReadScoresOptions = {
     spreadsheetId: string;
     token: string;
@@ -99,6 +107,29 @@ export async function writeRanksToFirstSheet({
     const sheet = await fetchFirstUsableSheet(spreadsheetId, token);
     const values = await fetchSheetValues(spreadsheetId, sheet.title, token);
     const updates = buildUpdates(values, sheet.title, ranksBySongId, rankColumnHeader, scoreColumnHeader, scoresBySongId);
+
+    await postSheetValueUpdates(spreadsheetId, token, updates);
+    return updates.length;
+}
+
+export async function writePartialRanksToFirstSheet({
+    spreadsheetId,
+    token,
+    ranksBySongId,
+    expectedSongIds,
+    rankColumnHeader,
+}: WritePartialRanksOptions): Promise<number> {
+    if (ranksBySongId.size === 0) {
+        return 0;
+    }
+
+    const sheet = await fetchFirstUsableSheet(spreadsheetId, token);
+    const values = await fetchSheetValues(spreadsheetId, sheet.title, token);
+    const updates = buildPartialRankUpdates(values, sheet.title, ranksBySongId, expectedSongIds, rankColumnHeader);
+
+    if (updates.length === 0) {
+        return 0;
+    }
 
     await postSheetValueUpdates(spreadsheetId, token, updates);
     return updates.length;
@@ -308,6 +339,60 @@ function buildUpdates(
     }
 
     return updates;
+}
+
+function buildPartialRankUpdates(
+    values: string[][],
+    sheetTitle: string,
+    ranksBySongId: Map<number, number>,
+    expectedSongIds: number[],
+    rankColumnHeader: string,
+): Array<{ range: string; values: number[][] }> {
+    const headerRow = values[0];
+    if (!headerRow || headerRow.length === 0) {
+        throw new GoogleWritebackError('Sheet is empty or missing a header row.');
+    }
+
+    const rankHeaderIndexes = matchingHeaderIndexes(headerRow, rankColumnHeader);
+
+    if (rankHeaderIndexes.length === 0) {
+        throw new GoogleWritebackError(`Rank header "${rankColumnHeader}" was not found.`);
+    }
+
+    if (rankHeaderIndexes.length > 1) {
+        throw new GoogleWritebackError(`Rank header "${rankColumnHeader}" appears more than once.`);
+    }
+
+    const rankColumnIndex = rankHeaderIndexes[0];
+    const expectedSongIdSet = new Set(expectedSongIds);
+    const rankIdsOutsideSorter = [...ranksBySongId.keys()].filter((songId) => !expectedSongIdSet.has(songId));
+    if (rankIdsOutsideSorter.length > 0) {
+        throw new GoogleWritebackError(`Rank writeback contains unknown sorter song IDs: ${formatIdList(rankIdsOutsideSorter)}.`);
+    }
+
+    const rowsBySongId = rowsBySongIdFromValues(values);
+    const sheetSongIds = new Set(rowsBySongId.keys());
+    const unknownIds = [...sheetSongIds].filter((songId) => !expectedSongIdSet.has(songId));
+    if (unknownIds.length > 0) {
+        throw new GoogleWritebackError(`Sheet contains unknown song IDs: ${formatIdList(unknownIds)}.`);
+    }
+
+    const missingIds = expectedSongIds.filter((songId) => !sheetSongIds.has(songId));
+    if (missingIds.length > 0) {
+        throw new GoogleWritebackError(`Sheet is missing sorter song IDs: ${formatIdList(missingIds)}.`);
+    }
+
+    return [...ranksBySongId.entries()].map(([songId, rank]) => {
+        const rowNumber = rowsBySongId.get(songId);
+        if (rowNumber === undefined) {
+            throw new GoogleWritebackError(`Sheet is missing sorter song ID ${songId}.`);
+        }
+
+        return {
+            range: `${quoteSheetName(sheetTitle)}!${columnName(rankColumnIndex + 1)}${rowNumber}`,
+            values: [[rank]],
+        };
+    });
 }
 
 function readScores(values: string[][], songIds: number[], scoreColumnHeader: string): Map<number, string> {
