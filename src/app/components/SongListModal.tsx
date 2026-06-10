@@ -165,7 +165,7 @@ export function SongListModal({
                                         />
                                     </td>
                                     <td>{sheetScoresBySongId[song.id] ?? ''}</td>
-                                    <td>{range ? `${range.minRank}-${range.maxRank}` : ''}</td>
+                                    <td>{range ? formatRankRange(range.minRank, range.maxRank) : ''}</td>
                                 </tr>
                             );
                         })}
@@ -288,6 +288,10 @@ function parseScore(score: string | undefined): number | null {
 
     const parsed = Number.parseFloat(score);
     return Number.isFinite(parsed) ? parsed : null;
+}
+
+function formatRankRange(minRank: number, maxRank: number): string {
+    return minRank === maxRank ? String(minRank) : `${minRank}-${maxRank}`;
 }
 
 function SongLinks({song}: { song: ResolvedSong }) {

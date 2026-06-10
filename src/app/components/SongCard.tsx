@@ -88,5 +88,6 @@ export function SongCard({
 }
 
 function sortInfoTooltip(info: CurrentSongSortInfo): string {
-    return `Whole-set estimate: #${info.minRank}-#${info.maxRank} of ${info.songCount}.`;
+    const rank = info.minRank === info.maxRank ? `#${info.minRank}` : `#${info.minRank}-#${info.maxRank}`;
+    return `Whole-set estimate: ${rank} of ${info.songCount}.`;
 }
