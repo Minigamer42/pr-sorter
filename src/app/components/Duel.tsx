@@ -1,6 +1,7 @@
-import { currentBattle, currentSongSortInfo, type SortChoice, type SortState } from '../../sorter';
+import { currentBattle, type SortChoice, type SortState } from '../../sorter';
 import type { ResolvedSong } from '../../songs';
 import type { Settings, SongScoresById } from '../types';
+import { projectedSongSortInfo } from '../internal/projectedSortInfo';
 import { SongCard } from './SongCard';
 
 type DuelProps = {
@@ -48,7 +49,7 @@ export function Duel({
                 settings={settings}
                 scoreEnabled={scoreEnabled}
                 score={scoresBySongId[leftSong.id] ?? ''}
-                sortInfo={currentSongSortInfo(sort, leftIndex)}
+                sortInfo={projectedSongSortInfo(sort, leftIndex, {songs, scoresBySongId, settings, scoreEnabled})}
                 autoPlay={autoPlaySide === 'left'}
                 autoPlayKey={autoPlayKey}
                 onAutoPlayEnded={onAutoPlayEnded}
@@ -61,7 +62,7 @@ export function Duel({
                 settings={settings}
                 scoreEnabled={scoreEnabled}
                 score={scoresBySongId[rightSong.id] ?? ''}
-                sortInfo={currentSongSortInfo(sort, rightIndex)}
+                sortInfo={projectedSongSortInfo(sort, rightIndex, {songs, scoresBySongId, settings, scoreEnabled})}
                 autoPlay={autoPlaySide === 'right'}
                 autoPlayKey={autoPlayKey}
                 onAutoPlayEnded={onAutoPlayEnded}

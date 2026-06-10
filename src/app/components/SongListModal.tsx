@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { visibleUrl } from '../../media/internal/urls';
-import { songSortInfo, type SortState } from '../../sorter';
+import { type SortState } from '../../sorter';
 import type { ResolvedSong } from '../../songs';
-import type { GoogleSpreadsheetSelection, SongScoresById } from '../types';
+import { projectedSongSortInfos } from '../internal/projectedSortInfo';
+import type { GoogleSpreadsheetSelection, Settings, SongScoresById } from '../types';
 
 type SheetScoreStatus =
     | { state: 'unavailable'; message: string }
@@ -14,6 +15,7 @@ type SongListModalProps = {
     open: boolean;
     songs: ResolvedSong[];
     sort: SortState | null;
+    settings: Settings;
     scoreEnabled: boolean;
     scoresBySongId: SongScoresById;
     sheetScoresBySongId: SongScoresById;
@@ -33,6 +35,7 @@ export function SongListModal({
     open,
     songs,
     sort,
+    settings,
     scoreEnabled,
     scoresBySongId,
     sheetScoresBySongId,
@@ -53,6 +56,11 @@ export function SongListModal({
             setSortDirection('asc');
         }
     }, [open]);
+
+    const projectedRanges = useMemo(
+        () => open && sort ? projectedSongSortInfos(sort, songs.length, {songs, scoresBySongId, settings, scoreEnabled}) : new Map(),
+        [open, scoreEnabled, scoresBySongId, settings, songs, sort],
+    );
 
     if (!open) {
         return null;
@@ -134,7 +142,7 @@ export function SongListModal({
                         </thead>
                         <tbody>
                         {rows.map(({song, index}) => {
-                            const range = sort ? songSortInfo(sort, index) : null;
+                            const range = sort ? projectedRanges.get(index) ?? null : null;
 
                             return (
                                 <tr key={song.id}>

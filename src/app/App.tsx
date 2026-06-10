@@ -11,6 +11,7 @@ import { Progress } from './components/Progress';
 import { Results } from './components/Results';
 import { SettingsModal } from './components/SettingsModal';
 import { SongListModal } from './components/SongListModal';
+import { automaticChoiceForCurrentBattle } from './internal/automaticChoice';
 import { isScoreEnabled, normalizeScore } from './internal/songScores';
 import { createStorage, parseSorterStorageSnapshot } from './storage';
 import type { AppConfig, GoogleSpreadsheetSelection, SavedProgressKind, Screen, Settings, SongScoresById, SorterAutoPlayMode } from './types';
@@ -371,45 +372,6 @@ export function App({config, songs}: AppProps) {
             });
     }
 
-    function autoChoiceForCurrentBattle(
-        currentSort: SortState,
-        currentScoresBySongId: SongScoresById,
-        currentSettings: Settings,
-    ): SortChoice | null {
-        if (!scoreEnabled) {
-            return null;
-        }
-
-        const battle = currentBattle(currentSort);
-        if (!battle) {
-            return null;
-        }
-
-        const [leftIndex, rightIndex] = battle;
-        const leftSong = resolvedSongs[leftIndex];
-        const rightSong = resolvedSongs[rightIndex];
-        if (!leftSong || !rightSong) {
-            return null;
-        }
-
-        try {
-            const leftScore = normalizeScore(currentScoresBySongId[leftSong.id] ?? '');
-            const rightScore = normalizeScore(currentScoresBySongId[rightSong.id] ?? '');
-            if (leftScore === null || rightScore === null || leftScore === rightScore) {
-                return null;
-            }
-
-            const difference = Math.abs(leftScore - rightScore);
-            if (difference < currentSettings.autoSkipScoreDifference) {
-                return null;
-            }
-
-            return leftScore > rightScore ? 'left' : 'right';
-        } catch {
-            return null;
-        }
-    }
-
     function resolveAutoSkips(
         currentSort: SortState,
         currentScoresBySongId: SongScoresById,
@@ -419,7 +381,7 @@ export function App({config, songs}: AppProps) {
         const maxIterations = resolvedSongs.length * resolvedSongs.length * 2;
 
         for (let iteration = 0; iteration < maxIterations; iteration += 1) {
-            const choice = autoChoiceForCurrentBattle(nextSort, currentScoresBySongId, currentSettings);
+            const choice = automaticChoiceForCurrentBattle(nextSort, resolvedSongs, currentScoresBySongId, currentSettings, scoreEnabled);
             if (!choice) {
                 return nextSort;
             }
@@ -770,6 +732,7 @@ export function App({config, songs}: AppProps) {
                 open={isSongListOpen}
                 songs={resolvedSongs}
                 sort={sort}
+                settings={settings}
                 scoreEnabled={scoreEnabled}
                 scoresBySongId={scoresBySongId}
                 sheetScoresBySongId={sheetScoresBySongId}
