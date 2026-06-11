@@ -74,6 +74,7 @@ export async function writeRanksToGoogleSheet(
             spreadsheetId: spreadsheet.id,
             token,
             ranksBySongId,
+            idColumnHeader: config.idColumnHeader,
             rankColumnHeader: config.rankColumnHeader,
             scoreColumnHeader: config.scoreColumnHeader,
             scoresBySongId,
@@ -109,6 +110,7 @@ export async function writePartialRanksToGoogleSheet(
             token,
             ranksBySongId,
             expectedSongIds,
+            idColumnHeader: config.idColumnHeader,
             rankColumnHeader: config.rankColumnHeader,
         });
     } catch (error) {
@@ -155,6 +157,7 @@ export async function loadScoresFromGoogleSheet(
             spreadsheetId: spreadsheet.id,
             token,
             songIds,
+            idColumnHeader: config.idColumnHeader,
             scoreColumnHeader: config.scoreColumnHeader,
         });
     } catch (error) {
@@ -183,6 +186,7 @@ export async function writeScoresToGoogleSheet(
         return await writeScoresToFirstSheet({
             spreadsheetId: spreadsheet.id,
             token,
+            idColumnHeader: config.idColumnHeader,
             scoreColumnHeader: config.scoreColumnHeader,
             scoresBySongId,
         });

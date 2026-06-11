@@ -12,6 +12,7 @@ export type AppConfig = {
 export type GoogleSheetsConfig = {
     clientId: string;
     appId: string;
+    idColumnHeader?: string;
     rankColumnHeader: string;
     scoreColumnHeader?: string;
 };

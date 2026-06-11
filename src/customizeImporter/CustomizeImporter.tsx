@@ -122,6 +122,7 @@ export function CustomizeImporter({config}: CustomizeImporterProps) {
                     googleSheets: {
                         clientId: config.googleSheets?.clientId,
                         appId: config.googleSheets?.appId,
+                        idColumnHeader: parsed.idColumnHeader,
                         rankColumnHeader: parsed.rankColumnHeader,
                         scoreColumnHeader: parsed.scoreColumnHeader,
                     },

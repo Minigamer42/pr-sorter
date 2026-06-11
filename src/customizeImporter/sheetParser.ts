@@ -3,6 +3,7 @@ import type { Song } from '../songs';
 
 export type ParsedSheetCustomize = {
     songs: Song[];
+    idColumnHeader: string;
     rankColumnHeader: string;
     scoreColumnHeader?: string;
 };
@@ -18,20 +19,34 @@ export type SheetHeaders = {
 };
 
 const HEADER_ALIASES: Record<SheetColumnKey, readonly string[]> = {
-    id: ['ID', 'Id', 'id'],
+    id: ['ID', 'Song ID', '#'],
     anime: ['Anime Name', 'Anime', 'Series', 'Show'],
     song: ['Song', 'Song Name', 'Title', 'Song Info', 'Name'],
     video: ['Video', 'Video Link', 'Video Link (if exists)', 'Link'],
     mp3: ['MP3', 'MP3 Link', 'mp3 Links', 'Audio', 'Audio Link', 'Song Link'],
     full: ['Full', 'Full Song', 'Full Link'],
-    rank: ['Rank', 'rank'],
-    score: ['Score (optional)', 'Score', 'score'],
+    rank: ['Rank'],
+    score: ['Score (optional)', 'Score'],
 };
 
 export function inspectSheetHeaders(rows: SheetGridCell[][]): SheetHeaders {
-    const headerRowIndex = rows.findIndex((row) => row.some((cell) => cell.value.trim().toLowerCase() === 'id'));
+    let bestHeaderMatch = {index: -1, score: 0};
+
+    rows.forEach((row, index) => {
+        const rowHeaders = row.map((cell) => cell.value.trim());
+        if (rowHeaders.filter(Boolean).length < 2) {
+            return;
+        }
+
+        const score = countDetectedHeaders(rowHeaders);
+        if (score > bestHeaderMatch.score) {
+            bestHeaderMatch = {index, score};
+        }
+    });
+
+    const headerRowIndex = bestHeaderMatch.index;
     if (headerRowIndex === -1) {
-        throw new Error('Could not find a header row containing "ID".');
+        throw new Error('Could not find a header row.');
     }
 
     const headers = (rows[headerRowIndex] ?? []).map((cell) => cell.value.trim());
@@ -50,6 +65,10 @@ export function inspectSheetHeaders(rows: SheetGridCell[][]): SheetHeaders {
             score: findHeaderName(headers, HEADER_ALIASES.score) ?? undefined,
         },
     };
+}
+
+function countDetectedHeaders(headers: string[]): number {
+    return Object.values(HEADER_ALIASES).filter((aliases) => findHeaderName(headers, aliases) !== null).length;
 }
 
 export function parseSheetGrid(
@@ -122,6 +141,7 @@ export function parseSheetGrid(
 
     return {
         songs: [...songs].sort((left, right) => left.id - right.id),
+        idColumnHeader: mapping.id ?? 'ID',
         rankColumnHeader: mapping.rank ?? 'Rank',
         scoreColumnHeader: mapping.score || undefined,
     };

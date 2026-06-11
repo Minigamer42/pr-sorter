@@ -10,6 +10,7 @@ type CustomizePayload = {
     googleSheets?: {
         clientId?: unknown;
         appId?: unknown;
+        idColumnHeader?: unknown;
         rankColumnHeader?: unknown;
         scoreColumnHeader?: unknown;
     };
@@ -144,6 +145,7 @@ function parseCustomizePayload(payload: CustomizePayload) {
         googleSheets: {
             clientId: requireString(googleSheets.clientId, 'googleSheets.clientId'),
             appId: requireString(googleSheets.appId, 'googleSheets.appId'),
+            idColumnHeader: optionalString(googleSheets.idColumnHeader) ?? 'ID',
             rankColumnHeader: requireString(googleSheets.rankColumnHeader, 'googleSheets.rankColumnHeader'),
             scoreColumnHeader: optionalString(googleSheets.scoreColumnHeader),
         },
@@ -203,6 +205,7 @@ export const songList = ${formatSongList(songs)} satisfies Song[];
 }
 
 function configSource(payload: ReturnType<typeof parseCustomizePayload>): string {
+    const idColumnHeader = payload.googleSheets.idColumnHeader;
     const scoreColumnHeader = payload.googleSheets.scoreColumnHeader;
 
     return `import type { AppConfig } from '../src/app/types';
@@ -213,7 +216,8 @@ export const config = {
     description: ${formatTsString(payload.description)},
     googleSheets: {
         clientId: ${formatTsString(payload.googleSheets.clientId)},
-        appId: ${formatTsString(payload.googleSheets.appId)},
+        appId: ${formatTsString(payload.googleSheets.appId)}${idColumnHeader !== 'ID' ? `,
+        idColumnHeader: ${formatTsString(idColumnHeader)}` : ''},
         rankColumnHeader: ${formatTsString(payload.googleSheets.rankColumnHeader)}${scoreColumnHeader ? `,
         scoreColumnHeader: ${formatTsString(scoreColumnHeader)}` : ''}
     }

@@ -159,6 +159,7 @@ export const config = {
   googleSheets: {
     clientId: "YOUR_GOOGLE_OAUTH_CLIENT_ID.apps.googleusercontent.com",
     appId: "YOUR_GOOGLE_CLOUD_PROJECT_NUMBER",
+    idColumnHeader: "Song ID",
     rankColumnHeader: "Rank",
     scoreColumnHeader: "Score (optional)",
   },
@@ -173,7 +174,7 @@ VITE_GOOGLE_API_KEY=your-browser-api-key
 
 `.env.local` is intentionally ignored by git, so each local clone needs its own copy.
 
-Omit `googleSheets` if you do not need Google features. Omit only `scoreColumnHeader` if you want Google rank writeback but do not want score support.
+Omit `googleSheets` if you do not need Google features. Omit `idColumnHeader` if your song ID column is named `ID`. Omit only `scoreColumnHeader` if you want Google rank writeback but do not want score support.
 
 ## 6. Optional: Import Songs From Google Sheets
 
@@ -190,11 +191,11 @@ The import page writes:
 - `customize/config.ts`
 - `customize/songList.ts`
 
-The importer reads the first non-hidden grid worksheet. It looks for the first row containing an `ID` header, then auto-detects common column names and lets you map missing columns manually.
+The importer reads the first non-hidden grid worksheet. It looks for a row with recognized column names, then auto-detects common column names and lets you map missing columns manually.
 
 Required columns:
 
-- `ID`
+- numeric song ID, such as `ID`, `Song ID`, or any manually mapped column
 - song name, such as `Song`, `Song Name`, `Title`, or `Song Info`
 - rank column, such as `Rank`
 - at least one media column, such as `Video`, `Video Link`, `mp3 Links`, `MP3`, `Full`, or `Full Link`
@@ -224,7 +225,7 @@ Spreadsheet format:
 
 - The first non-hidden grid worksheet is used.
 - Row `1` is the header row.
-- Column `A` contains song IDs.
+- The song ID column header must exactly match `googleSheets.idColumnHeader` after trimming surrounding whitespace, or `ID` if `idColumnHeader` is omitted.
 - The rank column header must exactly match `googleSheets.rankColumnHeader` after trimming surrounding whitespace. Matching is case-sensitive.
 - If score support is enabled and at least one song has a score, the score column header must exactly match `googleSheets.scoreColumnHeader` after trimming surrounding whitespace. Matching is case-sensitive.
 - Data rows may be in any order.

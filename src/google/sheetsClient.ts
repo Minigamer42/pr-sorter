@@ -67,6 +67,7 @@ type WriteRanksOptions = {
     spreadsheetId: string;
     token: string;
     ranksBySongId: Map<number, number>;
+    idColumnHeader?: string;
     rankColumnHeader: string;
     scoreColumnHeader?: string;
     scoresBySongId?: Map<number, number>;
@@ -77,6 +78,7 @@ type WritePartialRanksOptions = {
     token: string;
     ranksBySongId: Map<number, number>;
     expectedSongIds: number[];
+    idColumnHeader?: string;
     rankColumnHeader: string;
 };
 
@@ -84,29 +86,33 @@ type ReadScoresOptions = {
     spreadsheetId: string;
     token: string;
     songIds: number[];
+    idColumnHeader?: string;
     scoreColumnHeader: string;
 };
 
 type WriteScoresOptions = {
     spreadsheetId: string;
     token: string;
+    idColumnHeader?: string;
     scoreColumnHeader: string;
     scoresBySongId: Map<number, number>;
 };
 
 const SHEETS_API_BASE = 'https://sheets.googleapis.com/v4/spreadsheets';
+const DEFAULT_ID_COLUMN_HEADER = 'ID';
 
 export async function writeRanksToFirstSheet({
     spreadsheetId,
     token,
     ranksBySongId,
+    idColumnHeader,
     rankColumnHeader,
     scoreColumnHeader,
     scoresBySongId,
 }: WriteRanksOptions): Promise<number> {
     const sheet = await fetchFirstUsableSheet(spreadsheetId, token);
     const values = await fetchSheetValues(spreadsheetId, sheet.title, token);
-    const updates = buildUpdates(values, sheet.title, ranksBySongId, rankColumnHeader, scoreColumnHeader, scoresBySongId);
+    const updates = buildUpdates(values, sheet.title, ranksBySongId, idColumnHeader ?? DEFAULT_ID_COLUMN_HEADER, rankColumnHeader, scoreColumnHeader, scoresBySongId);
 
     await postSheetValueUpdates(spreadsheetId, token, updates);
     return updates.length;
@@ -117,6 +123,7 @@ export async function writePartialRanksToFirstSheet({
     token,
     ranksBySongId,
     expectedSongIds,
+    idColumnHeader,
     rankColumnHeader,
 }: WritePartialRanksOptions): Promise<number> {
     if (ranksBySongId.size === 0) {
@@ -125,7 +132,7 @@ export async function writePartialRanksToFirstSheet({
 
     const sheet = await fetchFirstUsableSheet(spreadsheetId, token);
     const values = await fetchSheetValues(spreadsheetId, sheet.title, token);
-    const updates = buildPartialRankUpdates(values, sheet.title, ranksBySongId, expectedSongIds, rankColumnHeader);
+    const updates = buildPartialRankUpdates(values, sheet.title, ranksBySongId, expectedSongIds, idColumnHeader ?? DEFAULT_ID_COLUMN_HEADER, rankColumnHeader);
 
     if (updates.length === 0) {
         return 0;
@@ -139,16 +146,18 @@ export async function readScoresFromFirstSheet({
     spreadsheetId,
     token,
     songIds,
+    idColumnHeader,
     scoreColumnHeader,
 }: ReadScoresOptions): Promise<Map<number, string>> {
     const sheet = await fetchFirstUsableSheet(spreadsheetId, token);
     const values = await fetchSheetValues(spreadsheetId, sheet.title, token);
-    return readScores(values, songIds, scoreColumnHeader);
+    return readScores(values, songIds, idColumnHeader ?? DEFAULT_ID_COLUMN_HEADER, scoreColumnHeader);
 }
 
 export async function writeScoresToFirstSheet({
     spreadsheetId,
     token,
+    idColumnHeader,
     scoreColumnHeader,
     scoresBySongId,
 }: WriteScoresOptions): Promise<number> {
@@ -158,7 +167,7 @@ export async function writeScoresToFirstSheet({
 
     const sheet = await fetchFirstUsableSheet(spreadsheetId, token);
     const values = await fetchSheetValues(spreadsheetId, sheet.title, token);
-    const updates = buildScoreUpdates(values, sheet.title, scoreColumnHeader, scoresBySongId);
+    const updates = buildScoreUpdates(values, sheet.title, idColumnHeader ?? DEFAULT_ID_COLUMN_HEADER, scoreColumnHeader, scoresBySongId);
 
     if (updates.length === 0) {
         return 0;
@@ -244,6 +253,7 @@ function buildUpdates(
     values: string[][],
     sheetTitle: string,
     ranksBySongId: Map<number, number>,
+    idColumnHeader: string,
     rankColumnHeader: string,
     scoreColumnHeader?: string,
     scoresBySongId?: Map<number, number>,
@@ -253,17 +263,8 @@ function buildUpdates(
         throw new GoogleWritebackError('Sheet is empty or missing a header row.');
     }
 
-    const rankHeaderIndexes = matchingHeaderIndexes(headerRow, rankColumnHeader);
-
-    if (rankHeaderIndexes.length === 0) {
-        throw new GoogleWritebackError(`Rank header "${rankColumnHeader}" was not found.`);
-    }
-
-    if (rankHeaderIndexes.length > 1) {
-        throw new GoogleWritebackError(`Rank header "${rankColumnHeader}" appears more than once.`);
-    }
-
-    const rankColumnIndex = rankHeaderIndexes[0];
+    const idColumnIndex = requireHeaderColumnIndex(headerRow, idColumnHeader, 'ID');
+    const rankColumnIndex = requireHeaderColumnIndex(headerRow, rankColumnHeader, 'Rank');
     const shouldWriteScores = Boolean(scoreColumnHeader && scoresBySongId && scoresBySongId.size > 0);
     let scoreColumnIndex: number | null = null;
     if (shouldWriteScores && scoreColumnHeader) {
@@ -276,32 +277,8 @@ function buildUpdates(
         scoreColumnIndex = scoreHeaderIndexes[0] ?? null;
     }
 
-    const rowsBySongId = new Map<number, number>();
-    const unknownIds: number[] = [];
-
-    for (let rowIndex = 1; rowIndex < values.length; rowIndex += 1) {
-        const rawId = values[rowIndex]?.[0];
-        const trimmedId = rawId === undefined || rawId === null ? '' : String(rawId).trim();
-
-        if (trimmedId === '') {
-            continue;
-        }
-
-        if (!/^\d+$/.test(trimmedId)) {
-            throw new GoogleWritebackError(`Sheet contains a non-numeric song ID in row ${rowIndex + 1}.`);
-        }
-
-        const songId = Number.parseInt(trimmedId, 10);
-        if (rowsBySongId.has(songId)) {
-            throw new GoogleWritebackError(`Sheet contains duplicate song ID ${songId}.`);
-        }
-
-        if (!ranksBySongId.has(songId)) {
-            unknownIds.push(songId);
-        }
-
-        rowsBySongId.set(songId, rowIndex + 1);
-    }
+    const rowsBySongId = rowsBySongIdFromValues(values, idColumnIndex);
+    const unknownIds = [...rowsBySongId.keys()].filter((songId) => !ranksBySongId.has(songId));
 
     if (unknownIds.length > 0) {
         throw new GoogleWritebackError(`Sheet contains unknown song IDs: ${formatIdList(unknownIds)}.`);
@@ -346,6 +323,7 @@ function buildPartialRankUpdates(
     sheetTitle: string,
     ranksBySongId: Map<number, number>,
     expectedSongIds: number[],
+    idColumnHeader: string,
     rankColumnHeader: string,
 ): Array<{ range: string; values: number[][] }> {
     const headerRow = values[0];
@@ -353,24 +331,15 @@ function buildPartialRankUpdates(
         throw new GoogleWritebackError('Sheet is empty or missing a header row.');
     }
 
-    const rankHeaderIndexes = matchingHeaderIndexes(headerRow, rankColumnHeader);
-
-    if (rankHeaderIndexes.length === 0) {
-        throw new GoogleWritebackError(`Rank header "${rankColumnHeader}" was not found.`);
-    }
-
-    if (rankHeaderIndexes.length > 1) {
-        throw new GoogleWritebackError(`Rank header "${rankColumnHeader}" appears more than once.`);
-    }
-
-    const rankColumnIndex = rankHeaderIndexes[0];
+    const idColumnIndex = requireHeaderColumnIndex(headerRow, idColumnHeader, 'ID');
+    const rankColumnIndex = requireHeaderColumnIndex(headerRow, rankColumnHeader, 'Rank');
     const expectedSongIdSet = new Set(expectedSongIds);
     const rankIdsOutsideSorter = [...ranksBySongId.keys()].filter((songId) => !expectedSongIdSet.has(songId));
     if (rankIdsOutsideSorter.length > 0) {
         throw new GoogleWritebackError(`Rank writeback contains unknown sorter song IDs: ${formatIdList(rankIdsOutsideSorter)}.`);
     }
 
-    const rowsBySongId = rowsBySongIdFromValues(values);
+    const rowsBySongId = rowsBySongIdFromValues(values, idColumnIndex);
     const sheetSongIds = new Set(rowsBySongId.keys());
     const unknownIds = [...sheetSongIds].filter((songId) => !expectedSongIdSet.has(songId));
     if (unknownIds.length > 0) {
@@ -395,12 +364,13 @@ function buildPartialRankUpdates(
     });
 }
 
-function readScores(values: string[][], songIds: number[], scoreColumnHeader: string): Map<number, string> {
+function readScores(values: string[][], songIds: number[], idColumnHeader: string, scoreColumnHeader: string): Map<number, string> {
     const headerRow = values[0];
     if (!headerRow || headerRow.length === 0) {
         throw new GoogleWritebackError('Sheet is empty or missing a header row.');
     }
 
+    const idColumnIndex = requireHeaderColumnIndex(headerRow, idColumnHeader, 'ID');
     const scoreHeaderIndexes = matchingHeaderIndexes(headerRow, scoreColumnHeader);
     if (scoreHeaderIndexes.length === 0) {
         return new Map();
@@ -411,35 +381,17 @@ function readScores(values: string[][], songIds: number[], scoreColumnHeader: st
     }
 
     const expectedSongIds = new Set(songIds);
-    const seenSongIds = new Set<number>();
     const unknownIds: number[] = [];
     const scoresBySongId = new Map<number, string>();
     const scoreColumnIndex = scoreHeaderIndexes[0];
+    const rowsBySongId = rowsBySongIdFromValues(values, idColumnIndex);
 
-    for (let rowIndex = 1; rowIndex < values.length; rowIndex += 1) {
-        const rawId = values[rowIndex]?.[0];
-        const trimmedId = rawId === undefined || rawId === null ? '' : String(rawId).trim();
-
-        if (trimmedId === '') {
-            continue;
-        }
-
-        if (!/^\d+$/.test(trimmedId)) {
-            throw new GoogleWritebackError(`Sheet contains a non-numeric song ID in row ${rowIndex + 1}.`);
-        }
-
-        const songId = Number.parseInt(trimmedId, 10);
-        if (seenSongIds.has(songId)) {
-            throw new GoogleWritebackError(`Sheet contains duplicate song ID ${songId}.`);
-        }
-
+    for (const [songId, rowNumber] of rowsBySongId.entries()) {
         if (!expectedSongIds.has(songId)) {
             unknownIds.push(songId);
         }
 
-        seenSongIds.add(songId);
-
-        const rawScore = values[rowIndex]?.[scoreColumnIndex];
+        const rawScore = values[rowNumber - 1]?.[scoreColumnIndex];
         const score = scoreValueFromSheetCell(rawScore);
         if (score !== '') {
             scoresBySongId.set(songId, score);
@@ -450,7 +402,7 @@ function readScores(values: string[][], songIds: number[], scoreColumnHeader: st
         throw new GoogleWritebackError(`Sheet contains unknown song IDs: ${formatIdList(unknownIds)}.`);
     }
 
-    const missingIds = songIds.filter((songId) => !seenSongIds.has(songId));
+    const missingIds = songIds.filter((songId) => !rowsBySongId.has(songId));
     if (missingIds.length > 0) {
         throw new GoogleWritebackError(`Sheet is missing sorter song IDs: ${formatIdList(missingIds)}.`);
     }
@@ -479,6 +431,7 @@ function scoreValueFromSheetCell(rawScore: string | undefined): string {
 function buildScoreUpdates(
     values: string[][],
     sheetTitle: string,
+    idColumnHeader: string,
     scoreColumnHeader: string,
     scoresBySongId: Map<number, number>,
 ): Array<{ range: string; values: number[][] }> {
@@ -487,6 +440,7 @@ function buildScoreUpdates(
         throw new GoogleWritebackError('Sheet is empty or missing a header row.');
     }
 
+    const idColumnIndex = requireHeaderColumnIndex(headerRow, idColumnHeader, 'ID');
     const scoreHeaderIndexes = matchingHeaderIndexes(headerRow, scoreColumnHeader);
     if (scoreHeaderIndexes.length === 0) {
         return [];
@@ -497,7 +451,7 @@ function buildScoreUpdates(
     }
 
     const scoreColumnIndex = scoreHeaderIndexes[0];
-    const rowsBySongId = rowsBySongIdFromValues(values);
+    const rowsBySongId = rowsBySongIdFromValues(values, idColumnIndex);
 
     return [...scoresBySongId.entries()].map(([songId, score]) => {
         const rowNumber = rowsBySongId.get(songId);
@@ -512,11 +466,11 @@ function buildScoreUpdates(
     });
 }
 
-function rowsBySongIdFromValues(values: string[][]): Map<number, number> {
+function rowsBySongIdFromValues(values: string[][], idColumnIndex: number): Map<number, number> {
     const rowsBySongId = new Map<number, number>();
 
     for (let rowIndex = 1; rowIndex < values.length; rowIndex += 1) {
-        const rawId = values[rowIndex]?.[0];
+        const rawId = values[rowIndex]?.[idColumnIndex];
         const trimmedId = rawId === undefined || rawId === null ? '' : String(rawId).trim();
 
         if (trimmedId === '') {
@@ -670,6 +624,20 @@ function matchingHeaderIndexes(headerRow: string[], headerName: string): number[
         .map((header, index) => ({header: String(header).trim(), index}))
         .filter(({header}) => header === headerName)
         .map(({index}) => index);
+}
+
+function requireHeaderColumnIndex(headerRow: string[], headerName: string, label: string): number {
+    const indexes = matchingHeaderIndexes(headerRow, headerName);
+
+    if (indexes.length === 0) {
+        throw new GoogleWritebackError(`${label} header "${headerName}" was not found.`);
+    }
+
+    if (indexes.length > 1) {
+        throw new GoogleWritebackError(`${label} header "${headerName}" appears more than once.`);
+    }
+
+    return indexes[0];
 }
 
 function formatIdList(ids: number[]): string {
