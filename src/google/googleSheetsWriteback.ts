@@ -97,8 +97,12 @@ export async function writePartialRanksToGoogleSheet(
     spreadsheet: PickedSpreadsheet,
     options: { allowAuthPrompt?: boolean } = {},
 ): Promise<number> {
-    if (!config.clientId || !config.appId || !config.apiKey || !config.rankColumnHeader) {
+    if (!config.clientId || !config.appId || !config.apiKey) {
         throw new GoogleWritebackError('Google integration is not configured.');
+    }
+
+    if (!config.rankColumnHeader) {
+        return 0;
     }
 
     try {
@@ -123,7 +127,7 @@ export async function writePartialRanksToGoogleSheet(
 }
 
 export async function chooseGoogleSpreadsheet(config: GoogleSheetsWritebackConfig): Promise<PickedSpreadsheet> {
-    if (!config.clientId || !config.appId || !config.apiKey || !config.rankColumnHeader) {
+    if (!config.clientId || !config.appId || !config.apiKey) {
         throw new GoogleWritebackError('Google integration is not configured.');
     }
 
@@ -145,7 +149,7 @@ export async function loadScoresFromGoogleSheet(
     spreadsheet: PickedSpreadsheet,
     songIds: number[],
 ): Promise<Map<number, string>> {
-    if (!config.clientId || !config.appId || !config.apiKey || !config.rankColumnHeader || !config.scoreColumnHeader) {
+    if (!config.clientId || !config.appId || !config.apiKey || !config.scoreColumnHeader) {
         throw new GoogleWritebackError('Google integration is not configured.');
     }
 
@@ -175,7 +179,7 @@ export async function writeScoresToGoogleSheet(
     scoresBySongId: Map<number, number>,
     options: { allowAuthPrompt?: boolean } = {},
 ): Promise<number> {
-    if (!config.clientId || !config.appId || !config.apiKey || !config.rankColumnHeader || !config.scoreColumnHeader) {
+    if (!config.clientId || !config.appId || !config.apiKey || !config.scoreColumnHeader) {
         throw new GoogleWritebackError('Google integration is not configured.');
     }
 

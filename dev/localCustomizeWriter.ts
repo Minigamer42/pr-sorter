@@ -7,6 +7,7 @@ type CustomizePayload = {
     localStoragePrefix?: unknown;
     title?: unknown;
     description?: unknown;
+    rankSupported?: unknown;
     googleSheets?: {
         clientId?: unknown;
         appId?: unknown;
@@ -138,15 +139,22 @@ function parseCustomizePayload(payload: CustomizePayload) {
         throw new CustomizeWriterError('Missing googleSheets configuration.', 'validation', `Received ${describeValue(googleSheets)}.`);
     }
 
+    const rankColumnHeader = optionalString(googleSheets.rankColumnHeader);
+    const rankSupported = optionalBoolean(payload.rankSupported) ?? Boolean(rankColumnHeader);
+    if (rankSupported && !rankColumnHeader) {
+        throw new CustomizeWriterError('Missing rank column header.', 'validation', 'googleSheets.rankColumnHeader is required when rank writeback is supported.');
+    }
+
     return {
         localStoragePrefix,
         title,
         description,
+        rankSupported,
         googleSheets: {
             clientId: requireString(googleSheets.clientId, 'googleSheets.clientId'),
             appId: requireString(googleSheets.appId, 'googleSheets.appId'),
             idColumnHeader: optionalString(googleSheets.idColumnHeader) ?? 'ID',
-            rankColumnHeader: requireString(googleSheets.rankColumnHeader, 'googleSheets.rankColumnHeader'),
+            rankColumnHeader: rankSupported ? rankColumnHeader : null,
             scoreColumnHeader: optionalString(googleSheets.scoreColumnHeader),
         },
         songs: [...songs].sort((left, right) => left.id - right.id),
@@ -206,6 +214,8 @@ export const songList = ${formatSongList(songs)} satisfies Song[];
 
 function configSource(payload: ReturnType<typeof parseCustomizePayload>): string {
     const idColumnHeader = payload.googleSheets.idColumnHeader;
+    const rankSupported = payload.rankSupported;
+    const rankColumnHeader = payload.googleSheets.rankColumnHeader;
     const scoreColumnHeader = payload.googleSheets.scoreColumnHeader;
 
     return `import type { AppConfig } from '../src/app/types';
@@ -213,12 +223,13 @@ function configSource(payload: ReturnType<typeof parseCustomizePayload>): string
 export const config = {
     localStoragePrefix: ${formatTsString(payload.localStoragePrefix)},
     title: ${formatTsString(payload.title)},
-    description: ${formatTsString(payload.description)},
+    description: ${formatTsString(payload.description)}${rankSupported ? '' : `,
+    rankSupported: false`},
     googleSheets: {
         clientId: ${formatTsString(payload.googleSheets.clientId)},
         appId: ${formatTsString(payload.googleSheets.appId)}${idColumnHeader !== 'ID' ? `,
-        idColumnHeader: ${formatTsString(idColumnHeader)}` : ''},
-        rankColumnHeader: ${formatTsString(payload.googleSheets.rankColumnHeader)}${scoreColumnHeader ? `,
+        idColumnHeader: ${formatTsString(idColumnHeader)}` : ''}${rankColumnHeader ? `,
+        rankColumnHeader: ${formatTsString(rankColumnHeader)}` : ''}${scoreColumnHeader ? `,
         scoreColumnHeader: ${formatTsString(scoreColumnHeader)}` : ''}
     }
 } satisfies AppConfig;
@@ -260,6 +271,10 @@ function requireString(value: unknown, name: string): string {
 
 function optionalString(value: unknown): string | null {
     return typeof value === 'string' && value.trim() !== '' ? value.trim() : null;
+}
+
+function optionalBoolean(value: unknown): boolean | null {
+    return typeof value === 'boolean' ? value : null;
 }
 
 function requireNumber(value: unknown, name: string): number {

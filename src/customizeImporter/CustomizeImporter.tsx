@@ -29,6 +29,7 @@ const IMPORT_SUCCESS_STORAGE_KEY = 'customize-import:last-success';
 
 export function CustomizeImporter({config}: CustomizeImporterProps) {
     const [state, setState] = useState<ImportState>(() => loadImportSuccessState());
+    const appHref = useMemo(() => appRouteHref(), []);
 
     const writebackConfig = useMemo(() => {
         const googleSheets = config.googleSheets;
@@ -119,6 +120,7 @@ export function CustomizeImporter({config}: CustomizeImporterProps) {
                     title: `${spreadsheetName} Sorter`,
                     description: `Party rank sorter for ${spreadsheetName}.`,
                     localStoragePrefix: slugify(spreadsheetName),
+                    rankSupported: parsed.rankSupported,
                     googleSheets: {
                         clientId: config.googleSheets?.clientId,
                         appId: config.googleSheets?.appId,
@@ -160,8 +162,8 @@ export function CustomizeImporter({config}: CustomizeImporterProps) {
                     <button className="basic-button" type="button" onClick={() => void selectSheet()} disabled={state.status === 'loading'}>
                         Select Google Sheet
                     </button>
-                    <a className="import-link" href="./">
-                        Back to sorter
+                    <a className="import-link" href={appHref} onClick={clearImportSuccessState}>
+                        Back to app
                     </a>
                 </div>
 
@@ -204,14 +206,15 @@ function ColumnMappingForm({
     onChange(key: SheetColumnKey, value: string): void;
     onConfirm(): void;
 }) {
-    const missingRequired = (['id', 'song', 'rank'] as const).filter((key) => !mapping[key]);
+    const missingRequired = (['id', 'song'] as const).filter((key) => !mapping[key]);
     const hasMediaColumn = Boolean(mapping.video || mapping.mp3 || mapping.full);
+    const hasRankOrScoreColumn = Boolean(mapping.rank || mapping.score);
 
     return (
         <div className="import-mapping">
             <h2>Map Sheet Columns</h2>
             <p>
-                Some headers were not detected. Leave Anime blank to use <strong>{fallbackAnimeName}</strong>. Leave Score blank to disable score support. At least one media column is required.
+                Some headers were not detected. Leave Anime blank to use <strong>{fallbackAnimeName}</strong>. Leave Rank blank to disable rank writeback. Leave Score blank to disable score support. At least one media column is required, and at least one of Rank or Score is required.
             </p>
             <div className="import-mapping__grid">
                 <ColumnSelect label="ID" value={mapping.id ?? ''} headers={headers} required onChange={(value) => onChange('id', value)}/>
@@ -219,13 +222,14 @@ function ColumnMappingForm({
                 <ColumnSelect label="Video link" value={mapping.video ?? ''} headers={headers} onChange={(value) => onChange('video', value)}/>
                 <ColumnSelect label="MP3 link" value={mapping.mp3 ?? ''} headers={headers} onChange={(value) => onChange('mp3', value)}/>
                 <ColumnSelect label="Full link" value={mapping.full ?? ''} headers={headers} onChange={(value) => onChange('full', value)}/>
-                <ColumnSelect label="Rank" value={mapping.rank ?? ''} headers={headers} required onChange={(value) => onChange('rank', value)}/>
+                <ColumnSelect label="Rank" value={mapping.rank ?? ''} headers={headers} onChange={(value) => onChange('rank', value)}/>
                 <ColumnSelect label="Anime" value={mapping.anime ?? ''} headers={headers} onChange={(value) => onChange('anime', value)}/>
                 <ColumnSelect label="Score" value={mapping.score ?? ''} headers={headers} onChange={(value) => onChange('score', value)}/>
             </div>
             {missingRequired.length > 0 ? <Status message={`Required columns still missing: ${missingRequired.join(', ')}.`} tone="error"/> : null}
             {!hasMediaColumn ? <Status message="Select at least one of Video link, MP3 link, or Full link." tone="error"/> : null}
-            <button className="basic-button" type="button" onClick={onConfirm} disabled={missingRequired.length > 0 || !hasMediaColumn}>
+            {!hasRankOrScoreColumn ? <Status message="Select at least one of Rank or Score." tone="error"/> : null}
+            <button className="basic-button" type="button" onClick={onConfirm} disabled={missingRequired.length > 0 || !hasMediaColumn || !hasRankOrScoreColumn}>
                 Preview songs
             </button>
         </div>
@@ -330,7 +334,11 @@ function slugify(value: string): string {
 }
 
 function needsColumnMapping(mapping: SheetColumnMapping): boolean {
-    return !mapping.id || !mapping.song || !mapping.rank || (!mapping.video && !mapping.mp3 && !mapping.full) || !mapping.anime || !mapping.score;
+    return !mapping.id || !mapping.song || (!mapping.video && !mapping.mp3 && !mapping.full) || !mapping.anime || !mapping.rank || !mapping.score;
+}
+
+function appRouteHref(): string {
+    return `${window.location.pathname.replace(/\/import\/?$/, '/')}${window.location.search}${window.location.hash}`;
 }
 
 function fallbackAnimeName(config: AppConfig): string {
@@ -410,4 +418,8 @@ function loadImportSuccessState(): ImportState {
 
 function saveImportSuccessState(state: Extract<ImportState, { status: 'done' }>): void {
     sessionStorage.setItem(IMPORT_SUCCESS_STORAGE_KEY, JSON.stringify(state));
+}
+
+function clearImportSuccessState(): void {
+    sessionStorage.removeItem(IMPORT_SUCCESS_STORAGE_KEY);
 }

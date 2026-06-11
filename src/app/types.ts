@@ -6,6 +6,7 @@ export type AppConfig = {
     hide?: boolean;
     deadline?: Date;
     fallbackAnimeName?: string;
+    rankSupported?: boolean;
     googleSheets?: GoogleSheetsConfig;
 };
 
@@ -13,7 +14,7 @@ export type GoogleSheetsConfig = {
     clientId: string;
     appId: string;
     idColumnHeader?: string;
-    rankColumnHeader: string;
+    rankColumnHeader?: string;
     scoreColumnHeader?: string;
 };
 

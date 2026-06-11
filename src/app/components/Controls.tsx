@@ -3,6 +3,7 @@ import type { SavedProgressKind, Screen } from '../types';
 type ControlsProps = {
     screen: Screen;
     savedKind: SavedProgressKind;
+    rankSupported: boolean;
     googleSheetsEnabled: boolean;
     googleSheetsDisabledReason: string | null;
     googleSheetsSetupReason: string | null;
@@ -24,6 +25,7 @@ type ControlsProps = {
 export function Controls({
     screen,
     savedKind,
+    rankSupported,
     googleSheetsEnabled,
     googleSheetsDisabledReason,
     googleSheetsSetupReason,
@@ -41,33 +43,8 @@ export function Controls({
     onWriteRanksToSheet,
     onSetupGoogleSheet,
 }: ControlsProps) {
-    return (
-        <div className="button-container">
-            <a className="basic-button" href="../">
-                Overview
-            </a>
-            {screen === 'playlist' ? (
-                <button className="basic-button" type="button" onClick={onExitPlaylist}>
-                    Sorter
-                </button>
-            ) : (
-                <button className="basic-button" type="button" onClick={onOpenPlaylist}>
-                    Playlist
-                </button>
-            )}
-            {screen === 'sorting' || screen === 'playlist' ? (
-                <button className="basic-button" type="button" onClick={onOpenSongList}>
-                    Songlist
-                </button>
-            ) : null}
-            {screen === 'sorting' ? (
-                <button className="basic-button" type="button" onClick={onOpenHistory}>
-                    History
-                </button>
-            ) : null}
-            <button className="basic-button" type="button" onClick={onOpenSettings}>
-                Settings
-            </button>
+    const rankControls = rankSupported ? (
+        <>
             {screen === 'landing' ? (
                 <button className="basic-button" type="button" onClick={onStart}>
                     Start
@@ -105,6 +82,37 @@ export function Controls({
                                 : 'Write ranks to Google Sheet'}
                 </button>
             ) : null}
+        </>
+    ) : null;
+
+    return (
+        <div className="button-container">
+            <a className="basic-button" href="../">
+                Overview
+            </a>
+            {rankSupported && screen === 'playlist' ? (
+                <button className="basic-button" type="button" onClick={onExitPlaylist}>
+                    Sorter
+                </button>
+            ) : screen !== 'playlist' ? (
+                <button className="basic-button" type="button" onClick={onOpenPlaylist}>
+                    Playlist
+                </button>
+            ) : null}
+            {screen === 'sorting' || screen === 'playlist' ? (
+                <button className="basic-button" type="button" onClick={onOpenSongList}>
+                    Songlist
+                </button>
+            ) : null}
+            {screen === 'sorting' ? (
+                <button className="basic-button" type="button" onClick={onOpenHistory}>
+                    History
+                </button>
+            ) : null}
+            <button className="basic-button" type="button" onClick={onOpenSettings}>
+                Settings
+            </button>
+            {rankControls}
         </div>
     );
 }

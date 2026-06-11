@@ -41,6 +41,7 @@ export function App({config, songs}: AppProps) {
     const songIds = useMemo(() => resolvedSongs.map((song) => song.id), [resolvedSongs]);
     const storage = useMemo(() => createStorage(config, songIds), [config, songIds]);
     const scoreEnabled = isScoreEnabled(config);
+    const rankSupported = config.rankSupported !== false;
     const [screen, setScreen] = useState<Screen>('landing');
     const [settings, setSettings] = useState<Settings>(() => storage.loadSettings());
     const [scoresBySongId, setScoresBySongId] = useState<SongScoresById>(() => storage.loadScores());
@@ -133,6 +134,10 @@ export function App({config, songs}: AppProps) {
     }, [googleSpreadsheetSelection, isSongListOpen, scoreEnabled, songIds]);
 
     const savedKind: SavedProgressKind = useMemo(() => {
+        if (!rankSupported) {
+            return 'none';
+        }
+
         if (screen !== 'landing') {
             return 'none';
         }
@@ -143,9 +148,13 @@ export function App({config, songs}: AppProps) {
         }
 
         return isComplete(savedSort) ? 'complete' : 'in-progress';
-    }, [screen, storage]);
+    }, [rankSupported, screen, storage]);
 
     function startSort(): void {
+        if (!rankSupported) {
+            return;
+        }
+
         const savedSort = storage.loadSort();
         if (savedSort && hasSavedSortProgress(savedSort) && !window.confirm('Starting a new sort deletes all saved picks for this sorter. Scores are kept. Continue?')) {
             return;
@@ -159,6 +168,12 @@ export function App({config, songs}: AppProps) {
     }
 
     function loadSort(): void {
+        if (!rankSupported) {
+            setScreen('landing');
+            setSort(null);
+            return;
+        }
+
         const savedSort = storage.loadSort();
         if (!savedSort) {
             setScreen('landing');
@@ -176,7 +191,7 @@ export function App({config, songs}: AppProps) {
     }
 
     function pick(choice: SortChoice): void {
-        if (!sort) {
+        if (!rankSupported || !sort) {
             return;
         }
 
@@ -191,7 +206,7 @@ export function App({config, songs}: AppProps) {
     }
 
     function undoPick(): void {
-        if (!sort) {
+        if (!rankSupported || !sort) {
             return;
         }
 
@@ -220,6 +235,10 @@ export function App({config, songs}: AppProps) {
     }
 
     function exitPlaylist(): void {
+        if (!rankSupported) {
+            return;
+        }
+
         const nextScreen = screenFor(sort);
         setScreen(nextScreen);
         if (nextScreen === 'sorting') {
@@ -507,7 +526,7 @@ export function App({config, songs}: AppProps) {
     }
 
     function copyRanks(): void {
-        if (!sort) {
+        if (!rankSupported || !sort) {
             return;
         }
 
@@ -532,7 +551,7 @@ export function App({config, songs}: AppProps) {
     }
 
     function writeRanksToSheet(): void {
-        if (screen !== 'complete' || !sort) {
+        if (!rankSupported || screen !== 'complete' || !sort) {
             return;
         }
 
@@ -729,8 +748,8 @@ export function App({config, songs}: AppProps) {
         pendingScoreWritebackRef.current.clear();
         setSettings(importedSettings);
         setScoresBySongId(importedScores);
-        setSort(importedSort && hasSavedSortProgress(importedSort) ? importedSort : null);
-        setScreen(importedSort && hasSavedSortProgress(importedSort) ? screenFor(importedSort) : 'landing');
+        setSort(rankSupported && importedSort && hasSavedSortProgress(importedSort) ? importedSort : null);
+        setScreen(rankSupported && importedSort && hasSavedSortProgress(importedSort) ? screenFor(importedSort) : 'landing');
         setGoogleSpreadsheetSelection(importedGoogleSpreadsheetSelection);
         setSheetScoresBySongId({});
         setSheetScoreStatus({
@@ -746,7 +765,7 @@ export function App({config, songs}: AppProps) {
         setHistoryOpen(false);
         setSongListOpen(false);
         setSorterAutoPlayForSort(
-            importedSort && hasSavedSortProgress(importedSort) ? importedSort : null,
+            rankSupported && importedSort && hasSavedSortProgress(importedSort) ? importedSort : null,
             importedSettings,
             importedScores,
         );
@@ -827,13 +846,14 @@ export function App({config, songs}: AppProps) {
             <div className={`main-page ${screen === 'landing' ? 'main-page--landing' : ''}`}>
                 {screen !== 'sorting' ? (
                     <div className="title" style={screen === 'complete' ? {height: '3%'} : undefined}>
-                        {screen === 'complete' ? 'Results' : screen === 'playlist' ? 'Playlist' : landingTitle(savedKind)}
+                        {screen === 'complete' ? 'Results' : screen === 'playlist' ? 'Playlist' : landingTitle(savedKind, rankSupported)}
                     </div>
                 ) : null}
 
                 <Controls
                     screen={screen}
                     savedKind={savedKind}
+                    rankSupported={rankSupported}
                     googleSheetsEnabled={Boolean(config.googleSheets)}
                     googleSheetsDisabledReason={googleSheetsDisabledReason}
                     googleSheetsSetupReason={writeSheetSetupReason}
@@ -976,7 +996,11 @@ function changedRanks(currentRanks: Map<number, number>, lastWrittenRanks: Map<n
     );
 }
 
-function landingTitle(savedKind: SavedProgressKind): string {
+function landingTitle(savedKind: SavedProgressKind, rankSupported: boolean): string {
+    if (!rankSupported) {
+        return 'Press "Playlist" to browse songs.';
+    }
+
     if (savedKind === 'complete') {
         return 'Press "Start" to begin sorting or "Show Results" to display results of previous sorting.';
     }

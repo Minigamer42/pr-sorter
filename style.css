@@ -1155,6 +1155,12 @@ table td {
   margin-top: 20px;
 }
 
+.import-actions .basic-button,
+.import-preview__header .basic-button {
+  margin-left: 0;
+  margin-right: 0;
+}
+
 .import-link {
   color: #bbf7d0;
 }
@@ -1197,6 +1203,15 @@ table td {
 
 .import-mapping {
   margin-top: 20px;
+}
+
+.import-mapping > .basic-button {
+  margin: 14px 0 0;
+}
+
+.import-mapping > .basic-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .import-mapping h2 {

@@ -4,7 +4,8 @@ import type { Song } from '../songs';
 export type ParsedSheetCustomize = {
     songs: Song[];
     idColumnHeader: string;
-    rankColumnHeader: string;
+    rankSupported: boolean;
+    rankColumnHeader?: string;
     scoreColumnHeader?: string;
 };
 
@@ -83,9 +84,13 @@ export function parseSheetGrid(
         video: optionalColumn(headers.headers, mapping.video),
         mp3: optionalColumn(headers.headers, mapping.mp3),
         full: optionalColumn(headers.headers, mapping.full),
-        rank: requireColumn(headers.headers, mapping.rank, 'Rank'),
+        rank: optionalColumn(headers.headers, mapping.rank),
         score: optionalColumn(headers.headers, mapping.score),
     };
+
+    if (columns.rank === null && columns.score === null) {
+        throw new Error('Missing required header: Rank or Score.');
+    }
 
     const songs: Song[] = [];
     const seenIds = new Set<number>();
@@ -142,7 +147,8 @@ export function parseSheetGrid(
     return {
         songs: [...songs].sort((left, right) => left.id - right.id),
         idColumnHeader: mapping.id ?? 'ID',
-        rankColumnHeader: mapping.rank ?? 'Rank',
+        rankSupported: Boolean(mapping.rank),
+        rankColumnHeader: mapping.rank || undefined,
         scoreColumnHeader: mapping.score || undefined,
     };
 }

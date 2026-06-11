@@ -8,7 +8,7 @@ export type GoogleSheetsWritebackConfig = {
     appId: string;
     apiKey: string;
     idColumnHeader?: string;
-    rankColumnHeader: string;
+    rankColumnHeader?: string;
     scoreColumnHeader?: string;
     tokenStorageKey: string;
 };
