@@ -17,12 +17,17 @@ type PlaylistProps = {
     settings: Settings;
     scoreEnabled: boolean;
     scoresBySongId: SongScoresById;
+    canWriteSheetScores: boolean;
+    sheetScoresSetupReason: string | null;
+    isWritingSheetScores: boolean;
     onModeChange(mode: PlaylistMode): void;
     onScoreFilterChange(filter: PlaylistScoreFilter): void;
     onPrevious(): void;
     onNext(): void;
     onAutoNext(): void;
     onScoreChange(songId: number, score: string): void;
+    onWriteSheetScores(): void;
+    onSetupGoogleSheet(): void;
 };
 
 export function Playlist({
@@ -37,13 +42,30 @@ export function Playlist({
     settings,
     scoreEnabled,
     scoresBySongId,
+    canWriteSheetScores,
+    sheetScoresSetupReason,
+    isWritingSheetScores,
     onModeChange,
     onScoreFilterChange,
     onPrevious,
     onNext,
     onAutoNext,
     onScoreChange,
+    onWriteSheetScores,
+    onSetupGoogleSheet,
 }: PlaylistProps) {
+    const writeScoresButton = scoreEnabled ? (
+        <button
+            className="playlist-mode__button"
+            type="button"
+            onClick={sheetScoresSetupReason ? onSetupGoogleSheet : onWriteSheetScores}
+            disabled={scoredSongCount === 0 || isWritingSheetScores || (!canWriteSheetScores && !sheetScoresSetupReason)}
+            title={sheetScoresSetupReason ?? undefined}
+        >
+            {isWritingSheetScores ? 'Writing...' : sheetScoresSetupReason ? 'Choose sheet' : 'Write scores'}
+        </button>
+    ) : null;
+
     if (songs.length === 0) {
         return (
             <div className="playlist">
@@ -63,6 +85,7 @@ export function Playlist({
                         mode={mode}
                         scoreFilter={scoreFilter}
                         scoreEnabled={scoreEnabled}
+                        writeScoresButton={writeScoresButton}
                         onModeChange={onModeChange}
                         onScoreFilterChange={onScoreFilterChange}
                     />
@@ -84,6 +107,7 @@ export function Playlist({
                     mode={mode}
                     scoreFilter={scoreFilter}
                     scoreEnabled={scoreEnabled}
+                    writeScoresButton={writeScoresButton}
                     onModeChange={onModeChange}
                     onScoreFilterChange={onScoreFilterChange}
                 />
@@ -133,6 +157,7 @@ type PlaylistToolbarControlsProps = {
     mode: PlaylistMode;
     scoreFilter: PlaylistScoreFilter;
     scoreEnabled: boolean;
+    writeScoresButton: React.ReactNode;
     onModeChange(mode: PlaylistMode): void;
     onScoreFilterChange(filter: PlaylistScoreFilter): void;
 };
@@ -141,11 +166,17 @@ function PlaylistToolbarControls({
     mode,
     scoreFilter,
     scoreEnabled,
+    writeScoresButton,
     onModeChange,
     onScoreFilterChange,
 }: PlaylistToolbarControlsProps) {
     return (
         <div className="playlist-toolbar-controls">
+            {writeScoresButton ? (
+                <div className="playlist-mode" aria-label="Playlist score writeback">
+                    {writeScoresButton}
+                </div>
+            ) : null}
             <div className="playlist-mode" aria-label="Playlist order">
                 <button
                     className={`playlist-mode__button${mode === 'in-order' ? ' playlist-mode__button--active' : ''}`}

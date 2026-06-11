@@ -939,6 +939,16 @@ body.sorter-index-body {
   color: #ffffff;
 }
 
+.playlist-mode__button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.playlist-mode__button:disabled:hover {
+  background: transparent;
+  color: #dbeafe;
+}
+
 .playlist-card {
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto auto;

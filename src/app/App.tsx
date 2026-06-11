@@ -869,7 +869,7 @@ export function App({config, songs}: AppProps) {
                     onUndo={undoPick}
                     onCopyRanks={copyRanks}
                     onWriteRanksToSheet={writeRanksToSheet}
-                    onSetupGoogleSheet={() => setSettingsOpen(true)}
+                    onSetupGoogleSheet={chooseSheet}
                 />
 
                 {screen === 'playlist' ? (
@@ -885,12 +885,17 @@ export function App({config, songs}: AppProps) {
                         settings={settings}
                         scoreEnabled={scoreEnabled}
                         scoresBySongId={scoresBySongId}
+                        canWriteSheetScores={Boolean(googleWritebackConfig() && googleSpreadsheetSelection)}
+                        sheetScoresSetupReason={writeSheetSetupReason}
+                        isWritingSheetScores={isWritingSheetScores}
                         onModeChange={changePlaylistMode}
                         onScoreFilterChange={changePlaylistScoreFilter}
                         onPrevious={previousPlaylistSong}
                         onNext={nextPlaylistSong}
                         onAutoNext={autoNextPlaylistSong}
                         onScoreChange={updateScore}
+                        onWriteSheetScores={writeSongListScoresToSheet}
+                        onSetupGoogleSheet={chooseSheet}
                     />
                 ) : screen !== 'landing' && sort ? (
                     <>
