@@ -3,34 +3,124 @@
 import type { Song } from '../src/songs';
 
 export const songList = [
-    {'id': 1, 'anime': 'Bang Dream', 'name': 'Asu no Yozora Shoukaihan by Afterglow', 'video': 'https://www.youtube.com/watch?v=aaxlWyLU9vY', 'mp3': null},
-    {'id': 2, 'anime': 'Bang Dream', 'name': 'Ave Mujica by Ave Mujica', 'video': 'https://youtu.be/QDsd0nyzwz0', 'mp3': null},
-    {'id': 3, 'anime': 'Bang Dream', 'name': 'Bad Kids All Bet by RAISE A SUILEN', 'video': 'https://www.youtube.com/watch?v=mKt2u5a3-H8', 'mp3': null},
-    {'id': 4, 'anime': 'Bang Dream', 'name': 'Beautiful Birthday & RAISE A SUILEN', 'video': 'https://youtu.be/lpV2AtyGCk4', 'mp3': null},
-    {'id': 5, 'anime': 'Bang Dream', 'name': 'Choir \'s\' Choir by Ave Mujica', 'video': 'https://youtu.be/7llj4mh4L-8', 'mp3': null},
-    {'id': 6, 'anime': 'Bang Dream', 'name': 'Double Rainbow by Poppin\'Party', 'video': 'https://youtu.be/ulGsr3MxM8M', 'mp3': null},
-    {'id': 7, 'anime': 'Bang Dream', 'name': 'Ether by Ave Mujica', 'video': 'https://www.youtube.com/watch?v=z6k7YIIZ6Hk', 'mp3': null},
-    {'id': 8, 'anime': 'Bang Dream', 'name': 'Freedom by Poppin\'Party x Misato Fukuen', 'video': 'https://youtu.be/O_qXmu7NXl4', 'mp3': null},
-    {'id': 9, 'anime': 'Bang Dream', 'name': 'Hey-day Capriccio by Afterglow', 'video': 'https://youtu.be/bOsPKoj0AcA', 'mp3': null},
-    {'id': 10, 'anime': 'Bang Dream', 'name': 'Kamisama, Baka by Ave Mujica', 'video': 'https://youtu.be/vmheOfqsH_o', 'mp3': null},
-    {'id': 11, 'anime': 'Bang Dream', 'name': 'KiLLKiSS by Ave Mujica', 'video': 'https://www.youtube.com/watch?v=RexyoaXaQ1o', 'mp3': null},
-    {'id': 12, 'anime': 'Bang Dream', 'name': 'Kimi ga Inakucha, Hello Happy World', 'video': 'https://naedist.animemusicquiz.com/8poyjw.webm', 'mp3': null},
-    {'id': 13, 'anime': 'Bang Dream', 'name': 'Mugen My World by Mugendai Mewtype', 'video': 'https://youtube.com/watch?v=GB2MEvY2sQk', 'mp3': null},
-    {'id': 14, 'anime': 'Bang Dream', 'name': 'Radiate Warriors by Pastel＊Palettes', 'video': 'https://youtu.be/dS-SUwftzmM', 'mp3': null},
-    {'id': 15, 'anime': 'Bang Dream', 'name': 'Returns by Poppin\'Party', 'video': 'https://www.youtube.com/watch?v=rBL930dHVkY', 'mp3': null},
-    {'id': 16, 'anime': 'Bang Dream', 'name': 'Roku-chou Nen to Ichiya Monogatari by Roselia', 'video': 'https://youtu.be/8OeGR6gMy7E', 'mp3': null},
-    {'id': 17, 'anime': 'Bang Dream', 'name': 'Sing Alive by Roselia', 'video': 'https://naedist.animemusicquiz.com/2h5qt3.webm', 'mp3': null},
-    {'id': 18, 'anime': 'Bang Dream', 'name': 'Mayoi Uta by MyGO!!!!!', 'video': 'https://naedist.animemusicquiz.com/vppf6y.webm', 'mp3': null},
-    {'id': 19, 'anime': 'Bang Dream', 'name': 'Smiling & Singing A Song by Hello, Happy World!', 'video': 'https://youtu.be/XFv3P-fKhWw', 'mp3': null},
-    {'id': 20, 'anime': 'Bang Dream', 'name': 'Song I am. by Roselia', 'video': 'https://naedist.animemusicquiz.com/njc8p5.webm', 'mp3': null},
-    {'id': 21, 'anime': 'Bang Dream', 'name': 'Sora no Música by Ave Mujica', 'video': 'https://youtu.be/2Bo-ULStqLo', 'mp3': null},
-    {'id': 22, 'anime': 'Bang Dream', 'name': 'Sprechchor by Roselia', 'video': 'https://www.youtube.com/watch?v=sdRwP4OjVn4', 'mp3': null},
-    {'id': 23, 'anime': 'Bang Dream', 'name': 'Sunlit Musical - Roselia', 'video': 'https://youtu.be/BtG1mA_1e0s', 'mp3': null},
-    {'id': 24, 'anime': 'Bang Dream', 'name': 'swim by MyGO!!!!!', 'video': 'https://www.youtube.com/watch?v=AEZ7suhPML0', 'mp3': null},
-    {'id': 25, 'anime': 'Bang Dream', 'name': 'Symbol III: ▽ by Ave Mujica', 'video': 'https://www.youtube.com/watch?v=NB3PxWLn9v4', 'mp3': null},
-    {'id': 26, 'anime': 'Bang Dream', 'name': 'Symbol IV :Earth by Ave Mujica', 'video': 'https://www.youtube.com/watch?v=WqQPM0dZpXc', 'mp3': null},
-    {'id': 27, 'anime': 'Bang Dream', 'name': 'Telepathy by Mugendai Mewtype', 'video': 'https://www.youtube.com/watch?v=GN_0T7cClGM', 'mp3': null},
-    {'id': 28, 'anime': 'Bang Dream', 'name': 'The Circle of Butterflies by Morfonica x fhána', 'video': 'https://www.youtube.com/watch?v=JfhgKn1hnnk', 'mp3': null},
-    {'id': 29, 'anime': 'Bang Dream', 'name': 'Utakotoba by MyGO!!!!!', 'video': 'https://youtu.be/wJ-OebTVyvk', 'mp3': null},
-    {'id': 30, 'anime': 'Bang Dream', 'name': 'Yakusoku by Roselia', 'video': 'https://naedist.animemusicquiz.com/h0rza6.webm', 'mp3': null}
+    {
+        'id': 1,
+        'anime': 'Chuuka Ichiban!',
+        'name': '"Iki mo Dekinai ~Now I can breath~" by ZARD',
+        'video': 'https://naedist.animemusicquiz.com/640fbh.webm',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 2,
+        'anime': 'Dragon Ball GT',
+        'name': '"Don\'t you see!" by ZARD',
+        'video': 'https://naedist.animemusicquiz.com/1phuph.webm',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 3,
+        'anime': 'Meitantei Conan',
+        'name': '"Unmei no Roulette Mawashite" by ZARD',
+        'video': 'https://naedist.animemusicquiz.com/onnl7p.webm',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 4,
+        'anime': 'Meitantei Conan',
+        'name': '"Hoshi no Kagayaki yo" by ZARD',
+        'video': 'https://naedist.animemusicquiz.com/y9m43b.webm',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 5,
+        'anime': 'Meitantei Conan',
+        'name': '"Glorious Mind" by ZARD',
+        'video': 'https://naedist.animemusicquiz.com/skn2ja.webm',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 6,
+        'anime': 'Meitantei Conan',
+        'name': '"Ai wa Kurayami no Naka de" by ZARD',
+        'video': 'https://naedist.animemusicquiz.com/46cpuc.webm',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 7,
+        'anime': 'Meitantei Conan',
+        'name': '"Ashita wo Yumemite" by ZARD',
+        'video': 'https://naedist.animemusicquiz.com/g1rwv2.webm',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 8,
+        'anime': 'Meitantei Conan',
+        'name': '"Kanashii Hodo Anata ga Suki" by ZARD',
+        'video': 'https://naedist.animemusicquiz.com/lwcx5l.webm',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 9,
+        'anime': 'Meitantei Conan Movie 02: 14-banme no Target',
+        'name': '"Shoujo no Koro ni Modotta Mitai ni" by ZARD',
+        'video': 'https://naedist.animemusicquiz.com/e1cras.webm',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 10,
+        'anime': 'Meitantei Conan Movie 09: Suihei Senjou no Strategy',
+        'name': '"Natsu wo Matsu Sail no You ni" by ZARD',
+        'video': 'https://naedist.animemusicquiz.com/6sggte.webm',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 11,
+        'anime': 'Meitantei Conan Movie 12: Senritsu no Full Score',
+        'name': '"Tsubasa wo Hirogete" by ZARD',
+        'video': 'https://naedist.animemusicquiz.com/ehfofx.webm',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 12,
+        'anime': 'Slam Dunk',
+        'name': '"My Friend" by ZARD',
+        'video': 'https://naedist.animemusicquiz.com/fa9cnm.webm',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 13,
+        'anime': 'Time Bokan: Gyakushuu no San Akunin',
+        'name': '"Makenaide" by ZARD',
+        'video': 'https://naedist.animemusicquiz.com/7ztsoh.webm',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 14,
+        'anime': 'Yawara!: Zutto Kimi no Koto ga...',
+        'name': '"Today is another day" by ZARD',
+        'video': 'https://naedist.animemusicquiz.com/lrxa6g.webm',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 15,
+        'anime': 'Yawara!: Zutto Kimi no Koto ga...',
+        'name': '"Mitsumete Itai ne" by ZARD',
+        'video': 'https://naedist.animemusicquiz.com/bc54dm.webm',
+        'mp3': null,
+        'full': null
+    }
 ] satisfies Song[];
