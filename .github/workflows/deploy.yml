@@ -56,7 +56,7 @@ jobs:
 
             rm -rf customize dist "pages-dist/$slug"
             git checkout "origin/$branch" -- customize
-            npx tsc customize/config.ts --outDir .pages-tools --module NodeNext --target ES2022 --moduleResolution NodeNext --skipLibCheck --types node --ignoreConfig
+            npx tsc customize/*.ts --outDir .pages-tools --module NodeNext --target ES2022 --moduleResolution NodeNext --skipLibCheck --types node --ignoreConfig
             node .pages-tools/dev/pagesIndexWriter.js add "$slug"
 
             npm run build:app
@@ -129,7 +129,7 @@ jobs:
 
             rm -rf customize
             git checkout "origin/$index_branch" -- customize
-            npx tsc customize/config.ts --outDir .pages-tools --module NodeNext --target ES2022 --moduleResolution NodeNext --skipLibCheck --types node --ignoreConfig
+            npx tsc customize/*.ts --outDir .pages-tools --module NodeNext --target ES2022 --moduleResolution NodeNext --skipLibCheck --types node --ignoreConfig
             node .pages-tools/dev/pagesIndexWriter.js add "$index_slug"
           done
           node .pages-tools/dev/pagesIndexWriter.js write

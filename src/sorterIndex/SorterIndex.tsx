@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { progressPercentage, type SortState } from '../sorter';
 import { externalSorterSources } from './externalSorterSources';
 import { sorters } from './sorters.generated';
 import type { ExternalSorterSource, SorterIndexEntry } from './types';
@@ -314,11 +315,50 @@ function loadSorterProgress(sorter: SorterIndexEntry, storage: Storage = localSt
             return null;
         }
 
-        const percent = Math.max(1, Math.min(99, Math.floor((value.pickedCount * 100) / Math.max(1, value.estimatedBattles))));
+        const songCount = inferStoredSortSongCount(value);
+        const percent = songCount === null
+            ? Math.max(1, Math.min(99, Math.floor((value.pickedCount * 100) / Math.max(1, value.estimatedBattles))))
+            : Math.max(1, progressPercentage(value as SortState, songCount));
         return {percent, label: 'In progress', kind: 'in-progress'};
     } catch {
         return null;
     }
+}
+
+function inferStoredSortSongCount(value: { groups: unknown[]; current: unknown }): number | null {
+    const indexes = [
+        ...indexesFromGroups(value.groups),
+        ...indexesFromMerge(value.current),
+    ];
+    if (indexes.length === 0) {
+        return null;
+    }
+
+    return Math.max(...indexes) + 1;
+}
+
+function indexesFromGroups(groups: unknown[]): number[] {
+    return groups.flatMap((group) => Array.isArray(group) ? group.filter(isSongIndex) : []);
+}
+
+function indexesFromMerge(value: unknown): number[] {
+    if (!isRecord(value)) {
+        return [];
+    }
+
+    return [
+        ...indexesFromUnknownArray(value.left),
+        ...indexesFromUnknownArray(value.right),
+        ...indexesFromUnknownArray(value.merged),
+    ];
+}
+
+function indexesFromUnknownArray(value: unknown): number[] {
+    return Array.isArray(value) ? value.filter(isSongIndex) : [];
+}
+
+function isSongIndex(value: unknown): value is number {
+    return typeof value === 'number' && Number.isInteger(value) && value >= 0;
 }
 
 function loadScoreProgress(localStoragePrefix: string, sorter: SorterIndexEntry, storage: Storage): SorterProgress | null {
