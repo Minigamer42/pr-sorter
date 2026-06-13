@@ -1,6 +1,15 @@
 {
   "sorters": [
     {
+      "slug": "trios-2",
+      "title": "Anime Songs Trios Sorter",
+      "description": "Party rank sorter for your custom list of songs.",
+      "tags": [
+        "Nominations"
+      ],
+      "deadline": "2026-06-21T03:00:00.000Z"
+    },
+    {
       "slug": "ayase",
       "title": "Ayase Sorter",
       "description": "Party rank sorter for Ayase",
