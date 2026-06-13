@@ -1,13 +1,15 @@
+import { useEffect, useState } from 'react';
 import { Media } from '../../media';
-import type { ResolvedSong } from '../../songs';
-import type { Settings, SongScoresById } from '../types';
+import { songEntryId, songEntrySongs, songWithTypeLabel, type ResolvedSongEntry } from '../../songs';
+import type { AppConfig, Settings, SongScoresById } from '../types';
 
 export type PlaylistMode = 'in-order' | 'random';
 export type PlaylistScoreFilter = 'all' | 'unscored';
 
 type PlaylistProps = {
-    songs: ResolvedSong[];
-    currentSong: ResolvedSong | null;
+    config: AppConfig;
+    songs: ResolvedSongEntry[];
+    currentSong: ResolvedSongEntry | null;
     currentPosition: number;
     orderLength: number;
     scoredSongCount: number;
@@ -31,6 +33,7 @@ type PlaylistProps = {
 };
 
 export function Playlist({
+    config,
     songs,
     currentSong,
     currentPosition,
@@ -54,6 +57,15 @@ export function Playlist({
     onWriteSheetScores,
     onSetupGoogleSheet,
 }: PlaylistProps) {
+    const [activeSongIndex, setActiveSongIndex] = useState(0);
+    const [playingSongIndex, setPlayingSongIndex] = useState<number | null>(null);
+    const currentSongId = currentSong ? songEntryId(currentSong) : null;
+
+    useEffect(() => {
+        setActiveSongIndex(0);
+        setPlayingSongIndex(null);
+    }, [currentPosition, currentSongId, settings.mediaFormat, settings.region]);
+
     const writeScoresButton = scoreEnabled ? (
         <button
             className="playlist-mode__button"
@@ -95,12 +107,51 @@ export function Playlist({
         );
     }
 
+    if (currentSongId === null) {
+        return null;
+    }
+
+    const currentSongs = songEntrySongs(currentSong);
+    const clampedActiveSongIndex = Math.min(activeSongIndex, currentSongs.length - 1);
+
+    function mediaStarted(index: number): void {
+        setPlayingSongIndex(index);
+        setActiveSongIndex(index);
+    }
+
+    function mediaPaused(index: number): void {
+        setPlayingSongIndex((current) => (current === index ? null : current));
+    }
+
+    function mediaEnded(index: number): void {
+        setPlayingSongIndex((current) => (current === index ? null : current));
+        if (index < currentSongs.length - 1) {
+            setActiveSongIndex(index + 1);
+            return;
+        }
+
+        setActiveSongIndex(0);
+        onAutoNext();
+    }
+
+    function previousEntry(): void {
+        setActiveSongIndex(0);
+        setPlayingSongIndex(null);
+        onPrevious();
+    }
+
+    function nextEntry(): void {
+        setActiveSongIndex(0);
+        setPlayingSongIndex(null);
+        onNext();
+    }
+
     return (
         <div className="playlist">
             <div className="playlist-toolbar">
                 <div className="playlist-position">
                     {scoreFilter === 'unscored'
-                        ? `${scoredSongCount} / ${totalSongCount} scored · ID ${currentSong.id}`
+                        ? `${scoredSongCount} / ${totalSongCount} scored · ID ${currentSongId}`
                         : `${currentPosition + 1} / ${orderLength}`}
                 </div>
                 <PlaylistToolbarControls
@@ -113,19 +164,33 @@ export function Playlist({
                 />
             </div>
 
-            <div className={`playlist-card${scoreEnabled ? ' playlist-card--scored' : ''}`}>
-                <div className="playlist-media">
-                    <Media
-                        key={`${currentSong.id}:${settings.mediaFormat}:${settings.region}`}
-                        song={currentSong}
-                        settings={settings}
-                        autoPlay
-                        onEnded={onAutoNext}
-                    />
-                </div>
-                <div className="playlist-song-meta">
-                    <div className="playlist-anime">{currentSong.anime}</div>
-                    <div className="playlist-song">{currentSong.name}</div>
+            <div className={`playlist-card${scoreEnabled ? ' playlist-card--scored' : ''}${currentSongs.length > 1 ? ' playlist-card--group' : ''}`}>
+                <div className={currentSongs.length > 1 ? 'playlist-media-grid' : 'playlist-media'}>
+                    {currentSongs.map((song, index) => {
+                        const labelledSong = songWithTypeLabel(song, config.songTypes?.[index]);
+                        const shouldAutoPlay = index === clampedActiveSongIndex;
+                        const isPlaying = currentSongs.length > 1 && index === playingSongIndex;
+
+                        return (
+                            <div className={`playlist-media-entry${isPlaying ? ' playlist-media-entry--active' : ''}`} key={`${song.id}-${index}`}>
+                                <div className="playlist-media">
+                                    <Media
+                                        key={`${currentSongId}:${index}:${clampedActiveSongIndex}:${settings.mediaFormat}:${settings.region}`}
+                                        song={song}
+                                        settings={settings}
+                                        autoPlay={shouldAutoPlay}
+                                        onPlay={() => mediaStarted(index)}
+                                        onPause={() => mediaPaused(index)}
+                                        onEnded={() => mediaEnded(index)}
+                                    />
+                                </div>
+                                <div className="playlist-song-meta">
+                                    <div className="playlist-anime" title={labelledSong.anime}>{labelledSong.anime}</div>
+                                    <div className="playlist-song" title={labelledSong.name}>{labelledSong.name}</div>
+                                </div>
+                            </div>
+                        );
+                    })}
                 </div>
                 {scoreEnabled ? (
                     <label className="score-field playlist-score-field">
@@ -135,16 +200,16 @@ export function Playlist({
                             min="0"
                             max="10"
                             step="0.01"
-                            value={scoresBySongId[currentSong.id] ?? ''}
-                            onChange={(event) => onScoreChange(currentSong.id, event.currentTarget.value)}
+                            value={scoresBySongId[currentSongId] ?? ''}
+                            onChange={(event) => onScoreChange(currentSongId, event.currentTarget.value)}
                         />
                     </label>
                 ) : null}
                 <div className="playlist-actions">
-                    <button type="button" onClick={onPrevious}>
+                    <button type="button" onClick={previousEntry}>
                         Previous
                     </button>
-                    <button type="button" onClick={onNext}>
+                    <button type="button" onClick={nextEntry}>
                         Next
                     </button>
                 </div>

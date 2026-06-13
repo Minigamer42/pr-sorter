@@ -1,7 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { visibleUrl } from '../../media/internal/urls';
 import { type SortState } from '../../sorter';
-import type { ResolvedSong } from '../../songs';
+import {
+    songEntryAnime,
+    songEntryId,
+    songEntryName,
+    songEntrySongs,
+    type ResolvedSong,
+    type ResolvedSongEntry,
+} from '../../songs';
 import { projectedSongSortInfos } from '../internal/projectedSortInfo';
 import type { GoogleSpreadsheetSelection, Settings, SongScoresById } from '../types';
 
@@ -13,7 +20,7 @@ type SheetScoreStatus =
 
 type SongListModalProps = {
     open: boolean;
-    songs: ResolvedSong[];
+    songs: ResolvedSongEntry[];
     sort: SortState | null;
     settings: Settings;
     scoreEnabled: boolean;
@@ -142,13 +149,16 @@ export function SongListModal({
                         </thead>
                         <tbody>
                         {rows.map(({song, index}) => {
+                            const id = songEntryId(song);
+                            const anime = songEntryAnime(song);
+                            const name = songEntryName(song);
                             const range = sort ? projectedRanges.get(index) ?? null : null;
 
                             return (
-                                <tr key={song.id}>
-                                    <td>{song.id}</td>
-                                    <td title={song.anime}>{song.anime}</td>
-                                    <td title={song.name}>{song.name}</td>
+                                <tr key={id}>
+                                    <td>{id}</td>
+                                    <td title={anime}>{anime}</td>
+                                    <td title={name}>{name}</td>
                                     <td>
                                         <SongLinks song={song}/>
                                     </td>
@@ -159,12 +169,12 @@ export function SongListModal({
                                             min="0"
                                             max="10"
                                             step="0.01"
-                                            value={scoresBySongId[song.id] ?? ''}
+                                            value={scoresBySongId[id] ?? ''}
                                             disabled={!scoreEnabled}
-                                            onChange={(event) => onScoreChange(song.id, event.currentTarget.value)}
+                                            onChange={(event) => onScoreChange(id, event.currentTarget.value)}
                                         />
                                     </td>
-                                    <td>{sheetScoresBySongId[song.id] ?? ''}</td>
+                                    <td>{sheetScoresBySongId[id] ?? ''}</td>
                                     <td>{range ? formatRankRange(range.minRank, range.maxRank) : ''}</td>
                                 </tr>
                             );
@@ -220,8 +230,8 @@ function SortableHeader({
 }
 
 function compareRows(
-    left: { song: ResolvedSong; index: number },
-    right: { song: ResolvedSong; index: number },
+    left: { song: ResolvedSongEntry; index: number },
+    right: { song: ResolvedSongEntry; index: number },
     column: SortColumn,
     direction: SortDirection,
     scoresBySongId: SongScoresById,
@@ -229,33 +239,36 @@ function compareRows(
 ): number {
     const multiplier = direction === 'asc' ? 1 : -1;
     const compared = compareByColumn(left, right, column, scoresBySongId, sheetScoresBySongId);
-    return (compared || left.song.id - right.song.id) * multiplier;
+    return (compared || songEntryId(left.song) - songEntryId(right.song)) * multiplier;
 }
 
 function compareByColumn(
-    left: { song: ResolvedSong; index: number },
-    right: { song: ResolvedSong; index: number },
+    left: { song: ResolvedSongEntry; index: number },
+    right: { song: ResolvedSongEntry; index: number },
     column: SortColumn,
     scoresBySongId: SongScoresById,
     sheetScoresBySongId: SongScoresById,
 ): number {
+    const leftId = songEntryId(left.song);
+    const rightId = songEntryId(right.song);
+
     if (column === 'id') {
-        return left.song.id - right.song.id;
+        return leftId - rightId;
     }
 
     if (column === 'anime') {
-        return compareText(left.song.anime, right.song.anime);
+        return compareText(songEntryAnime(left.song), songEntryAnime(right.song));
     }
 
     if (column === 'song') {
-        return compareText(left.song.name, right.song.name);
+        return compareText(songEntryName(left.song), songEntryName(right.song));
     }
 
     if (column === 'score') {
-        return compareScores(scoresBySongId[left.song.id], scoresBySongId[right.song.id]);
+        return compareScores(scoresBySongId[leftId], scoresBySongId[rightId]);
     }
 
-    return compareScores(sheetScoresBySongId[left.song.id], sheetScoresBySongId[right.song.id]);
+    return compareScores(sheetScoresBySongId[leftId], sheetScoresBySongId[rightId]);
 }
 
 function compareText(left: string, right: string): number {
@@ -294,12 +307,14 @@ function formatRankRange(minRank: number, maxRank: number): string {
     return minRank === maxRank ? String(minRank) : `${minRank}-${maxRank}`;
 }
 
-function SongLinks({song}: { song: ResolvedSong }) {
-    const links = [
-        {label: 'video', href: song.video},
-        {label: 'mp3', href: song.mp3},
-        {label: 'full', href: song.full},
-    ].filter((link): link is { label: string; href: string } => Boolean(link.href));
+function SongLinks({song}: { song: ResolvedSongEntry }) {
+    const links = songEntrySongs(song).flatMap((entrySong: ResolvedSong, index) =>
+        [
+            {label: linkLabel('video', index, song), href: entrySong.video},
+            {label: linkLabel('mp3', index, song), href: entrySong.mp3},
+            {label: linkLabel('full', index, song), href: entrySong.full},
+        ].filter((link): link is { label: string; href: string } => Boolean(link.href)),
+    );
 
     if (links.length === 0) {
         return <span className="song-list-links__empty">No link</span>;
@@ -308,10 +323,14 @@ function SongLinks({song}: { song: ResolvedSong }) {
     return (
         <div className="song-list-links">
             {links.map((link) => (
-                <a key={link.label} href={visibleUrl(link.href)} target="_blank" rel="noreferrer">
+                <a key={`${link.label}-${link.href}`} href={visibleUrl(link.href)} target="_blank" rel="noreferrer">
                     {link.label}
                 </a>
             ))}
         </div>
     );
+}
+
+function linkLabel(label: string, index: number, song: ResolvedSongEntry): string {
+    return Array.isArray(song) ? `${label} ${index + 1}` : label;
 }

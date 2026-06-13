@@ -1,8 +1,8 @@
 import type { SheetGridCell } from '../google/sheetsClient';
-import type { Song } from '../songs';
+import type { SongData } from '../songs';
 
 export type ParsedSheetCustomize = {
-    songs: Song[];
+    songs: SongData[];
     idColumnHeader: string;
     rankSupported: boolean;
     rankColumnHeader?: string;
@@ -92,7 +92,7 @@ export function parseSheetGrid(
         throw new Error('Missing required header: Rank or Score.');
     }
 
-    const songs: Song[] = [];
+    const songs: SongData[] = [];
     const seenIds = new Set<number>();
 
     for (let rowIndex = headers.headerRowIndex + 1; rowIndex < rows.length; rowIndex += 1) {

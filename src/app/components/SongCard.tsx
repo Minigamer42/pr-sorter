@@ -13,6 +13,13 @@ type SongCardProps = {
     sortInfo: CurrentSongSortInfo | null;
     autoPlay: boolean;
     autoPlayKey: number;
+    paused?: boolean;
+    pickVisible?: boolean;
+    compact?: boolean;
+    playing?: boolean;
+    onMediaPlay?(): void;
+    onMediaPause?(): void;
+    onMediaEnded?(): void;
     onAutoPlayEnded(side: SortChoice): void;
     onPick(choice: SortChoice): void;
     onScoreChange(score: string): void;
@@ -27,6 +34,13 @@ export function SongCard({
     sortInfo,
     autoPlay,
     autoPlayKey,
+    paused = false,
+    pickVisible = true,
+    compact = false,
+    playing = false,
+    onMediaPlay,
+    onMediaPause,
+    onMediaEnded,
     onAutoPlayEnded,
     onPick,
     onScoreChange,
@@ -34,14 +48,27 @@ export function SongCard({
     const [mediaRemountKey, setMediaRemountKey] = useState(0);
 
     return (
-        <div className={`music-card${scoreEnabled ? ' music-card--scored' : ''}`}>
+        <div className={`music-card${scoreEnabled ? ' music-card--scored' : ''}${compact ? ' music-card--compact' : ''}${playing ? ' music-card--playing' : ''}`}>
             <div data-slot="media">
                 <Media
-                    key={`${song.id}:${settings.mediaFormat}:${settings.region}:${autoPlay ? autoPlayKey : 0}:${mediaRemountKey}`}
+                    key={`${song.id}:${settings.mediaFormat}:${settings.region}:${autoPlayKey}:${mediaRemountKey}`}
                     song={song}
                     settings={settings}
                     autoPlay={autoPlay}
-                    onEnded={autoPlay ? () => onAutoPlayEnded(side) : undefined}
+                    paused={paused}
+                    onPlay={onMediaPlay}
+                    onPause={onMediaPause}
+                    onEnded={
+                        autoPlay || onMediaEnded
+                            ? () => {
+                                if (onMediaEnded) {
+                                    onMediaEnded();
+                                } else if (autoPlay) {
+                                    onAutoPlayEnded(side);
+                                }
+                            }
+                            : undefined
+                    }
                 />
                 <button
                     type="button"
@@ -67,7 +94,7 @@ export function SongCard({
           </span>
                 ) : null}
             </div>
-            {scoreEnabled ? (
+            {scoreEnabled && !compact ? (
                 <label className="score-field">
                     <span>Score</span>
                     <input
@@ -80,9 +107,11 @@ export function SongCard({
                     />
                 </label>
             ) : null}
-            <button type="button" onClick={() => onPick(side)}>
-                PICK
-            </button>
+            {pickVisible ? (
+                <button type="button" onClick={() => onPick(side)}>
+                    PICK
+                </button>
+            ) : null}
         </div>
     );
 }

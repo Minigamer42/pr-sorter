@@ -3,7 +3,7 @@ import { chooseGoogleSpreadsheet, getGoogleSheetsAccessToken } from '../google/g
 import { readFirstSheetGrid, type SheetGridCell } from '../google/sheetsClient';
 import { GooglePickerCanceledError, GoogleWritebackError } from '../google/types';
 import type { AppConfig } from '../app/types';
-import type { Song } from '../songs';
+import type { SongData } from '../songs';
 import { inspectSheetHeaders, type ParsedSheetCustomize, parseSheetGrid, type SheetColumnKey, type SheetColumnMapping, type SheetHeaders } from './sheetParser';
 
 type CustomizeImporterProps = {
@@ -275,7 +275,7 @@ function Preview({
     onWrite,
 }: {
     spreadsheetName: string;
-    songs: Song[];
+    songs: SongData[];
     onWrite(): void;
 }) {
     return (

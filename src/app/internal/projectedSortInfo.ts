@@ -6,11 +6,12 @@ import {
     type SortChoice,
     type SortState,
 } from '../../sorter';
+import type { ResolvedSongEntry } from '../../songs';
 import type { Settings, SongScoresById } from '../types';
 import { automaticChoiceForCurrentBattle } from './automaticChoice';
 
 type ProjectionOptions = {
-    songs: Array<{ id: number }>;
+    songs: ResolvedSongEntry[];
     scoresBySongId: SongScoresById;
     settings: Settings;
     scoreEnabled: boolean;

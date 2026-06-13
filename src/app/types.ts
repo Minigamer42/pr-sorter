@@ -1,11 +1,14 @@
+export type SongTypeTuple = readonly [string, ...string[]];
+
 export type AppConfig = {
     localStoragePrefix: string;
     title: string;
     description: string;
-    tags?: string[];
+    tags?: readonly string[];
     hide?: boolean;
     deadline?: Date;
     fallbackAnimeName?: string;
+    songTypes?: SongTypeTuple;
     rankSupported?: boolean;
     googleSheets?: GoogleSheetsConfig;
 };

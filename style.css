@@ -662,7 +662,8 @@ body.sorter-index-body {
 
 .main-page {
   height: 100vh;
-  width: 100vw;
+  width: 100%;
+  max-width: 100%;
   align-content: center;
 }
 
@@ -691,14 +692,21 @@ body.sorter-index-body {
 }
 
 .button-container {
-  height: 5%;
+  min-height: 5%;
   box-sizing: border-box;
   text-align: center;
   display: flex;
   padding: 20px;
   justify-content: center;
   flex-direction: row;
+  flex-wrap: wrap;
+  gap: 12px 20px;
   align-items: center;
+}
+
+.button-container .basic-button {
+  margin-left: 0;
+  margin-right: 0;
 }
 
 .basic-button {
@@ -750,9 +758,63 @@ body.sorter-index-body {
   box-sizing: border-box;
 }
 
+.music-card-wrapper {
+  position: relative;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  row-gap: 20px;
+  width: 45%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.music-card-wrapper__songs {
+  display: grid;
+  row-gap: 20px;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 8px 0 0;
+}
+
+.music-card-wrapper.grid-2 .music-card-wrapper__songs {
+  grid-template-rows: repeat(2, auto);
+}
+
+.music-card-wrapper.grid-3 .music-card-wrapper__songs {
+  grid-template-rows: repeat(3, auto);
+}
+
+.music-card-wrapper.grid-4 .music-card-wrapper__songs {
+  grid-template-rows: repeat(4, auto);
+}
+
+.music-card-wrapper .music-card {
+  width: 100%;
+}
+
+.music-card-wrapper__song-anchor {
+  min-width: 0;
+}
+
+.music-card-wrapper__controls {
+  display: grid;
+  gap: 8px;
+  padding: 28px 20px 20px;
+  border-radius: 0 0 8px 8px;
+  background: rgba(0, 26, 63, 0.6);
+  backdrop-filter: blur(3px);
+}
+
+.music-card-wrapper__score {
+  height: 44px;
+  margin: 0;
+}
+
 .music-card {
   padding: 20px;
   width: 48%;
+  min-width: 0;
+  border: 1px solid transparent;
   background: rgba(0, 26, 63, 0.6);
   text-align: center;
   border-radius: 8px;
@@ -761,11 +823,19 @@ body.sorter-index-body {
   backdrop-filter: blur(3px);
 }
 
+.music-card--playing {
+  border-color: rgba(160, 255, 172, 0.72);
+  background: rgba(45, 106, 79, 0.22);
+}
+
 .music-card .anime {
   align-content: center;
   font-size: 2.2vh;
   color: #a0ffac;
   height: 10%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .music-card .song {
@@ -777,9 +847,11 @@ body.sorter-index-body {
   color: #fcffef;
   height: 10%;
   min-width: 0;
+  overflow: hidden;
 }
 
 .song__name {
+  display: block;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -829,8 +901,29 @@ body.sorter-index-body {
   box-sizing: border-box;
 }
 
+.music-card-wrapper__controls > button {
+  padding: 10px;
+  background-color: #40ab47a6;
+  color: #e5e5e5;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 2.5vh;
+  min-height: 60px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
 .music-card button:hover {
   background-color: #45a049;
+}
+
+.music-card-wrapper__controls > button:hover {
+  background-color: #45a049;
+}
+
+.music-card--compact {
+  min-height: 360px;
 }
 
 .music-card .media-remount-button {
@@ -965,6 +1058,48 @@ body.sorter-index-body {
   grid-template-rows: minmax(0, 1fr) auto auto auto;
 }
 
+.playlist-card--group {
+  grid-template-rows: minmax(0, 1fr) auto auto;
+}
+
+.playlist-card--group.playlist-card--scored {
+  grid-template-rows: minmax(0, 1fr) auto auto;
+}
+
+.playlist-card:not(.playlist-card--group) > .playlist-media {
+  display: grid;
+  min-height: 0;
+}
+
+.playlist-card:not(.playlist-card--group) .playlist-media-entry {
+  grid-template-rows: minmax(0, 1fr) auto;
+  height: 100%;
+  min-height: 0;
+}
+
+.playlist-media-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  min-height: 0;
+}
+
+.playlist-media-entry {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) 6.8em;
+  min-width: 0;
+  min-height: 0;
+  box-sizing: border-box;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.playlist-media-entry--active {
+  border-color: rgba(160, 255, 172, 0.72);
+  background: rgba(45, 106, 79, 0.16);
+}
+
 .playlist-media {
   min-height: 0;
 }
@@ -985,15 +1120,24 @@ body.sorter-index-body {
 }
 
 .playlist-song-meta {
-  padding: 14px 0 8px;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  align-content: start;
+  min-height: 0;
+  padding: 14px 0 0;
   text-align: center;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .playlist-anime {
   color: #a0ffac;
   font-size: 2.1vh;
   font-weight: bold;
+  line-height: 1.2;
+  min-height: 1.2em;
   overflow: hidden;
+  overflow-wrap: anywhere;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1002,9 +1146,12 @@ body.sorter-index-body {
   margin-top: 5px;
   color: #fcffef;
   font-size: 2vh;
+  line-height: 1.25;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .playlist-score-field {
@@ -1302,6 +1449,21 @@ table td {
   .playlist-card {
     height: calc(100% - 86px);
     padding: 12px;
+  }
+
+  .playlist-card--group,
+  .playlist-card--group.playlist-card--scored {
+    height: auto;
+    min-height: calc(100% - 86px);
+  }
+
+  .playlist-media-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .playlist-media-entry {
+    grid-template-rows: minmax(0, 1fr) 7.6em;
+    min-height: 320px;
   }
 
   .playlist-anime,

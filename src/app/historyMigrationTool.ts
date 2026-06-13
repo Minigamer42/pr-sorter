@@ -1,5 +1,5 @@
 import { choose, chooseAutomatic, currentBattle, type SortChoice, type SortPickKind, type SortState } from '../sorter';
-import type { Song } from '../songs';
+import { songEntryId, type SongEntry } from '../songs';
 import { normalizeScore } from './internal/songScores';
 import type { Settings, SongScoresById } from './types';
 
@@ -22,12 +22,12 @@ declare global {
     }
 }
 
-export function exposeHistoryMigrationTool(defaultPrefix: string, songs: Song[]): void {
+export function exposeHistoryMigrationTool(defaultPrefix: string, songs: SongEntry[]): void {
     window.prSorterFillAutomaticPickHistory = (prefix = defaultPrefix) =>
         fillAutomaticPickHistory(prefix, songs);
 }
 
-function fillAutomaticPickHistory(prefix: string, songs: Song[]): MigrationReport {
+function fillAutomaticPickHistory(prefix: string, songs: SongEntry[]): MigrationReport {
     const sortKey = `${prefix}:sort`;
     const scores = readJson<SongScoresById>(`${prefix}:scores`) ?? {};
     const settings = readJson<Settings>(`${prefix}:settings`) ?? {
@@ -96,7 +96,7 @@ function fillAutomaticPickHistory(prefix: string, songs: Song[]): MigrationRepor
 function applyAutomaticPicksUntilTarget(
     sort: SortState,
     target: Snapshot,
-    songs: Song[],
+    songs: SongEntry[],
     scores: SongScoresById,
     settings: Settings,
 ): SortState {
@@ -121,7 +121,7 @@ function applyAutomaticPicksUntilTarget(
 
 function automaticChoice(
     sort: SortState,
-    songs: Song[],
+    songs: SongEntry[],
     scores: SongScoresById,
     settings: Settings,
 ): SortChoice | null {
@@ -137,8 +137,8 @@ function automaticChoice(
         return null;
     }
 
-    const leftScore = normalizeScore(scores[leftSong.id] ?? '');
-    const rightScore = normalizeScore(scores[rightSong.id] ?? '');
+    const leftScore = normalizeScore(scores[songEntryId(leftSong)] ?? '');
+    const rightScore = normalizeScore(scores[songEntryId(rightSong)] ?? '');
     if (leftScore === null || rightScore === null || leftScore === rightScore) {
         return null;
     }

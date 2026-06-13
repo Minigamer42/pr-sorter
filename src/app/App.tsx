@@ -2,7 +2,14 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { canUndo, choose, chooseAutomatic, createSort, currentBattle, isComplete, pickHistory, progressPercentage, ranksBySongId, type SortChoice, type SortState, undo } from '../sorter';
 import { GoogleAuthenticationRequiredError, GooglePickerCanceledError, GoogleWritebackError } from '../google/types';
 import { chooseGoogleSpreadsheet, loadScoresFromGoogleSheet, writePartialRanksToGoogleSheet, writeRanksToGoogleSheet, writeScoresToGoogleSheet } from '../google/googleSheetsWriteback';
-import { resolveSongAnime, type Song } from '../songs';
+import {
+    resolveSongEntry,
+    songEntryAnime,
+    songEntryId,
+    songEntryName,
+    type ResolvedSongEntry,
+    type SongEntry,
+} from '../songs';
 import { Controls } from './components/Controls';
 import { Duel } from './components/Duel';
 import { HistoryModal } from './components/HistoryModal';
@@ -19,7 +26,7 @@ import type { AppConfig, GoogleSpreadsheetSelection, SavedProgressKind, Screen, 
 
 type AppProps = {
     config: AppConfig;
-    songs: Song[];
+    songs: SongEntry[];
 };
 
 const screenFor = (sort: SortState | null): Screen => {
@@ -35,10 +42,10 @@ const hasSavedSortProgress = (sort: SortState): boolean =>
 
 export function App({config, songs}: AppProps) {
     const resolvedSongs = useMemo(
-        () => songs.map((song) => resolveSongAnime(song, fallbackAnimeName(config))),
+        () => songs.map((song) => resolveSongEntry(song, fallbackAnimeName(config))),
         [config, songs],
     );
-    const songIds = useMemo(() => resolvedSongs.map((song) => song.id), [resolvedSongs]);
+    const songIds = useMemo(() => resolvedSongs.map((song) => songEntryId(song)), [resolvedSongs]);
     const storage = useMemo(() => createStorage(config, songIds), [config, songIds]);
     const scoreEnabled = isScoreEnabled(config);
     const rankSupported = config.rankSupported !== false;
@@ -292,6 +299,14 @@ export function App({config, songs}: AppProps) {
         setSorterAutoPlayKey((current) => current + 1);
     }
 
+    function activateSorterAutoPlaySide(side: SortChoice): void {
+        if (screen !== 'sorting' || !sort || settings.sorterAutoPlayMode === 'off') {
+            return;
+        }
+
+        setSorterAutoPlaySide(side);
+    }
+
     function setSorterAutoPlayForSort(
         currentSort: SortState | null,
         currentSettings: Settings,
@@ -492,20 +507,22 @@ export function App({config, songs}: AppProps) {
         if (!leftSong || !rightSong) {
             return;
         }
+        const leftId = songEntryId(leftSong);
+        const rightId = songEntryId(rightSong);
 
         console.info('Auto-skipped comparison', {
             picked: choice,
             left: {
-                id: leftSong.id,
-                anime: leftSong.anime,
-                name: leftSong.name,
-                score: currentScoresBySongId[leftSong.id] ?? '',
+                id: leftId,
+                anime: songEntryAnime(leftSong),
+                name: songEntryName(leftSong),
+                score: currentScoresBySongId[leftId] ?? '',
             },
             right: {
-                id: rightSong.id,
-                anime: rightSong.anime,
-                name: rightSong.name,
-                score: currentScoresBySongId[rightSong.id] ?? '',
+                id: rightId,
+                anime: songEntryAnime(rightSong),
+                name: songEntryName(rightSong),
+                score: currentScoresBySongId[rightId] ?? '',
             },
         });
     }
@@ -532,9 +549,10 @@ export function App({config, songs}: AppProps) {
 
         const ranks = ranksBySongId(resolvedSongs, sort);
         const lines = resolvedSongs.map((song) => {
-            const rank = ranks.get(song.id);
+            const id = songEntryId(song);
+            const rank = ranks.get(id);
             if (rank === undefined) {
-                throw new Error(`Missing rank for song id ${song.id}.`);
+                throw new Error(`Missing rank for song id ${id}.`);
             }
             return String(rank);
         });
@@ -777,7 +795,7 @@ export function App({config, songs}: AppProps) {
         }
 
         return resolvedSongs
-            .map((song, index) => (hasMemoryScore(song.id, scoresBySongId) ? null : index))
+            .map((song, index) => (hasMemoryScore(songEntryId(song), scoresBySongId) ? null : index))
             .filter((index): index is number => index !== null);
     }
 
@@ -874,6 +892,7 @@ export function App({config, songs}: AppProps) {
 
                 {screen === 'playlist' ? (
                     <Playlist
+                        config={config}
                         songs={resolvedSongs}
                         currentSong={currentPlaylistSong}
                         currentPosition={playlistPosition}
@@ -902,6 +921,7 @@ export function App({config, songs}: AppProps) {
                         <div className="duel-container">
                             {screen === 'sorting' ? (
                                 <Duel
+                                    config={config}
                                     songs={resolvedSongs}
                                     sort={sort}
                                     settings={settings}
@@ -909,6 +929,7 @@ export function App({config, songs}: AppProps) {
                                     scoresBySongId={scoresBySongId}
                                     autoPlaySide={sorterAutoPlaySide}
                                     autoPlayKey={sorterAutoPlayKey}
+                                    onAutoPlaySideActivate={activateSorterAutoPlaySide}
                                     onAutoPlayEnded={sorterAutoPlayEnded}
                                     onPick={pick}
                                     onScoreChange={updateScore}
@@ -977,7 +998,7 @@ function normalizedScoresForWriteback(scoresBySongId: SongScoresById): Map<numbe
 
 function fixedProjectedRanksBySongId(
     sort: SortState,
-    songs: Array<{ id: number }>,
+    songs: ResolvedSongEntry[],
     scoresBySongId: SongScoresById,
     settings: Settings,
     scoreEnabled: boolean,
@@ -988,7 +1009,7 @@ function fixedProjectedRanksBySongId(
     songs.forEach((song, index) => {
         const info = projectedInfos.get(index);
         if (info && info.minRank === info.maxRank) {
-            ranks.set(song.id, info.minRank);
+            ranks.set(songEntryId(song), info.minRank);
         }
     });
 
@@ -1032,7 +1053,7 @@ function initialSorterAutoPlaySide(
     sort: SortState | null,
     settings: Settings,
     scoresBySongId: SongScoresById,
-    songs: { id: number }[],
+    songs: ResolvedSongEntry[],
     scoreEnabled: boolean,
     context?: { previousBattle: [number, number] | null; choice: SortChoice },
 ): SortChoice | null {
@@ -1092,7 +1113,7 @@ function changedSideForBattleTransition(
 function higherScoredBattleSide(
     battle: [number, number],
     scoresBySongId: SongScoresById,
-    songs: { id: number }[],
+    songs: ResolvedSongEntry[],
     scoreEnabled: boolean,
 ): SortChoice | null {
     if (!scoreEnabled) {
@@ -1107,8 +1128,8 @@ function higherScoredBattleSide(
     }
 
     try {
-        const leftScore = normalizeScore(scoresBySongId[leftSong.id] ?? '');
-        const rightScore = normalizeScore(scoresBySongId[rightSong.id] ?? '');
+        const leftScore = normalizeScore(scoresBySongId[songEntryId(leftSong)] ?? '');
+        const rightScore = normalizeScore(scoresBySongId[songEntryId(rightSong)] ?? '');
         if (leftScore === null || rightScore === null || leftScore === rightScore) {
             return null;
         }
@@ -1154,8 +1175,8 @@ function positiveModulo(value: number, divisor: number): number {
     return ((value % divisor) + divisor) % divisor;
 }
 
-function countScoredSongs(songs: { id: number }[], scoresBySongId: SongScoresById): number {
-    return songs.filter((song) => hasMemoryScore(song.id, scoresBySongId)).length;
+function countScoredSongs(songs: ResolvedSongEntry[], scoresBySongId: SongScoresById): number {
+    return songs.filter((song) => hasMemoryScore(songEntryId(song), scoresBySongId)).length;
 }
 
 function hasMemoryScore(songId: number, scoresBySongId: SongScoresById): boolean {
