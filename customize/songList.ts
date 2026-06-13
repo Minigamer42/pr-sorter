@@ -3,22 +3,22 @@
 import type { Song } from '../src/songs';
 
 export const songList = [
-    {'id': 1, 'anime': 'Bang Dream', 'name': 'Asu no Yozora Shoukaihan by Afterglow', 'video': 'https://www.youtube.com/watch?v=aaxlWyLU9vY', 'mp3': null},
+    {'id': 1, 'anime': 'Bang Dream', 'name': 'Asu no Yozora Shoukaihan by Afterglow', 'video': 'https://www.youtube.com/watch?v=1JgfLP2QtZw', 'mp3': null},
     {'id': 2, 'anime': 'Bang Dream', 'name': 'Ave Mujica by Ave Mujica', 'video': 'https://youtu.be/QDsd0nyzwz0', 'mp3': null},
     {'id': 3, 'anime': 'Bang Dream', 'name': 'Bad Kids All Bet by RAISE A SUILEN', 'video': 'https://www.youtube.com/watch?v=mKt2u5a3-H8', 'mp3': null},
-    {'id': 4, 'anime': 'Bang Dream', 'name': 'Beautiful Birthday & RAISE A SUILEN', 'video': 'https://youtu.be/lpV2AtyGCk4', 'mp3': null},
+    {'id': 4, 'anime': 'Bang Dream', 'name': 'Beautiful Birthday by RAISE A SUILEN', 'video': 'https://www.youtube.com/watch?v=AxEUw6LdHR4', 'mp3': null},
     {'id': 5, 'anime': 'Bang Dream', 'name': 'Choir \'s\' Choir by Ave Mujica', 'video': 'https://youtu.be/7llj4mh4L-8', 'mp3': null},
-    {'id': 6, 'anime': 'Bang Dream', 'name': 'Double Rainbow by Poppin\'Party', 'video': 'https://youtu.be/ulGsr3MxM8M', 'mp3': null},
+    {'id': 6, 'anime': 'Bang Dream', 'name': 'Double Rainbow by Poppin\'Party', 'video': 'https://www.youtube.com/watch?v=sNaJuqFB-_g', 'mp3': null},
     {'id': 7, 'anime': 'Bang Dream', 'name': 'Ether by Ave Mujica', 'video': 'https://www.youtube.com/watch?v=z6k7YIIZ6Hk', 'mp3': null},
-    {'id': 8, 'anime': 'Bang Dream', 'name': 'Freedom by Poppin\'Party x Misato Fukuen', 'video': 'https://youtu.be/O_qXmu7NXl4', 'mp3': null},
-    {'id': 9, 'anime': 'Bang Dream', 'name': 'Hey-day Capriccio by Afterglow', 'video': 'https://youtu.be/bOsPKoj0AcA', 'mp3': null},
+    {'id': 8, 'anime': 'Bang Dream', 'name': 'Freedom by Poppin\'Party x Misato Fukuen', 'video': 'https://www.youtube.com/watch?v=oy6OCnr9eAg', 'mp3': null},
+    {'id': 9, 'anime': 'Bang Dream', 'name': 'Hey-day Capriccio by Afterglow', 'video': 'https://www.youtube.com/watch?v=czHlLBls4oo', 'mp3': null},
     {'id': 10, 'anime': 'Bang Dream', 'name': 'Kamisama, Baka by Ave Mujica', 'video': 'https://youtu.be/vmheOfqsH_o', 'mp3': null},
     {'id': 11, 'anime': 'Bang Dream', 'name': 'KiLLKiSS by Ave Mujica', 'video': 'https://www.youtube.com/watch?v=RexyoaXaQ1o', 'mp3': null},
     {'id': 12, 'anime': 'Bang Dream', 'name': 'Kimi ga Inakucha, Hello Happy World', 'video': 'https://naedist.animemusicquiz.com/8poyjw.webm', 'mp3': null},
     {'id': 13, 'anime': 'Bang Dream', 'name': 'Mugen My World by Mugendai Mewtype', 'video': 'https://youtube.com/watch?v=GB2MEvY2sQk', 'mp3': null},
     {'id': 14, 'anime': 'Bang Dream', 'name': 'Radiate Warriors by Pastel＊Palettes', 'video': 'https://youtu.be/dS-SUwftzmM', 'mp3': null},
-    {'id': 15, 'anime': 'Bang Dream', 'name': 'Returns by Poppin\'Party', 'video': 'https://www.youtube.com/watch?v=rBL930dHVkY', 'mp3': null},
-    {'id': 16, 'anime': 'Bang Dream', 'name': 'Roku-chou Nen to Ichiya Monogatari by Roselia', 'video': 'https://youtu.be/8OeGR6gMy7E', 'mp3': null},
+    {'id': 15, 'anime': 'Bang Dream', 'name': 'Returns by Poppin\'Party', 'video': 'https://www.youtube.com/watch?v=zWKV5yudE18', 'mp3': null},
+    {'id': 16, 'anime': 'Bang Dream', 'name': 'Roku-chou Nen to Ichiya Monogatari by Roselia', 'video': 'https://www.youtube.com/watch?v=xnlJkmRhi3Q', 'mp3': null},
     {'id': 17, 'anime': 'Bang Dream', 'name': 'Sing Alive by Roselia', 'video': 'https://naedist.animemusicquiz.com/2h5qt3.webm', 'mp3': null},
     {'id': 18, 'anime': 'Bang Dream', 'name': 'Mayoi Uta by MyGO!!!!!', 'video': 'https://naedist.animemusicquiz.com/vppf6y.webm', 'mp3': null},
     {'id': 19, 'anime': 'Bang Dream', 'name': 'Smiling & Singing A Song by Hello, Happy World!', 'video': 'https://youtu.be/XFv3P-fKhWw', 'mp3': null},
@@ -32,5 +32,5 @@ export const songList = [
     {'id': 27, 'anime': 'Bang Dream', 'name': 'Telepathy by Mugendai Mewtype', 'video': 'https://www.youtube.com/watch?v=GN_0T7cClGM', 'mp3': null},
     {'id': 28, 'anime': 'Bang Dream', 'name': 'The Circle of Butterflies by Morfonica x fhána', 'video': 'https://www.youtube.com/watch?v=JfhgKn1hnnk', 'mp3': null},
     {'id': 29, 'anime': 'Bang Dream', 'name': 'Utakotoba by MyGO!!!!!', 'video': 'https://youtu.be/wJ-OebTVyvk', 'mp3': null},
-    {'id': 30, 'anime': 'Bang Dream', 'name': 'Yakusoku by Roselia', 'video': 'https://naedist.animemusicquiz.com/h0rza6.webm', 'mp3': null}
+    {'id': 30, 'anime': 'Bang Dream', 'name': 'Yakusoku by Roselia', 'video': 'https://naedist.animemusicquiz.com/h0rza6.webm', 'mp3': null},
 ] satisfies Song[];

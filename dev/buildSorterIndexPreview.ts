@@ -2,6 +2,7 @@ import { spawn } from "node:child_process";
 import { copyFile, cp, mkdir, rm } from "node:fs/promises";
 import path from "node:path";
 import { previewSlug, writeLocalPreviewSorterIndex } from "./localPreviewIndex.js";
+import { validateSongMedia } from "./validateSongMedia.js";
 
 const sorterPreviewDist = path.resolve(process.cwd(), ".pages-tools", "local-sorter-dist");
 const finalDist = path.resolve(process.cwd(), "dist");
@@ -13,6 +14,8 @@ void main().catch((error: unknown) => {
 
 async function main(): Promise<void> {
   await rm(sorterPreviewDist, { recursive: true, force: true });
+
+  await validateSongMedia();
 
   await runNodeBin("node_modules/typescript/bin/tsc", ["--noEmit"], childEnv());
   await runNodeBin("node_modules/vite/bin/vite.js", ["build", "--outDir", sorterPreviewDist, "--emptyOutDir"], childEnv());
