@@ -7,3 +7,4 @@ pages-dist/
 .env.local
 .logs/
 public/sorter-index.json
+.agents/
