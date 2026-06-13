@@ -206,7 +206,7 @@ export function SorterIndex() {
 function SorterCard({sorter, showLocalProgress}: { sorter: SorterIndexDisplayEntry; showLocalProgress: boolean }) {
     const href = sorter.url ?? `${sorter.slug}/`;
     const iconUrl = sorter.iconUrl ?? `${sorter.slug}/customize/favicon.ico`;
-    const progress = sorter.progress ?? (showLocalProgress ? loadSorterProgress(sorter.localStoragePrefix ?? sorter.slug) : null);
+    const progress = sorter.progress ?? (showLocalProgress ? loadSorterProgress(sorter) : null);
     const deadline = formatDeadline(sorter.deadline);
 
     return (
@@ -289,7 +289,12 @@ function formatRelativeDeadline(date: Date): string {
     return `${difference} left`;
 }
 
-function loadSorterProgress(localStoragePrefix: string, storage: Storage = localStorage): SorterProgress | null {
+function loadSorterProgress(sorter: SorterIndexEntry, storage: Storage = localStorage): SorterProgress | null {
+    const localStoragePrefix = sorter.localStoragePrefix ?? sorter.slug;
+    if (sorter.rankSupported === false) {
+        return loadScoreProgress(localStoragePrefix, sorter, storage);
+    }
+
     const raw = storage.getItem(`${localStoragePrefix}:sort`);
     if (!raw) {
         return null;
@@ -314,6 +319,50 @@ function loadSorterProgress(localStoragePrefix: string, storage: Storage = local
     } catch {
         return null;
     }
+}
+
+function loadScoreProgress(localStoragePrefix: string, sorter: SorterIndexEntry, storage: Storage): SorterProgress | null {
+    if (typeof sorter.songCount !== 'number' || sorter.songCount <= 0) {
+        return null;
+    }
+
+    const raw = storage.getItem(`${localStoragePrefix}:scores`);
+    const scoredCount = raw ? countStoredScores(raw) : 0;
+    const cappedScoredCount = Math.min(scoredCount, sorter.songCount);
+    const percent = Math.floor((cappedScoredCount * 100) / sorter.songCount);
+
+    return {
+        percent,
+        label: `${cappedScoredCount} / ${sorter.songCount} scored`,
+        kind: cappedScoredCount >= sorter.songCount ? 'complete' : 'in-progress',
+    };
+}
+
+function countStoredScores(raw: string): number {
+    try {
+        const value: unknown = JSON.parse(raw);
+        if (!isRecord(value)) {
+            return 0;
+        }
+
+        return Object.values(value).filter((score) => typeof score === 'string' && isValidScore(score)).length;
+    } catch {
+        return 0;
+    }
+}
+
+function isValidScore(raw: string): boolean {
+    const trimmed = raw.trim();
+    if (trimmed === '') {
+        return false;
+    }
+
+    const value = Number(trimmed);
+    return Number.isFinite(value) && value >= 0 && value <= 10;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 function isStoredSortState(value: unknown): value is {
@@ -385,7 +434,7 @@ function groupSorterEntries(entries: SorterIndexDisplayEntry[], includeLocalProg
     const now = Date.now();
     const classified = entries.map((sorter, index) => {
         const deadlineTime = parsedDeadlineTime(sorter.deadline);
-        const progress = sorter.progress ?? (includeLocalProgress ? loadSorterProgress(sorter.localStoragePrefix ?? sorter.slug) : null);
+        const progress = sorter.progress ?? (includeLocalProgress ? loadSorterProgress(sorter) : null);
         const isComplete = progress?.kind === 'complete';
         const isInProgress = progress?.kind === 'in-progress';
         const hasPastDeadline = deadlineTime !== null && deadlineTime < now;
@@ -536,6 +585,8 @@ function parseCatalog(value: unknown): LegacyCatalogSorterIndexEntry[] {
             typeof candidate.description === 'string' &&
             (tags === undefined || (Array.isArray(tags) && tags.every((tag) => typeof tag === 'string'))) &&
             (candidate.category === undefined || typeof candidate.category === 'string') &&
+            (candidate.rankSupported === undefined || typeof candidate.rankSupported === 'boolean') &&
+            (candidate.songCount === undefined || typeof candidate.songCount === 'number') &&
             (candidate.deadline === undefined || typeof candidate.deadline === 'string') &&
             (candidate.hide === undefined || typeof candidate.hide === 'boolean')
         );
@@ -639,8 +690,8 @@ async function respondToSorterIndexProgressRequest(event: MessageEvent<unknown>,
     const storage = await progressStorageForResponder();
     const progress = requestedSorters.map((sorter) => ({
         slug: sorter.slug,
-        localStoragePrefix: sorter.localStoragePrefix,
-        progress: storage ? loadSorterProgress(sorter.localStoragePrefix, storage) : null,
+        localStoragePrefix: sorter.localStoragePrefix ?? sorter.slug,
+        progress: storage ? loadSorterProgress(sorter, storage) : null,
     }));
     const response: SorterIndexProgressResponse = {
         type: sorterIndexProgressResponseType,
@@ -651,10 +702,10 @@ async function respondToSorterIndexProgressRequest(event: MessageEvent<unknown>,
     (event.source as Window).postMessage(response, event.origin === 'null' ? '*' : event.origin);
 }
 
-function requestedSorterStorageTargets(request: SorterIndexProgressRequest): { slug?: string; localStoragePrefix: string }[] {
+function requestedSorterStorageTargets(request: SorterIndexProgressRequest): SorterIndexEntry[] {
     const visibleLocalSorters = sorters.filter((sorter) => sorter.hide !== true);
     const localSortersBySlug = new Map(visibleLocalSorters.map((sorter) => [sorter.slug, sorter]));
-    const requestedTargets: { slug?: string; localStoragePrefix: string }[] = [];
+    const requestedTargets: SorterIndexEntry[] = [];
     const seenPrefixes = new Set<string>();
 
     for (const item of request.sorters) {
@@ -667,7 +718,7 @@ function requestedSorterStorageTargets(request: SorterIndexProgressRequest): { s
 
         if (localStoragePrefix && !seenPrefixes.has(localStoragePrefix)) {
             seenPrefixes.add(localStoragePrefix);
-            requestedTargets.push({slug: matchedSorter.slug, localStoragePrefix});
+            requestedTargets.push(matchedSorter);
         }
     }
 

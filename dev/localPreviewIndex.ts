@@ -1,6 +1,6 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { loadCustomizeConfig, serializedDeadline, serializedTags } from "./configLoader.js";
+import { loadCustomizeConfig, loadCustomizeSongCount, serializedDeadline, serializedTags } from "./configLoader.js";
 import { writePublicSorterIndexCatalog } from "./sorterIndexCatalog.js";
 
 export const previewSlug = "test";
@@ -9,6 +9,7 @@ const generatedModulePath = path.resolve(process.cwd(), "src", "sorterIndex", "s
 
 export async function writeLocalPreviewSorterIndex(): Promise<void> {
   const config = await loadCustomizeConfig();
+  const songCount = await loadCustomizeSongCount();
   const deadline = serializedDeadline(config);
   const configTags = serializedTags(config);
   const localSorter = config.hide
@@ -19,6 +20,8 @@ export async function writeLocalPreviewSorterIndex(): Promise<void> {
         description: config.description,
         tags: [...(configTags ?? []), `test ${index + 1}`],
         localStoragePrefix: config.localStoragePrefix,
+        ...(config.rankSupported === false ? { rankSupported: false } : {}),
+        ...(config.rankSupported === false ? { songCount } : {}),
         ...(deadline ? { deadline } : {}),
         url: `${previewSlug}/`,
         iconUrl: `${previewSlug}/customize/favicon.ico`,

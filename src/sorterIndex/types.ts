@@ -4,6 +4,8 @@ export type SorterIndexEntry = {
     description: string;
     tags?: string[];
     localStoragePrefix?: string;
+    rankSupported?: boolean;
+    songCount?: number;
     deadline?: string;
     url?: string;
     iconUrl?: string;

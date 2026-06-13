@@ -1,8 +1,13 @@
 import { config } from "../customize/config.js";
+import { songList } from "../customize/songList.js";
 import type { AppConfig } from "../src/app/types.js";
 
 export async function loadCustomizeConfig(): Promise<AppConfig> {
   return config;
+}
+
+export async function loadCustomizeSongCount(): Promise<number> {
+  return songList.length;
 }
 
 export function serializedDeadline(config: AppConfig): string | undefined {

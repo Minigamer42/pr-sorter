@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { loadCustomizeConfig, serializedDeadline, serializedTags } from "./configLoader.js";
+import { loadCustomizeConfig, loadCustomizeSongCount, serializedDeadline, serializedTags } from "./configLoader.js";
 import {
   sortIndexEntries,
   type SorterIndexEntry,
@@ -33,6 +33,7 @@ async function main(): Promise<void> {
 
     const manifest = await readManifest();
     const config = await loadCustomizeConfig();
+    const songCount = await loadCustomizeSongCount();
     const deadline = serializedDeadline(config);
     const tags = serializedTags(config);
     const nextEntry = {
@@ -41,6 +42,8 @@ async function main(): Promise<void> {
       description: config.description,
       ...(tags ? { tags } : {}),
       localStoragePrefix: config.localStoragePrefix,
+      ...(config.rankSupported === false ? { rankSupported: false } : {}),
+      ...(config.rankSupported === false ? { songCount } : {}),
       ...(config.hide ? { hide: true } : {}),
       ...(deadline ? { deadline } : {}),
     };
