@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import type { LegacySorterSaveInfo } from '../legacySorterMigration';
 import type { GoogleSpreadsheetSelection, MediaFormat, Region, Settings, SorterAutoPlayMode } from '../types';
 
 type SettingsModalProps = {
@@ -9,12 +10,14 @@ type SettingsModalProps = {
     googleSheetsDisabledReason: string | null;
     googleSpreadsheetSelection: GoogleSpreadsheetSelection | null;
     isConnectingGoogleSheet: boolean;
+    legacySorterSaveInfo: LegacySorterSaveInfo | null;
     onClose(): void;
     onChange(settings: Settings): void;
     onChooseGoogleSheet(): void;
     onClearGoogleSheet(): void;
     onExportSorterState(): void;
     onImportSorterState(file: File): void;
+    onMigrateLegacySorterSave(): void;
 };
 
 const regions: { value: Region; label: string }[] = [
@@ -45,12 +48,14 @@ export function SettingsModal({
     googleSheetsDisabledReason,
     googleSpreadsheetSelection,
     isConnectingGoogleSheet,
+    legacySorterSaveInfo,
     onClose,
     onChange,
     onChooseGoogleSheet,
     onClearGoogleSheet,
     onExportSorterState,
     onImportSorterState,
+    onMigrateLegacySorterSave,
 }: SettingsModalProps) {
     const importInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -178,6 +183,25 @@ export function SettingsModal({
                     <button className="option-button" type="button" onClick={() => importInputRef.current?.click()}>
                         Import
                     </button>
+                    {legacySorterSaveInfo ? (
+                        <>
+                            <div className="setting-value">
+                                Legacy save found at {legacySorterSaveInfo.legacyPrefix}*
+                                {legacySorterSaveInfo.complete ? ' (complete)' : ' (in progress)'}.
+                                {!legacySorterSaveInfo.compatible && legacySorterSaveInfo.reason ? (
+                                    <span className="setting-warning"> {legacySorterSaveInfo.reason}</span>
+                                ) : null}
+                            </div>
+                            <button
+                                className="option-button"
+                                type="button"
+                                onClick={onMigrateLegacySorterSave}
+                                disabled={!legacySorterSaveInfo.compatible}
+                            >
+                                Migrate Legacy Save
+                            </button>
+                        </>
+                    ) : null}
                     <input
                         ref={importInputRef}
                         className="state-file-input"

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { AppConfig, GoogleSpreadsheetSelection, Settings, SongScoresById } from './types';
 import { isSortState } from './internal/savedSortValidation';
 import { isScoreEnabled } from './internal/songScores';
+import { findLegacySorterSave, migrateLegacySorterSave, type LegacySorterSaveInfo } from './legacySorterMigration';
 
 type StorageFacade = {
     loadSort(): SortState | null;
@@ -17,6 +18,8 @@ type StorageFacade = {
     clearGoogleSpreadsheetSelection(): void;
     exportSorterState(): SorterStorageSnapshot;
     importSorterState(snapshot: SorterStorageSnapshot): SorterStorageImportResult;
+    findLegacySorterSave(): LegacySorterSaveInfo | null;
+    migrateLegacySorterSave(): LegacySorterSaveInfo | null;
 };
 
 export type SorterStorageSnapshot = {
@@ -228,6 +231,25 @@ export function createStorage(config: AppConfig, songIds: number[]): StorageFaca
         return {importedKeys, removedKeys};
     }
 
+    function findLegacySave(): LegacySorterSaveInfo | null {
+        return findLegacySorterSave(config.localStoragePrefix, songCount);
+    }
+
+    function migrateLegacySave(): LegacySorterSaveInfo | null {
+        const result = migrateLegacySorterSave(config.localStoragePrefix, songCount);
+        if (!result) {
+            return null;
+        }
+
+        localStorage.setItem(sortKey, JSON.stringify(result.sort));
+        return {
+            legacyPrefix: result.legacyPrefix,
+            keyCount: result.keyCount,
+            complete: result.complete,
+            compatible: result.compatible,
+        };
+    }
+
     function sorterLocalStorageKeys(): string[] {
         const keys: string[] = [];
 
@@ -254,6 +276,8 @@ export function createStorage(config: AppConfig, songIds: number[]): StorageFaca
         clearGoogleSpreadsheetSelection,
         exportSorterState,
         importSorterState,
+        findLegacySorterSave: findLegacySave,
+        migrateLegacySorterSave: migrateLegacySave,
     };
 }
 

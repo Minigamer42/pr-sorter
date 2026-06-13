@@ -757,6 +757,33 @@ export function App({config, songs}: AppProps) {
             });
     }
 
+    function migrateLegacySorterSave(): void {
+        const legacySave = storage.findLegacySorterSave();
+        if (!legacySave) {
+            alert('No compatible legacy save was found for this sorter.');
+            return;
+        }
+
+        if (!legacySave.compatible) {
+            alert(legacySave.reason ?? 'This legacy save is not compatible with the current sorter.');
+            return;
+        }
+
+        const progressDescription = legacySave.complete ? 'completed result' : 'in-progress sort';
+        if (!window.confirm(`Migrate the legacy ${progressDescription} from ${legacySave.legacyPrefix}*? This replaces saved new-format sorter progress.`)) {
+            return;
+        }
+
+        const result = storage.migrateLegacySorterSave();
+        if (!result) {
+            alert('The legacy save could not be migrated.');
+            return;
+        }
+
+        reloadStateFromStorage();
+        alert(`Migrated ${result.complete ? 'completed' : 'in-progress'} legacy sorter progress from ${result.legacyPrefix}*.`);
+    }
+
     function reloadStateFromStorage(): void {
         const importedSettings = storage.loadSettings();
         const importedScores = storage.loadScores();
@@ -803,6 +830,7 @@ export function App({config, songs}: AppProps) {
         ? 'Google API key is not configured.'
         : null;
     const writeSheetSetupReason = config.googleSheets && !googleSpreadsheetSelection ? 'Choose a Google Sheet in Settings.' : null;
+    const legacySorterSaveInfo = isSettingsOpen && rankSupported ? storage.findLegacySorterSave() : null;
 
     const progressLabel =
         sort && screen === 'complete'
@@ -831,12 +859,14 @@ export function App({config, songs}: AppProps) {
                 googleSheetsDisabledReason={googleSheetsDisabledReason}
                 googleSpreadsheetSelection={googleSpreadsheetSelection}
                 isConnectingGoogleSheet={isConnectingGoogleSheet}
+                legacySorterSaveInfo={legacySorterSaveInfo}
                 onClose={() => setSettingsOpen(false)}
                 onChange={updateSettings}
                 onChooseGoogleSheet={chooseSheet}
                 onClearGoogleSheet={clearSheetSelection}
                 onExportSorterState={exportSorterState}
                 onImportSorterState={importSorterState}
+                onMigrateLegacySorterSave={migrateLegacySorterSave}
             />
             <HistoryModal
                 open={isHistoryOpen}
