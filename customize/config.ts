@@ -1,11 +1,12 @@
 import type { AppConfig } from '../src/app/types';
 
 export const config = {
-    localStoragePrefix: 'test',
-    title: 'test! Sorter',
-    description: 'Party rank sorter for your custom list of songs.',
-    tags: ['test'],
-    deadline: new Date('2026-06-30T23:59:00+02:00'),
+    localStoragePrefix: 'idol-anisongs-pr-1',
+    title: 'Idol Anisongs PR #1',
+    description: 'Party rank sorter for Idol Anisongs PR #1',
+    tags: ['Nominations'],
+    deadline: new Date('2026-07-13T23:59:00+02:00'),
+    defaultMediaFormat: 'full',
     googleSheets: {
         clientId: '575550662002-hivobiln683gua375ss3b7k58afnn36t.apps.googleusercontent.com',
         appId: '575550662002',
