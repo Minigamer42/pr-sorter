@@ -130,7 +130,7 @@ export function createStorage(config: AppConfig, songIds: number[]): StorageFaca
 
     function loadSettings(): Settings {
         const fallback: Settings = {
-            mediaFormat: 'video',
+            mediaFormat: config.defaultMediaFormat ?? 'video',
             region: 'eu',
             sorterAutoPlayMode: 'off',
             autoSkipScoreDifference: 10,

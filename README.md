@@ -66,6 +66,8 @@ Change `localStoragePrefix` for each hosted sorter. Browser storage is shared by
 
 `tags` is optional. When set, the collection index shows clickable tag toggles above the sorter list. Selecting multiple tags filters sorters that have all selected tags.
 
+`defaultMediaFormat` is optional and can be set to `"video"`, `"audio"`, or `"full"` to choose the initial Settings format for new users. It defaults to `"video"`.
+
 Set `hide: true` to publish the sorter route without listing it on the collection index or in the public `sorter-index.json` catalog.
 
 Replace `customize/favicon.ico` if you want a custom browser icon.

@@ -4,6 +4,7 @@ export type AppConfig = {
     localStoragePrefix: string;
     title: string;
     description: string;
+    defaultMediaFormat?: MediaFormat;
     tags?: readonly string[];
     hide?: boolean;
     deadline?: Date;
