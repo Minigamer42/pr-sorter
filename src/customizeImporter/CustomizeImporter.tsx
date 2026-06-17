@@ -62,14 +62,7 @@ export function CustomizeImporter({config}: CustomizeImporterProps) {
             const headers = inspectSheetHeaders(grid.rows);
             const mapping = headers.detected;
 
-            if (needsColumnMapping(mapping)) {
-                setState({status: 'mapping', spreadsheetName: spreadsheet.name, rows: grid.rows, headers, mapping});
-                return;
-            }
-
-            const parsed = parseSheetGrid(grid.rows, headers, mapping);
-
-            setState({status: 'ready', spreadsheetName: spreadsheet.name, parsed});
+            setState({status: 'mapping', spreadsheetName: spreadsheet.name, rows: grid.rows, headers, mapping});
         } catch (error) {
             if (error instanceof GooglePickerCanceledError) {
                 setState({status: 'idle'});
@@ -214,7 +207,7 @@ function ColumnMappingForm({
         <div className="import-mapping">
             <h2>Map Sheet Columns</h2>
             <p>
-                Some headers were not detected. Leave Anime blank to use <strong>{fallbackAnimeName}</strong>. Leave Rank blank to disable rank writeback. Leave Score blank to disable score support. At least one media column is required, and at least one of Rank or Score is required.
+                Review the detected columns before previewing the import. Leave Anime blank to use <strong>{fallbackAnimeName}</strong>. Leave Rank blank to disable rank writeback. Leave Score blank to disable score support. At least one media column is required, and at least one of Rank or Score is required.
             </p>
             <div className="import-mapping__grid">
                 <ColumnSelect label="ID" value={mapping.id ?? ''} headers={headers} required onChange={(value) => onChange('id', value)}/>
@@ -331,10 +324,6 @@ function slugify(value: string): string {
         .replace(/^-+|-+$/g, '');
 
     return slug || 'custom-sorter';
-}
-
-function needsColumnMapping(mapping: SheetColumnMapping): boolean {
-    return !mapping.id || !mapping.song || (!mapping.video && !mapping.mp3 && !mapping.full) || !mapping.anime || !mapping.rank || !mapping.score;
 }
 
 function appRouteHref(): string {
