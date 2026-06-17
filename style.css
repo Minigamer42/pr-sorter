@@ -20,6 +20,12 @@ body.sorter-index-body {
   overflow-y: auto;
 }
 
+.sorter-index-actions {
+  display: flex;
+  justify-content: center;
+  margin: -4px auto 14px;
+}
+
 .sorter-index-tags {
   display: flex;
   flex-wrap: wrap;

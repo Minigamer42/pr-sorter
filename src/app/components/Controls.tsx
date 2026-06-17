@@ -90,6 +90,11 @@ export function Controls({
             <a className="basic-button" href="../">
                 Overview
             </a>
+            {import.meta.env.DEV ? (
+                <a className="basic-button" href="../import">
+                    Import (Dev build only)
+                </a>
+            ) : null}
             {rankSupported && screen === 'playlist' ? (
                 <button className="basic-button" type="button" onClick={onExitPlaylist}>
                     Sorter

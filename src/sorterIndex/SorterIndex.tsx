@@ -142,6 +142,13 @@ export function SorterIndex() {
             <div className="title">
                 Choose a sorter to start ranking.
             </div>
+            {import.meta.env.DEV ? (
+                <div className="sorter-index-actions">
+                    <a className="basic-button" href="import">
+                        Import (Dev build only)
+                    </a>
+                </div>
+            ) : null}
             {allSorters.length ? (
                 <>
                     {allTags.length ? (
