@@ -64,6 +64,11 @@
       "deadline": "2026-06-11T21:59:00.000Z"
     },
     {
+      "slug": "suara",
+      "title": "Suara Sorter",
+      "description": "Party rank sorter for Suara"
+    },
+    {
       "slug": "symphogear",
       "title": "Symphogear Sorter",
       "description": "Party rank sorter for your custom list of songs.",
