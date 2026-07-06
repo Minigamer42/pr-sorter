@@ -82,6 +82,15 @@
       "deadline": "2026-06-14T10:00:00.000Z"
     },
     {
+      "slug": "vsinger-originals",
+      "title": "Vtuber/VSinger Originals",
+      "description": "Party rank sorter for Vtuber/VSinger Originals",
+      "tags": [
+        "Nominations"
+      ],
+      "deadline": "2026-07-20T21:59:59.000Z"
+    },
+    {
       "slug": "wuwa",
       "title": "WuWa OST",
       "description": "Party rank sorter for WuWa OST",
