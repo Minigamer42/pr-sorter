@@ -82,6 +82,15 @@
       "deadline": "2026-06-14T10:00:00.000Z"
     },
     {
+      "slug": "vsinger-covers",
+      "title": "Vtuber/VSinger Covers",
+      "description": "Party rank sorter for Vtuber/VSinger Covers",
+      "tags": [
+        "Nominations"
+      ],
+      "deadline": "2026-07-20T21:59:59.000Z"
+    },
+    {
       "slug": "vsinger-originals",
       "title": "Vtuber/VSinger Originals",
       "description": "Party rank sorter for Vtuber/VSinger Originals",
