@@ -17,6 +17,7 @@ type SongCardProps = {
     pickVisible?: boolean;
     compact?: boolean;
     playing?: boolean;
+    fullscreenTargetSelector?: string;
     onMediaPlay?(): void;
     onMediaPause?(): void;
     onMediaEnded?(): void;
@@ -38,6 +39,7 @@ export function SongCard({
     pickVisible = true,
     compact = false,
     playing = false,
+    fullscreenTargetSelector,
     onMediaPlay,
     onMediaPause,
     onMediaEnded,
@@ -70,15 +72,28 @@ export function SongCard({
                             : undefined
                     }
                 />
-                <button
-                    type="button"
-                    className="media-remount-button"
-                    onClick={() => setMediaRemountKey((key) => key + 1)}
-                    aria-label={`Remount ${song.name} media player`}
-                    title="Remount player"
-                >
-                    &#8635;
-                </button>
+                <div className="media-control-buttons">
+                    <button
+                        type="button"
+                        className="media-remount-button"
+                        onClick={() => setMediaRemountKey((key) => key + 1)}
+                        aria-label={`Remount ${song.name} media player`}
+                        title="Remount player"
+                    >
+                        &#8635;
+                    </button>
+                    {fullscreenTargetSelector ? (
+                        <button
+                            type="button"
+                            className="media-remount-button"
+                            onClick={(event) => void event.currentTarget.closest(fullscreenTargetSelector)?.requestFullscreen()}
+                            aria-label="Open sorter fullscreen"
+                            title="Fullscreen"
+                        >
+                            &#9974;
+                        </button>
+                    ) : null}
+                </div>
             </div>
             <div className="anime">{song.anime}</div>
             <div className="song">

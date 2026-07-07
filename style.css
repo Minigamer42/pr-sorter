@@ -760,11 +760,62 @@ body.sorter-index-body {
   background-color: #45a049;
 }
 
+.sorter-stage {
+  height: 85%;
+}
+
+.sorter-stage:fullscreen {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 20px 0;
+  background-color: #001a3f;
+  background-image: var(--background-image);
+  background-position: center;
+  background-size: cover;
+}
+
+.sorter-stage:fullscreen .duel-container {
+  flex: 0 0 auto;
+  height: auto;
+}
+
+.sorter-stage:fullscreen .music-card {
+  display: grid;
+  grid-template-rows: minmax(380px, min(56vh, 560px)) auto auto auto auto;
+  row-gap: 10px;
+}
+
+.sorter-stage:fullscreen .music-card [data-slot="media"],
+.sorter-stage:fullscreen .music-card .anime,
+.sorter-stage:fullscreen .music-card .song,
+.sorter-stage:fullscreen .score-field,
+.sorter-stage:fullscreen .music-card > button {
+  height: auto;
+}
+
+.sorter-stage:fullscreen .music-card [data-slot="media"] {
+  margin-bottom: 24px;
+}
+
+.sorter-stage:fullscreen .score-field {
+  min-height: 44px;
+}
+
+.sorter-stage:fullscreen .music-card > button {
+  min-height: 60px;
+}
+
+.sorter-stage:fullscreen .progress {
+  margin-top: auto;
+}
+
 .duel-container {
   display: flex;
   justify-content: space-between;
   padding: 20px 10%;
-  height: 75%;
+  height: calc(100% - 10vh);
   box-sizing: border-box;
 }
 
@@ -936,12 +987,16 @@ body.sorter-index-body {
   min-height: 360px;
 }
 
-.music-card .media-remount-button,
-.playlist-fullscreen-button {
+.media-control-buttons {
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
   z-index: 1;
+  display: flex;
+  gap: 4px;
+}
+
+.media-control-buttons .media-remount-button {
   width: 24px;
   height: 24px;
   min-height: 24px;
@@ -954,10 +1009,8 @@ body.sorter-index-body {
   line-height: 1;
 }
 
-.music-card .media-remount-button:hover,
-.music-card .media-remount-button:focus-visible,
-.playlist-fullscreen-button:hover,
-.playlist-fullscreen-button:focus-visible {
+.media-control-buttons .media-remount-button:hover,
+.media-control-buttons .media-remount-button:focus-visible {
   background-color: rgba(255, 255, 255, 0.14);
 }
 
@@ -1211,7 +1264,7 @@ body.sorter-index-body {
 
 .progress {
   padding: 10px;
-  height: 10%;
+  height: 10vh;
   width: 60%;
   box-sizing: border-box;
   display: flex;

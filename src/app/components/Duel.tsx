@@ -216,6 +216,7 @@ function DuelEntry({
                 autoPlayKey={autoPlayKey}
                 paused={activePlayer !== null && !(activePlayer.side === side && activePlayer.index === 0)}
                 playing={activePlayer?.side === side && activePlayer.index === 0}
+                fullscreenTargetSelector=".sorter-stage"
                 onMediaPlay={() => {
                     onMediaPlay(side, 0);
                     onAutoPlaySideActivate(side);

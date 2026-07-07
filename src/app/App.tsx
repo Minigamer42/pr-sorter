@@ -947,7 +947,7 @@ export function App({config, songs}: AppProps) {
                         onSetupGoogleSheet={chooseSheet}
                     />
                 ) : screen !== 'landing' && sort ? (
-                    <>
+                    <div className="sorter-stage">
                         <div className="duel-container">
                             {screen === 'sorting' ? (
                                 <Duel
@@ -970,7 +970,7 @@ export function App({config, songs}: AppProps) {
                             ) : null}
                         </div>
                         <Progress label={progressLabel} percentage={progressValue}/>
-                    </>
+                    </div>
                 ) : null}
             </div>
         </>
