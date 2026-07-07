@@ -936,7 +936,8 @@ body.sorter-index-body {
   min-height: 360px;
 }
 
-.music-card .media-remount-button {
+.music-card .media-remount-button,
+.playlist-fullscreen-button {
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
@@ -945,14 +946,18 @@ body.sorter-index-body {
   height: 24px;
   min-height: 24px;
   padding: 0;
+  border: 0;
   background-color: transparent;
   color: #fcffef;
+  cursor: pointer;
   font-size: 18px;
   line-height: 1;
 }
 
 .music-card .media-remount-button:hover,
-.music-card .media-remount-button:focus-visible {
+.music-card .media-remount-button:focus-visible,
+.playlist-fullscreen-button:hover,
+.playlist-fullscreen-button:focus-visible {
   background-color: rgba(255, 255, 255, 0.14);
 }
 
@@ -1064,6 +1069,13 @@ body.sorter-index-body {
   backdrop-filter: blur(3px);
 }
 
+.playlist-card:fullscreen {
+  background-color: #001a3f;
+  background-image: linear-gradient(rgba(0, 26, 63, 0.6), rgba(0, 26, 63, 0.6)), var(--background-image);
+  background-position: center;
+  background-size: auto, cover;
+}
+
 .playlist-card--scored {
   grid-template-rows: minmax(0, 1fr) auto auto auto;
 }
@@ -1111,6 +1123,7 @@ body.sorter-index-body {
 }
 
 .playlist-media {
+  position: relative;
   min-height: 0;
 }
 

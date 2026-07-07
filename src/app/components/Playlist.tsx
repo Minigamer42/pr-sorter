@@ -183,6 +183,17 @@ export function Playlist({
                                         onPause={() => mediaPaused(index)}
                                         onEnded={() => mediaEnded(index)}
                                     />
+                                    {index === 0 ? (
+                                        <button
+                                            type="button"
+                                            className="media-remount-button playlist-fullscreen-button"
+                                            onClick={(event) => void event.currentTarget.closest('.playlist-card')?.requestFullscreen()}
+                                            aria-label="Open playlist card fullscreen"
+                                            title="Fullscreen"
+                                        >
+                                            &#9974;
+                                        </button>
+                                    ) : null}
                                 </div>
                                 <div className="playlist-song-meta">
                                     <div className="playlist-anime" title={labelledSong.anime}>{labelledSong.anime}</div>
