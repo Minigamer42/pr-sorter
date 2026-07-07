@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { type MouseEvent, useState } from 'react';
 import { Media } from '../../media';
 import type { CurrentSongSortInfo, SortChoice } from '../../sorter';
 import type { ResolvedSong } from '../../songs';
@@ -49,6 +49,16 @@ export function SongCard({
 }: SongCardProps) {
     const [mediaRemountKey, setMediaRemountKey] = useState(0);
 
+    function toggleFullscreen(event: MouseEvent<HTMLButtonElement>): void {
+        const target = event.currentTarget.closest(fullscreenTargetSelector ?? '');
+        if (document.fullscreenElement === target) {
+            void document.exitFullscreen();
+            return;
+        }
+
+        void target?.requestFullscreen();
+    }
+
     return (
         <div className={`music-card${scoreEnabled ? ' music-card--scored' : ''}${compact ? ' music-card--compact' : ''}${playing ? ' music-card--playing' : ''}`}>
             <div data-slot="media">
@@ -86,7 +96,7 @@ export function SongCard({
                         <button
                             type="button"
                             className="media-remount-button"
-                            onClick={(event) => void event.currentTarget.closest(fullscreenTargetSelector)?.requestFullscreen()}
+                            onClick={toggleFullscreen}
                             aria-label="Open sorter fullscreen"
                             title="Fullscreen"
                         >

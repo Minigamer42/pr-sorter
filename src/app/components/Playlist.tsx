@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { type MouseEvent, useEffect, useState } from 'react';
 import { Media } from '../../media';
 import { songEntryId, songEntrySongs, songWithTypeLabel, type ResolvedSongEntry } from '../../songs';
 import type { AppConfig, Settings, SongScoresById } from '../types';
@@ -146,6 +146,16 @@ export function Playlist({
         onNext();
     }
 
+    function toggleFullscreen(event: MouseEvent<HTMLButtonElement>): void {
+        const target = event.currentTarget.closest('.playlist-card');
+        if (document.fullscreenElement === target) {
+            void document.exitFullscreen();
+            return;
+        }
+
+        void target?.requestFullscreen();
+    }
+
     return (
         <div className="playlist">
             <div className="playlist-toolbar">
@@ -188,7 +198,7 @@ export function Playlist({
                                             <button
                                                 type="button"
                                                 className="media-remount-button playlist-fullscreen-button"
-                                                onClick={(event) => void event.currentTarget.closest('.playlist-card')?.requestFullscreen()}
+                                                onClick={toggleFullscreen}
                                                 aria-label="Open playlist card fullscreen"
                                                 title="Fullscreen"
                                             >
