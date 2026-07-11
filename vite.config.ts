@@ -66,9 +66,7 @@ function pagesPreviewAssetRewrite(): Plugin {
                     return;
                 }
 
-                if (request.url === '/test/style.css') {
-                    request.url = '/style.css';
-                } else if (request.url.startsWith('/test/customize/')) {
+                if (request.url.startsWith('/test/customize/')) {
                     request.url = request.url.slice('/test'.length);
                 }
 

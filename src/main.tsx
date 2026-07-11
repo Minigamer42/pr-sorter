@@ -1,3 +1,4 @@
+import '../style.css';
 import { createRoot } from 'react-dom/client';
 import { ActiveRoute } from 'active-route';
 
