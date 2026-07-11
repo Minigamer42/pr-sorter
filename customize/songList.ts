@@ -413,9 +413,9 @@ export const songList = [
     },
     {
         'id': 52,
-        'anime': 'Harusaruhi',
-        'name': 'Prince',
-        'video': 'https://www.youtube.com/watch?v=eBdlV5qbIVc',
+        'anime': 'Ibuki',
+        'name': 'Blooming Dancer',
+        'video': 'https://www.youtube.com/watch?v=WJrpgYYQsAs',
         'mp3': null,
         'full': null
     },
