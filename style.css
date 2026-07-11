@@ -769,7 +769,7 @@ body.sorter-index-body {
   flex-direction: column;
   height: 100%;
   box-sizing: border-box;
-  padding: 20px 0;
+  padding: 20px clamp(16px, 2.5vw, 48px);
   background-color: #001a3f;
   background-image: var(--background-image);
   background-position: center;
@@ -778,25 +778,24 @@ body.sorter-index-body {
 
 .sorter-stage:fullscreen .duel-container {
   flex: 0 0 auto;
+  align-items: stretch;
+  gap: clamp(18px, 2.5vw, 40px);
+  width: min(100%, 1760px);
   height: auto;
+  margin: 0 auto;
+  padding: 20px 0;
 }
 
 .sorter-stage:fullscreen .music-card {
-  display: grid;
-  grid-template-rows: minmax(380px, min(56vh, 560px)) auto auto auto auto;
-  row-gap: 10px;
-}
-
-.sorter-stage:fullscreen .music-card [data-slot="media"],
-.sorter-stage:fullscreen .music-card .anime,
-.sorter-stage:fullscreen .music-card .song,
-.sorter-stage:fullscreen .score-field,
-.sorter-stage:fullscreen .music-card > button {
-  height: auto;
+  flex: 1 1 0;
+  --music-card-media-row: clamp(340px, 52vh, 560px);
+  --music-card-label-row: clamp(48px, 5.8vh, 68px);
+  --music-card-action-row: 60px;
+  width: auto;
 }
 
 .sorter-stage:fullscreen .music-card [data-slot="media"] {
-  margin-bottom: 24px;
+  margin-bottom: 36px;
 }
 
 .sorter-stage:fullscreen .score-field {
@@ -813,6 +812,7 @@ body.sorter-index-body {
 
 .duel-container {
   display: flex;
+  align-items: stretch;
   justify-content: space-between;
   padding: 20px 10%;
   height: calc(100% - 10vh);
@@ -872,6 +872,18 @@ body.sorter-index-body {
 }
 
 .music-card {
+  --music-card-media-row: clamp(220px, 38vh, 380px);
+  --music-card-label-row: clamp(36px, 5vh, 56px);
+  --music-card-action-row: clamp(48px, 7vh, 64px);
+  display: grid;
+  grid-template-rows:
+    var(--music-card-media-row)
+    var(--music-card-label-row)
+    var(--music-card-label-row)
+    minmax(44px, auto)
+    var(--music-card-action-row);
+  align-content: start;
+  row-gap: 10px;
   padding: 20px;
   width: 48%;
   min-width: 0;
@@ -892,11 +904,13 @@ body.sorter-index-body {
 .music-card .anime {
   align-content: center;
   font-size: 2.2vh;
+  line-height: 1.2;
   color: #a0ffac;
-  height: 10%;
+  height: auto;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow: visible;
+  overflow-wrap: anywhere;
+  text-overflow: clip;
 }
 
 .music-card .song {
@@ -905,17 +919,21 @@ body.sorter-index-body {
   justify-content: center;
   gap: 6px;
   font-size: 2vh;
+  line-height: 1.2;
   color: #fcffef;
-  height: 10%;
+  height: auto;
   min-width: 0;
-  overflow: hidden;
+  overflow: visible;
+  overflow-wrap: anywhere;
 }
 
 .song__name {
   display: block;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow: visible;
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+  white-space: normal;
 }
 
 .song__sort-help {
@@ -924,7 +942,8 @@ body.sorter-index-body {
 }
 
 .score-field {
-  height: 10%;
+  min-height: 44px;
+  height: auto;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -957,7 +976,8 @@ body.sorter-index-body {
   border-radius: 5px;
   cursor: pointer;
   font-size: 2.5vh;
-  height: 10%;
+  min-height: var(--music-card-action-row);
+  height: auto;
   width: 100%;
   box-sizing: border-box;
 }
@@ -1016,11 +1036,12 @@ body.sorter-index-body {
 
 .music-card [data-slot="media"] {
   position: relative;
-  height: 70%;
+  height: auto;
+  margin-bottom: 28px;
 }
 
 .music-card--scored [data-slot="media"] {
-  height: 60%;
+  height: auto;
 }
 
 .music-card video,
