@@ -77,6 +77,8 @@ export function App({config, songs}: AppProps) {
     );
     const pendingScoreWritebackRef = useRef<Map<number, number>>(new Map());
     const scoreWritebackQueueRef = useRef<Promise<void>>(Promise.resolve());
+    const pickAuthPromptUsedSpreadsheetIdsRef = useRef<Set<string>>(new Set());
+    const pickAuthPromptRequiredSpreadsheetIdsRef = useRef<Set<string>>(new Set());
     const lastEagerRankWritebackRef = useRef<Map<number, number>>(new Map());
     const lastEagerRankSpreadsheetIdRef = useRef<string | null>(null);
     const eagerRankWritebackQueueRef = useRef<Promise<void>>(Promise.resolve());
@@ -208,8 +210,9 @@ export function App({config, songs}: AppProps) {
         setScreen(screenFor(nextSort));
         storage.saveSort(nextSort);
         setSorterAutoPlayForSort(nextSort, settings, scoresBySongId, {previousBattle, choice});
-        flushPendingScoreWriteback();
-        void queueFixedRankWriteback(nextSort, scoresBySongId, settings);
+        const allowAuthPrompt = consumePickAuthPromptPermission(nextSort, scoresBySongId, settings);
+        flushPendingScoreWriteback({allowAuthPrompt});
+        void queueFixedRankWriteback(nextSort, scoresBySongId, settings, {allowAuthPrompt});
     }
 
     function undoPick(): void {
@@ -387,6 +390,7 @@ export function App({config, songs}: AppProps) {
             return;
         }
 
+        const spreadsheet = googleSpreadsheetSelection;
         const scoresToWrite = new Map(pendingScoreWritebackRef.current);
         pendingScoreWritebackRef.current.clear();
 
@@ -394,7 +398,7 @@ export function App({config, songs}: AppProps) {
             .catch(() => undefined)
             .then(async () => {
                 try {
-                    await writeScoresToGoogleSheet(writebackConfig, googleSpreadsheetSelection, scoresToWrite, {
+                    await writeScoresToGoogleSheet(writebackConfig, spreadsheet, scoresToWrite, {
                         allowAuthPrompt: options.allowAuthPrompt ?? true,
                     });
                 } catch (error) {
@@ -403,6 +407,7 @@ export function App({config, songs}: AppProps) {
                     }
 
                     if (options.allowAuthPrompt === false && isAuthenticationWritebackError(error)) {
+                        requireNextPickAuthPrompt(spreadsheet.id);
                         return;
                     }
 
@@ -451,6 +456,7 @@ export function App({config, songs}: AppProps) {
                     return writtenCount;
                 } catch (error) {
                     if (options.allowAuthPrompt === false && isAuthenticationWritebackError(error)) {
+                        requireNextPickAuthPrompt(spreadsheet.id);
                         return 0;
                     }
 
@@ -465,6 +471,38 @@ export function App({config, songs}: AppProps) {
 
         eagerRankWritebackQueueRef.current = queuedWrite.then(() => undefined, () => undefined);
         return queuedWrite;
+    }
+
+    function consumePickAuthPromptPermission(
+        currentSort: SortState,
+        currentScoresBySongId: SongScoresById,
+        currentSettings: Settings,
+    ): boolean {
+        const writebackConfig = googleWritebackConfig();
+        if (!writebackConfig || !googleSpreadsheetSelection) {
+            return false;
+        }
+
+        const spreadsheetId = googleSpreadsheetSelection.id;
+        const requiresAuthPrompt = pickAuthPromptRequiredSpreadsheetIdsRef.current.has(spreadsheetId);
+        if (!requiresAuthPrompt && pickAuthPromptUsedSpreadsheetIdsRef.current.has(spreadsheetId)) {
+            return false;
+        }
+
+        const fixedRanks = fixedProjectedRanksBySongId(currentSort, resolvedSongs, currentScoresBySongId, currentSettings, scoreEnabled);
+        const hasRankWriteback = changedRanks(fixedRanks, lastEagerRankWritebackRef.current).size > 0;
+        const hasScoreWriteback = scoreEnabled && pendingScoreWritebackRef.current.size > 0 && Boolean(writebackConfig.scoreColumnHeader);
+        if (!hasRankWriteback && !hasScoreWriteback) {
+            return false;
+        }
+
+        pickAuthPromptUsedSpreadsheetIdsRef.current.add(spreadsheetId);
+        pickAuthPromptRequiredSpreadsheetIdsRef.current.delete(spreadsheetId);
+        return true;
+    }
+
+    function requireNextPickAuthPrompt(spreadsheetId: string): void {
+        pickAuthPromptRequiredSpreadsheetIdsRef.current.add(spreadsheetId);
     }
 
     function resolveAutoSkips(
