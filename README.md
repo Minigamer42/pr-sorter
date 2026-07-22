@@ -193,6 +193,8 @@ The import page writes:
 - `customize/config.ts`
 - `customize/songList.ts`
 
+The mapping view also has a separate sorter metadata selector for one optional index tag: `Artist`, `Franchise`, `Nominations`, or `Seasonal`. Selecting none writes `tags: []`.
+
 The importer reads the first non-hidden grid worksheet. It looks for a row with recognized column names, then auto-detects common column names and lets you map missing columns manually.
 
 Required columns:
