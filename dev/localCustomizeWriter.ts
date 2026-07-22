@@ -217,13 +217,16 @@ function configSource(payload: ReturnType<typeof parseCustomizePayload>): string
     const rankSupported = payload.rankSupported;
     const rankColumnHeader = payload.googleSheets.rankColumnHeader;
     const scoreColumnHeader = payload.googleSheets.scoreColumnHeader;
+    const deadline = deadlineInTwoWeeksAtMidnightUtcPlus2();
 
     return `import type { AppConfig } from '../src/app/types';
 
 export const config = {
     localStoragePrefix: ${formatTsString(payload.localStoragePrefix)},
     title: ${formatTsString(payload.title)},
-    description: ${formatTsString(payload.description)}${rankSupported ? '' : `,
+    description: ${formatTsString(payload.description)},
+    tags: [],
+    deadline: new Date(${formatTsString(deadline)})${rankSupported ? '' : `,
     rankSupported: false`},
     googleSheets: {
         clientId: ${formatTsString(payload.googleSheets.clientId)},
@@ -234,6 +237,16 @@ export const config = {
     }
 } satisfies AppConfig;
 `;
+}
+
+function deadlineInTwoWeeksAtMidnightUtcPlus2(now = new Date()): string {
+    const utcPlus2 = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+    utcPlus2.setUTCDate(utcPlus2.getUTCDate() + 14);
+
+    const year = utcPlus2.getUTCFullYear();
+    const month = String(utcPlus2.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(utcPlus2.getUTCDate()).padStart(2, '0');
+    return `${year}-${month}-${day}T23:59:00+02:00`;
 }
 
 function formatSongList(songs: ReturnType<typeof parseSongs>): string {
