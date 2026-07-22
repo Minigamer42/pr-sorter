@@ -176,7 +176,7 @@ VITE_GOOGLE_API_KEY=your-browser-api-key
 
 `.env.local` is intentionally ignored by git, so each local clone needs its own copy.
 
-Omit `googleSheets` if you do not need Google features. Omit `idColumnHeader` if your song ID column is named `ID`. Set top-level `rankSupported` to `false` and omit `rankColumnHeader` for playlist-only sheets without a rank column. Omit only `scoreColumnHeader` if you want Google rank writeback but do not want score support.
+Omit `googleSheets` if you do not need Google features. Omit `idColumnHeader` if your song ID column is named `ID`. Set top-level `rankSupported` to `false` and omit `rankColumnHeader` for playlist-only sheets without a rank column. Omit `scoreColumnHeader` if scores should remain local and should not be read from or written to Google Sheets.
 
 ## 6. Optional: Import Songs From Google Sheets
 
@@ -210,13 +210,11 @@ Optional columns:
 
 Media URLs can be stored as cell hyperlinks or as plain `http`/`https` cell text.
 
-## 7. Optional: Use Song Scores
+## 7. Use Song Scores
 
-Scores are enabled by `googleSheets.scoreColumnHeader` in `customize/config.ts`.
+Score fields are always available, even when `googleSheets.scoreColumnHeader` is omitted or Google Sheets is not configured. Each song can have a score from `0` to `10`; blank scores are allowed. Scores are stored locally per song.
 
-If `scoreColumnHeader` is omitted, the sorter remains ranking-only: no score fields render, no scores are saved, no auto-skip setting is shown, and only ranks are written to Google Sheets.
-
-When enabled, each song can have a score from `0` to `10`. Blank scores are allowed. Scores are stored locally per song.
+`googleSheets.scoreColumnHeader` enables the separate Google Sheets score integration. Without a non-empty header, local scores and score-based settings still work, but scores are not read from or written to Google Sheets.
 
 Settings includes `Auto-skip score gap`, defaulting to `10`. During sorting, if both compared songs have valid scores and their absolute score difference is greater than or equal to this setting, the higher-scored song is picked automatically. Equal scores and missing scores never auto-skip. For example, `10` only skips comparisons such as `10` vs `0`, while `7` skips `10` vs `3`.
 
@@ -230,12 +228,12 @@ Spreadsheet format:
 - Row `1` is the header row.
 - The song ID column header must exactly match `googleSheets.idColumnHeader` after trimming surrounding whitespace, or `ID` if `idColumnHeader` is omitted.
 - If top-level `rankSupported` is not `false`, the rank column header must exactly match `googleSheets.rankColumnHeader` after trimming surrounding whitespace. Matching is case-sensitive.
-- If score support is enabled and at least one song has a score, the score column header must exactly match `googleSheets.scoreColumnHeader` after trimming surrounding whitespace. Matching is case-sensitive.
+- If `googleSheets.scoreColumnHeader` is configured and at least one song has a score, the score column header must exactly match it after trimming surrounding whitespace. Matching is case-sensitive.
 - Data rows may be in any order.
 
-Writeback validation is strict. The write aborts before changing cells if the sheet is empty, the rank header is missing or duplicated, the enabled score header is missing or duplicated, a song ID is duplicated or non-numeric, the sheet contains unknown song IDs, or the sheet is missing sorter song IDs.
+Writeback validation is strict. The write aborts before changing cells if the sheet is empty, the rank header is missing or duplicated, a configured score header is missing or duplicated, a song ID is duplicated or non-numeric, the sheet contains unknown song IDs, or the sheet is missing sorter song IDs.
 
-Ranks always write. Scores write only when score support is enabled and at least one nonblank score exists. Blank scores are skipped and do not clear existing spreadsheet cells. Rank and score changes are sent together in one Sheets batch update.
+Ranks always write. Scores write only when `googleSheets.scoreColumnHeader` is configured and at least one nonblank score exists. Blank scores are skipped and do not clear existing spreadsheet cells. Rank and score changes are sent together in one Sheets batch update.
 
 User flow:
 

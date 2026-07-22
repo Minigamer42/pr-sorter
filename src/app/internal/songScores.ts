@@ -1,7 +1,10 @@
 import type { AppConfig } from '../types';
 
 export function isScoreEnabled(config: AppConfig): boolean {
-    return Boolean(config.googleSheets?.scoreColumnHeader);
+    // Scores are a local sorter feature. The optional column header only
+    // controls whether scores can be read from or written to Google Sheets.
+    void config;
+    return true;
 }
 
 export function normalizeScore(raw: string): number | null {
