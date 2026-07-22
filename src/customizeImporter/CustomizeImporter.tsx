@@ -4,6 +4,7 @@ import { readFirstSheetGrid, type SheetGridCell } from '../google/sheetsClient';
 import { GooglePickerCanceledError, GoogleWritebackError } from '../google/types';
 import type { AppConfig } from '../app/types';
 import type { SongData } from '../songs';
+import { IMPORT_TAGS, type ImportTag, isImportTag } from './importTags';
 import { inspectSheetHeaders, type ParsedSheetCustomize, parseSheetGrid, type SheetColumnKey, type SheetColumnMapping, type SheetHeaders } from './sheetParser';
 
 type CustomizeImporterProps = {
@@ -13,8 +14,8 @@ type CustomizeImporterProps = {
 type ImportState =
     | { status: 'idle' }
     | { status: 'loading'; message: string }
-    | { status: 'mapping'; spreadsheetName: string; rows: SheetGridCell[][]; headers: SheetHeaders; mapping: SheetColumnMapping }
-    | { status: 'ready'; spreadsheetName: string; parsed: ParsedSheetCustomize }
+    | { status: 'mapping'; spreadsheetName: string; rows: SheetGridCell[][]; headers: SheetHeaders; mapping: SheetColumnMapping; selectedTag: ImportTag | '' }
+    | { status: 'ready'; spreadsheetName: string; parsed: ParsedSheetCustomize; selectedTag: ImportTag | '' }
     | { status: 'done'; spreadsheetName: string; songCount: number }
     | { status: 'error'; message: string };
 
@@ -62,7 +63,7 @@ export function CustomizeImporter({config}: CustomizeImporterProps) {
             const headers = inspectSheetHeaders(grid.rows);
             const mapping = headers.detected;
 
-            setState({status: 'mapping', spreadsheetName: spreadsheet.name, rows: grid.rows, headers, mapping});
+            setState({status: 'mapping', spreadsheetName: spreadsheet.name, rows: grid.rows, headers, mapping, selectedTag: ''});
         } catch (error) {
             if (error instanceof GooglePickerCanceledError) {
                 setState({status: 'idle'});
@@ -95,24 +96,26 @@ export function CustomizeImporter({config}: CustomizeImporterProps) {
 
         try {
             const parsed = parseSheetGrid(state.rows, state.headers, state.mapping);
-            setState({status: 'ready', spreadsheetName: state.spreadsheetName, parsed});
+            setState({status: 'ready', spreadsheetName: state.spreadsheetName, parsed, selectedTag: state.selectedTag});
         } catch (error) {
             setState({status: 'error', message: errorMessage(error)});
         }
     }
 
-    async function writeCustomize(parsed: ParsedSheetCustomize, spreadsheetName: string): Promise<void> {
+    async function writeCustomize(parsed: ParsedSheetCustomize, spreadsheetName: string, selectedTag: ImportTag | ''): Promise<void> {
         try {
             setState({status: 'loading', message: 'Writing customize files...'});
+            const sorterName = sorterNameFromSpreadsheetName(spreadsheetName);
             const response = await fetch('/api/customize-from-sheet', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    title: `${spreadsheetName} Sorter`,
-                    description: `Party rank sorter for ${spreadsheetName}.`,
-                    localStoragePrefix: slugify(spreadsheetName),
+                    title: sorterName,
+                    description: `Party rank sorter for ${sorterName}.`,
+                    localStoragePrefix: slugify(sorterName),
+                    tags: selectedTag ? [selectedTag] : [],
                     rankSupported: parsed.rankSupported,
                     googleSheets: {
                         clientId: config.googleSheets?.clientId,
@@ -169,15 +172,17 @@ export function CustomizeImporter({config}: CustomizeImporterProps) {
                     <Preview
                         spreadsheetName={state.spreadsheetName}
                         songs={state.parsed.songs}
-                        onWrite={() => void writeCustomize(state.parsed, state.spreadsheetName)}
+                        onWrite={() => void writeCustomize(state.parsed, state.spreadsheetName, state.selectedTag)}
                     />
                 ) : null}
                 {state.status === 'mapping' ? (
                     <ColumnMappingForm
                         headers={state.headers.headers}
                         mapping={state.mapping}
+                        selectedTag={state.selectedTag}
                         fallbackAnimeName={fallbackAnimeName(config)}
                         onChange={updateMapping}
+                        onTagChange={(selectedTag) => setState({...state, selectedTag})}
                         onConfirm={confirmMapping}
                     />
                 ) : null}
@@ -189,14 +194,18 @@ export function CustomizeImporter({config}: CustomizeImporterProps) {
 function ColumnMappingForm({
     headers,
     mapping,
+    selectedTag,
     fallbackAnimeName,
     onChange,
+    onTagChange,
     onConfirm,
 }: {
     headers: string[];
     mapping: SheetColumnMapping;
+    selectedTag: ImportTag | '';
     fallbackAnimeName: string;
     onChange(key: SheetColumnKey, value: string): void;
+    onTagChange(tag: ImportTag | ''): void;
     onConfirm(): void;
 }) {
     const missingRequired = (['id', 'song'] as const).filter((key) => !mapping[key]);
@@ -205,10 +214,27 @@ function ColumnMappingForm({
 
     return (
         <div className="import-mapping">
-            <h2>Map Sheet Columns</h2>
+            <h2>Configure Import</h2>
             <p>
                 Review the detected columns before previewing the import. Leave Anime blank to use <strong>{fallbackAnimeName}</strong>. Leave Rank blank to disable rank writeback. Leave Score blank to disable score support. At least one media column is required, and at least one of Rank or Score is required.
             </p>
+            <section className="import-mapping__metadata" aria-labelledby="import-metadata-heading">
+                <h3 id="import-metadata-heading">Sorter metadata</h3>
+                <label className="import-field import-mapping__tag-field">
+                    <span>Index tag</span>
+                    <select
+                        value={selectedTag}
+                        onChange={(event) => {
+                            const value = event.currentTarget.value;
+                            onTagChange(isImportTag(value) ? value : '');
+                        }}
+                    >
+                        <option value=""></option>
+                        {IMPORT_TAGS.map((tag) => <option key={tag} value={tag}>{tag}</option>)}
+                    </select>
+                </label>
+            </section>
+            <h3 className="import-mapping__columns-heading">Sheet columns</h3>
             <div className="import-mapping__grid">
                 <ColumnSelect label="ID" value={mapping.id ?? ''} headers={headers} required onChange={(value) => onChange('id', value)}/>
                 <ColumnSelect label="Song name" value={mapping.song ?? ''} headers={headers} required onChange={(value) => onChange('song', value)}/>
@@ -324,6 +350,12 @@ function slugify(value: string): string {
         .replace(/^-+|-+$/g, '');
 
     return slug || 'custom-sorter';
+}
+
+function sorterNameFromSpreadsheetName(spreadsheetName: string): string {
+    const withoutOwner = spreadsheetName.replace(/\s*\(Minigamer42\)\s*$/i, '').trim();
+    const withoutPr = withoutOwner.replace(/\s+PR\s*$/i, '').trim();
+    return withoutPr || spreadsheetName.trim();
 }
 
 function appRouteHref(): string {

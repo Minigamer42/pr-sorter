@@ -2,11 +2,13 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import type { IncomingMessage } from 'node:http';
 import path from 'node:path';
 import type { Plugin } from 'vite';
+import { type ImportTag, isImportTag } from '../src/customizeImporter/importTags';
 
 type CustomizePayload = {
     localStoragePrefix?: unknown;
     title?: unknown;
     description?: unknown;
+    tags?: unknown;
     rankSupported?: unknown;
     googleSheets?: {
         clientId?: unknown;
@@ -149,6 +151,7 @@ function parseCustomizePayload(payload: CustomizePayload) {
         localStoragePrefix,
         title,
         description,
+        tags: parseImportTags(payload.tags),
         rankSupported,
         googleSheets: {
             clientId: requireString(googleSheets.clientId, 'googleSheets.clientId'),
@@ -225,7 +228,7 @@ export const config = {
     localStoragePrefix: ${formatTsString(payload.localStoragePrefix)},
     title: ${formatTsString(payload.title)},
     description: ${formatTsString(payload.description)},
-    tags: [],
+    tags: ${formatTsStringArray(payload.tags)},
     deadline: new Date(${formatTsString(deadline)})${rankSupported ? '' : `,
     rankSupported: false`},
     googleSheets: {
@@ -270,6 +273,10 @@ function formatNullableTsString(value: string | null): string {
     return value === null ? 'null' : formatTsString(value);
 }
 
+function formatTsStringArray(values: readonly string[]): string {
+    return `[${values.map(formatTsString).join(', ')}]`;
+}
+
 function formatTsString(value: string): string {
     return `'${value.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
 }
@@ -288,6 +295,23 @@ function optionalString(value: unknown): string | null {
 
 function optionalBoolean(value: unknown): boolean | null {
     return typeof value === 'boolean' ? value : null;
+}
+
+function parseImportTags(value: unknown): ImportTag[] {
+    if (value === undefined) {
+        return [];
+    }
+
+    if (!Array.isArray(value) || value.length > 1) {
+        throw new CustomizeWriterError('Expected zero or one sorter tag.', 'validation', `Received ${describeValue(value)}.`);
+    }
+
+    return value.map((tag) => {
+        if (!isImportTag(tag)) {
+            throw new CustomizeWriterError('Invalid sorter tag.', 'validation', `Received ${describeValue(tag)}.`);
+        }
+        return tag;
+    });
 }
 
 function requireNumber(value: unknown, name: string): number {

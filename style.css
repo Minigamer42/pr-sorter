@@ -1474,6 +1474,30 @@ table td {
   letter-spacing: 0;
 }
 
+.import-mapping__metadata {
+  max-width: 520px;
+  margin: 18px 0 24px;
+  padding: 16px;
+  border: 1px solid rgba(187, 247, 208, 0.45);
+  border-radius: 8px;
+  background: rgba(45, 106, 79, 0.2);
+}
+
+.import-mapping__metadata h3,
+.import-mapping__columns-heading {
+  margin: 0 0 8px;
+  font-size: 18px;
+  letter-spacing: 0;
+}
+
+.import-mapping__metadata p {
+  margin-bottom: 12px;
+}
+
+.import-mapping__tag-field {
+  max-width: 280px;
+}
+
 .import-mapping__grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
