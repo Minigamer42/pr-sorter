@@ -3,34 +3,372 @@
 import type { Song } from '../src/songs';
 
 export const songList = [
-    {'id': 1, 'anime': 'Bang Dream', 'name': 'Asu no Yozora Shoukaihan by Afterglow', 'video': 'https://www.youtube.com/watch?v=1JgfLP2QtZw', 'mp3': null},
-    {'id': 2, 'anime': 'Bang Dream', 'name': 'Ave Mujica by Ave Mujica', 'video': 'https://youtu.be/QDsd0nyzwz0', 'mp3': null},
-    {'id': 3, 'anime': 'Bang Dream', 'name': 'Bad Kids All Bet by RAISE A SUILEN', 'video': 'https://www.youtube.com/watch?v=mKt2u5a3-H8', 'mp3': null},
-    {'id': 4, 'anime': 'Bang Dream', 'name': 'Beautiful Birthday by RAISE A SUILEN', 'video': 'https://www.youtube.com/watch?v=AxEUw6LdHR4', 'mp3': null},
-    {'id': 5, 'anime': 'Bang Dream', 'name': 'Choir \'s\' Choir by Ave Mujica', 'video': 'https://youtu.be/7llj4mh4L-8', 'mp3': null},
-    {'id': 6, 'anime': 'Bang Dream', 'name': 'Double Rainbow by Poppin\'Party', 'video': 'https://www.youtube.com/watch?v=sNaJuqFB-_g', 'mp3': null},
-    {'id': 7, 'anime': 'Bang Dream', 'name': 'Ether by Ave Mujica', 'video': 'https://www.youtube.com/watch?v=z6k7YIIZ6Hk', 'mp3': null},
-    {'id': 8, 'anime': 'Bang Dream', 'name': 'Freedom by Poppin\'Party x Misato Fukuen', 'video': 'https://www.youtube.com/watch?v=oy6OCnr9eAg', 'mp3': null},
-    {'id': 9, 'anime': 'Bang Dream', 'name': 'Hey-day Capriccio by Afterglow', 'video': 'https://www.youtube.com/watch?v=czHlLBls4oo', 'mp3': null},
-    {'id': 10, 'anime': 'Bang Dream', 'name': 'Kamisama, Baka by Ave Mujica', 'video': 'https://youtu.be/vmheOfqsH_o', 'mp3': null},
-    {'id': 11, 'anime': 'Bang Dream', 'name': 'KiLLKiSS by Ave Mujica', 'video': 'https://www.youtube.com/watch?v=RexyoaXaQ1o', 'mp3': null},
-    {'id': 12, 'anime': 'Bang Dream', 'name': 'Kimi ga Inakucha, Hello Happy World', 'video': 'https://naedist.animemusicquiz.com/8poyjw.webm', 'mp3': null},
-    {'id': 13, 'anime': 'Bang Dream', 'name': 'Mugen My World by Mugendai Mewtype', 'video': 'https://youtube.com/watch?v=GB2MEvY2sQk', 'mp3': null},
-    {'id': 14, 'anime': 'Bang Dream', 'name': 'Radiate Warriors by Pastel＊Palettes', 'video': 'https://youtu.be/dS-SUwftzmM', 'mp3': null},
-    {'id': 15, 'anime': 'Bang Dream', 'name': 'Returns by Poppin\'Party', 'video': 'https://www.youtube.com/watch?v=zWKV5yudE18', 'mp3': null},
-    {'id': 16, 'anime': 'Bang Dream', 'name': 'Roku-chou Nen to Ichiya Monogatari by Roselia', 'video': 'https://www.youtube.com/watch?v=xnlJkmRhi3Q', 'mp3': null},
-    {'id': 17, 'anime': 'Bang Dream', 'name': 'Sing Alive by Roselia', 'video': 'https://naedist.animemusicquiz.com/2h5qt3.webm', 'mp3': null},
-    {'id': 18, 'anime': 'Bang Dream', 'name': 'Mayoi Uta by MyGO!!!!!', 'video': 'https://naedist.animemusicquiz.com/vppf6y.webm', 'mp3': null},
-    {'id': 19, 'anime': 'Bang Dream', 'name': 'Smiling & Singing A Song by Hello, Happy World!', 'video': 'https://youtu.be/XFv3P-fKhWw', 'mp3': null},
-    {'id': 20, 'anime': 'Bang Dream', 'name': 'Song I am. by Roselia', 'video': 'https://naedist.animemusicquiz.com/njc8p5.webm', 'mp3': null},
-    {'id': 21, 'anime': 'Bang Dream', 'name': 'Sora no Música by Ave Mujica', 'video': 'https://youtu.be/2Bo-ULStqLo', 'mp3': null},
-    {'id': 22, 'anime': 'Bang Dream', 'name': 'Sprechchor by Roselia', 'video': 'https://www.youtube.com/watch?v=sdRwP4OjVn4', 'mp3': null},
-    {'id': 23, 'anime': 'Bang Dream', 'name': 'Sunlit Musical - Roselia', 'video': 'https://youtu.be/BtG1mA_1e0s', 'mp3': null},
-    {'id': 24, 'anime': 'Bang Dream', 'name': 'swim by MyGO!!!!!', 'video': 'https://www.youtube.com/watch?v=AEZ7suhPML0', 'mp3': null},
-    {'id': 25, 'anime': 'Bang Dream', 'name': 'Symbol III: ▽ by Ave Mujica', 'video': 'https://www.youtube.com/watch?v=NB3PxWLn9v4', 'mp3': null},
-    {'id': 26, 'anime': 'Bang Dream', 'name': 'Symbol IV :Earth by Ave Mujica', 'video': 'https://www.youtube.com/watch?v=WqQPM0dZpXc', 'mp3': null},
-    {'id': 27, 'anime': 'Bang Dream', 'name': 'Telepathy by Mugendai Mewtype', 'video': 'https://www.youtube.com/watch?v=GN_0T7cClGM', 'mp3': null},
-    {'id': 28, 'anime': 'Bang Dream', 'name': 'The Circle of Butterflies by Morfonica x fhána', 'video': 'https://www.youtube.com/watch?v=JfhgKn1hnnk', 'mp3': null},
-    {'id': 29, 'anime': 'Bang Dream', 'name': 'Utakotoba by MyGO!!!!!', 'video': 'https://youtu.be/wJ-OebTVyvk', 'mp3': null},
-    {'id': 30, 'anime': 'Bang Dream', 'name': 'Yakusoku by Roselia', 'video': 'https://naedist.animemusicquiz.com/h0rza6.webm', 'mp3': null},
+    {
+        'id': 1,
+        'anime': 'Utawarerumono',
+        'name': '"Musouka" by Suara',
+        'video': 'https://naedist.animemusicquiz.com/t5bzh7.webm',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 2,
+        'anime': 'Utawarerumono',
+        'name': '"Madoromi no Rinne" by Eri Kawai',
+        'video': 'https://naedist.animemusicquiz.com/o7fsyj.webm',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 3,
+        'anime': 'Utawarerumono',
+        'name': '"Kimi ga Tame" by Suara',
+        'video': 'https://naedist.animemusicquiz.com/34njnq.webm',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 4,
+        'anime': 'Utawarerumono OVA',
+        'name': '"adamant faith" by Suara',
+        'video': 'https://naedist.animemusicquiz.com/028uaf.webm',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 5,
+        'anime': 'Utawarerumono OVA',
+        'name': '"Yume no Tsuzuki" by Rena Uehara',
+        'video': 'https://naedist.animemusicquiz.com/6738tl.webm',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 6,
+        'anime': 'Utawarerumono OVA',
+        'name': '"Boku dake no Tabiji" by Tsuyoshi Koyama',
+        'video': 'https://naedist.animemusicquiz.com/yxyo65.webm',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 7,
+        'anime': 'Utawarerumono OVA',
+        'name': '"SADAME" by Ryoka Yuzuki',
+        'video': 'https://naedist.animemusicquiz.com/ux084g.webm',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 8,
+        'anime': 'Utawarerumono OVA',
+        'name': '"Towa ni" by Ryoka Yuzuki',
+        'video': 'https://naedist.animemusicquiz.com/0ubt53om4vs7rm72.webm',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 9,
+        'anime': 'Utawarerumono: Itsuwari no Kamen',
+        'name': '"Fuantei na Kamisama" by Suara',
+        'video': 'https://naedist.animemusicquiz.com/pbzsm6.webm',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 10,
+        'anime': 'Utawarerumono: Itsuwari no Kamen',
+        'name': '"Amakakeru Hoshi" by Suara',
+        'video': 'https://naedist.animemusicquiz.com/yg4voo.webm',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 11,
+        'anime': 'Utawarerumono: Itsuwari no Kamen',
+        'name': '"Yume ka Utsutsu ka" by Suara',
+        'video': 'https://naedist.animemusicquiz.com/46huhp.webm',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 12,
+        'anime': 'Utawarerumono: Itsuwari no Kamen',
+        'name': '"Hoshi Furu Sora Aogimite" by Suara',
+        'video': 'https://naedist.animemusicquiz.com/o4nx06.webm',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 13,
+        'anime': 'Utawarerumono: Itsuwari no Kamen',
+        'name': '"SADAME" by Risa Taneda',
+        'video': 'https://naedist.animemusicquiz.com/qlqwnf.webm',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 14,
+        'anime': 'Utawarerumono: Itsuwari no Kamen',
+        'name': '"Nuedori" by Suara',
+        'video': 'https://naedist.animemusicquiz.com/k5qy4k.webm',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 15,
+        'anime': 'Utawarerumono: Futari no Hakuoro',
+        'name': '"Hito Nanda" by Suara',
+        'video': 'https://naedist.animemusicquiz.com/13nqxw.webm',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 16,
+        'anime': 'Utawarerumono: Futari no Hakuoro',
+        'name': '"Hyakunichisou" by Suara',
+        'video': 'https://naedist.animemusicquiz.com/1mjtmp.webm',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 17,
+        'anime': 'Utawarerumono: Futari no Hakuoro',
+        'name': '"Musouka 2016" by Suara',
+        'video': 'https://naedist.animemusicquiz.com/b07ei8.webm',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 18,
+        'anime': 'Utawarerumono: Futari no Hakuoro',
+        'name': '"Koiyume" by Suara',
+        'video': 'https://naedist.animemusicquiz.com/dv6vr3.webm',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 19,
+        'anime': 'Utawarerumono: Futari no Hakuoro',
+        'name': '"Hikari" by Suara',
+        'video': 'https://naedist.animemusicquiz.com/gc29hq.webm',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 20,
+        'anime': 'Utawarerumono: Futari no Hakuoro',
+        'name': '"Kimi ga Tame 2016" by Suara',
+        'video': 'https://naedist.animemusicquiz.com/nllynv.webm',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 21,
+        'anime': 'Utawarerumono (VN)',
+        'name': 'Kimi Dake no Tabiji by Suara',
+        'video': 'https://youtu.be/VSxTpdX_RFo?si=-QYPtj8qV7B3PJRL',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 22,
+        'anime': 'Utawarerumono (VN)',
+        'name': 'Kimi Dake No Tabiji Re:Boot by Suara',
+        'video': 'https://youtu.be/8fMPoJ881A0?si=irbJIkcpJPZnfF7C',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 23,
+        'anime': 'Utawarerumono (VN)',
+        'name': 'Kimi ga Tame Re:boot by Suara',
+        'video': 'https://youtu.be/1IsWh43seKg?si=Pb0y-vUpYjxYwIUl',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 24,
+        'anime': 'Utawarerumono (VN)',
+        'name': 'Towa ni by Suara',
+        'video': 'https://youtu.be/B33d9f5RPmY?si=Ae73oYD8oDKF2-Ej',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 25,
+        'anime': 'Utawarerumono (VN)',
+        'name': 'Uruwashiki Sekai by Suara',
+        'video': 'https://youtu.be/YWnFb30KQfg?si=LutJ4C9O7C7iL0f2',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 26,
+        'anime': 'Utawarerumono: Itsuwari no Kamen (VN)',
+        'name': 'Futatsuboshi by Ayane Sakura',
+        'video': 'https://www.youtube.com/watch?v=2t3TEXgcx-Y',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 27,
+        'anime': 'Utawarerumono: Futari no Hakuoro (VN)',
+        'name': 'Yukaura Futatsuboshi by Sayaka Ohara, Rie Kugimiya, Ayane Sakura',
+        'video': 'https://www.youtube.com/watch?v=A0fOXIIPCX0',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 28,
+        'anime': 'Utawarerumono Lost Frag',
+        'name': 'Tenmei no Marionette by Suara',
+        'video': 'https://www.youtube.com/watch?v=9BNSNpG7qWc',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 29,
+        'anime': 'Utawarerumono Lost Frag',
+        'name': 'Waga Mi Sasagete by Suara',
+        'video': 'https://www.youtube.com/watch?v=2MucC014-bM',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 30,
+        'anime': 'Utawarerumono Lost Frag',
+        'name': 'Eigou no Sadame by Suara',
+        'video': 'https://www.youtube.com/watch?v=vl7LUsMtK5U',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 31,
+        'anime': 'Utawarerumono Lost Frag',
+        'name': 'Ruten no Inori by Suara',
+        'video': 'https://www.youtube.com/watch?v=k6S00PGpNoo',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 32,
+        'anime': 'Utawarerumono Lost Frag',
+        'name': 'Kono Hoshi ni Aru Inochi by Suara',
+        'video': 'https://www.youtube.com/watch?v=RoiD1hQaatQ',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 33,
+        'anime': 'Utawarerumono Lost Frag',
+        'name': 'Natsukashii Kono Basho de by Suara',
+        'video': 'https://www.youtube.com/watch?v=C3Ci5eLCgo0',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 34,
+        'anime': 'Utawarerumono Lost Frag',
+        'name': 'Nami by Suara',
+        'video': 'https://youtu.be/mSx_BqX5Sfc?si=fNj0OGQTTXMg1ZHr',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 35,
+        'anime': 'Utawarerumono Lost Frag',
+        'name': 'Boukyou by Suara',
+        'video': 'https://youtu.be/7myIfqdYI44?si=pGNU0n5Yoi3-AnlU',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 36,
+        'anime': 'Utawarerumono Lost Frag',
+        'name': 'Kioku no Hate by Suara',
+        'video': 'https://youtu.be/WptTdjoimYg?si=H1uuxT4mlqQcHqhG',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 37,
+        'anime': 'Utawarerumono: Zan',
+        'name': 'Kotowari by Suara',
+        'video': 'https://youtu.be/yTjUIdKmrDs?si=1p7NKOJQn9MO9kV1',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 38,
+        'anime': 'Utawarerumono: Zan 2',
+        'name': 'Senjin genmu by Suara',
+        'video': 'https://youtu.be/dcXigwokpQU?si=HgZIfheLp2ciPstJ',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 39,
+        'anime': 'Monochrome Moebius: Toki no Taika',
+        'name': 'Toki no Taika by Suara',
+        'video': 'https://www.youtube.com/watch?v=k58aeFVYD6g',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 40,
+        'anime': 'Monochrome Moebius: Toki no Taika',
+        'name': 'Jiyuu na Kaze by Suara',
+        'video': 'https://www.youtube.com/watch?v=WDSZUL5RU_8',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 41,
+        'anime': 'Monochrome Moebius: Toki no Taika',
+        'name': 'Itooshiki Kakera by Suara',
+        'video': 'https://www.youtube.com/watch?v=HDqmj5VTfM8',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 42,
+        'anime': 'Utawarerumono : Shiro e no Michishirube',
+        'name': 'Tsuki no Fune Miagete',
+        'video': 'https://youtu.be/XYbCfw_9lkc?si=fmMm1OxUu3gka9Lz',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 43,
+        'anime': 'Utawarerumono : Shiro e no Michishirube',
+        'name': 'Kimidake no Uta by Suara',
+        'video': 'https://youtu.be/-zaFtLoMYKM?si=8XqIMroKLiWX3C0I',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 44,
+        'anime': 'P Fever Utawarerumono',
+        'name': 'Kyoumei by Suara',
+        'video': 'https://www.youtube.com/watch?v=i3w_VljoXbc',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 45,
+        'anime': 'Gizoku Tantei Nosuri',
+        'name': 'Jibun Rashiku Shizen na Mama ni by Akari Tsuda',
+        'video': 'https://youtu.be/TrEhbZYXCEQ?si=bXrOp5KlklIohLAz',
+        'mp3': null,
+        'full': null
+    },
+    {
+        'id': 46,
+        'anime': 'Dokapon UP! Mugen no Roulette',
+        'name': 'Chance It! by Akari Tsuda',
+        'video': 'https://youtu.be/jtpEjF6vphY?si=fvKMjMs_I_ECpgGu',
+        'mp3': null,
+        'full': null
+    }
 ] satisfies Song[];
