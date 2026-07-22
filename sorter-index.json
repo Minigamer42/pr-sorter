@@ -82,6 +82,15 @@
       "deadline": "2026-06-14T10:00:00.000Z"
     },
     {
+      "slug": "utawaremono",
+      "title": "Utawarerumono",
+      "description": "Party rank sorter for Utawarerumono",
+      "tags": [
+        "Franchise"
+      ],
+      "deadline": "2026-08-09T23:59:00.000Z"
+    },
+    {
       "slug": "vsinger-covers",
       "title": "Vtuber/VSinger Covers",
       "description": "Party rank sorter for Vtuber/VSinger Covers",
