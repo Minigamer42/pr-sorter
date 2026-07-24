@@ -55,6 +55,15 @@
       "deadline": "2026-06-11T21:59:00.000Z"
     },
     {
+      "slug": "idol-pr-14",
+      "title": "Idol PR #14",
+      "description": "Party rank sorter for Idol PR #14.",
+      "tags": [
+        "Nominations"
+      ],
+      "deadline": "2026-08-17T21:59:00.000Z"
+    },
+    {
       "slug": "princession",
       "title": "Princession Orchestra",
       "description": "Party rank sorter for Princession Orchestra songs.",
