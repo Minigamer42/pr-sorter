@@ -370,5 +370,13 @@ export const songList = [
         'video': 'https://youtu.be/jtpEjF6vphY?si=fvKMjMs_I_ECpgGu',
         'mp3': null,
         'full': null
+    },
+    {
+        'id': 47,
+        'anime': 'Utawarerumono Radio',
+        'name': '"Shin Utawarerumono no Theme" by Tsuyoshi Koyama & the Utaware Family',
+        'video': 'https://www.youtube.com/watch?v=VPdDURDdHRI',
+        'mp3': null,
+        'full': null
     }
 ] satisfies Song[];
