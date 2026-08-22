@@ -13,13 +13,14 @@ type SongTupleForTypes<SongTypes extends readonly string[]> = {
     readonly [Index in keyof SongTypes]: SongData;
 };
 
+export type SongEntry = SongData | readonly SongData[];
+
 type SongEntryForConfig<Config> =
     Config extends { songTypes: infer SongTypes extends readonly string[] }
         ? SongTupleForTypes<SongTypes>
         : SongData;
 
 export type Song = SongEntryForConfig<typeof config>;
-export type SongEntry = Song;
 
 export type ResolvedSong = Omit<SongData, 'anime'> & {
     anime: string;

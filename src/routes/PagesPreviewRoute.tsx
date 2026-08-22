@@ -1,8 +1,15 @@
 import { SorterIndex } from '../sorterIndex/SorterIndex';
+import {externalSorterRequestFromUrl} from '../externalSorter/routing';
 import { CustomizeImportRoute } from './CustomizeImportRoute';
+import {ExternalSorterRoute} from './ExternalSorterRoute';
 import { ActiveRoute as SorterAppRoute } from './SorterAppRoute';
 
 export function ActiveRoute() {
+    const externalSorterRequest = externalSorterRequestFromUrl(window.location.href);
+    if (externalSorterRequest) {
+        return <ExternalSorterRoute request={externalSorterRequest}/>;
+    }
+
     if (isCustomizeImportRoute()) {
         return <CustomizeImportRoute/>;
     }

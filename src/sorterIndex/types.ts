@@ -11,6 +11,7 @@ export type SorterIndexEntry = {
     iconUrl?: string;
     sourceTitle?: string;
     sourceIndexUrl?: string;
+    sourceRouteSlug?: string;
     sourceSlug?: string;
     hide?: boolean;
 };
@@ -18,5 +19,6 @@ export type SorterIndexEntry = {
 export type ExternalSorterSource = {
     title: string;
     indexUrl: string;
+    routeSlug?: string;
     excludedSorterSlugs?: string[];
 };

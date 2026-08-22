@@ -27,6 +27,8 @@ import type { AppConfig, GoogleSpreadsheetSelection, SavedProgressKind, Screen, 
 type AppProps = {
     config: AppConfig;
     songs: SongEntry[];
+    overviewHref?: string;
+    importHref?: string;
 };
 
 const screenFor = (sort: SortState | null): Screen => {
@@ -40,7 +42,7 @@ const screenFor = (sort: SortState | null): Screen => {
 const hasSavedSortProgress = (sort: SortState): boolean =>
     sort.pickedCount > 0 || sort.history.length > 0 || isComplete(sort);
 
-export function App({config, songs}: AppProps) {
+export function App({config, songs, overviewHref, importHref}: AppProps) {
     const resolvedSongs = useMemo(
         () => songs.map((song) => resolveSongEntry(song, fallbackAnimeName(config))),
         [config, songs],
@@ -938,6 +940,8 @@ export function App({config, songs}: AppProps) {
 
                 <Controls
                     screen={screen}
+                    overviewHref={overviewHref}
+                    importHref={importHref}
                     savedKind={savedKind}
                     rankSupported={rankSupported}
                     googleSheetsEnabled={Boolean(config.googleSheets)}

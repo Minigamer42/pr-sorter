@@ -307,6 +307,14 @@ That catalog contains both the sorters hosted by that repository and the externa
 
 To include another repository that uses the same template, add its Pages index to `src/sorterIndex/externalSorterSources.ts`. When the index page loads, it reads `sorter-index.json` from each configured source. This lets collections discover other collections through each other without rebuilding every site. Already visited collections and already found sorter URLs are ignored, and if this repository's own GitHub Pages URL is listed, the page skips it so the collection is not duplicated.
 
+External sorter cards open through this collection's current app version at a route such as:
+
+```text
+https://YOUR_USERNAME.github.io/pr-sorter/external/tutti/nana-mizuki/
+```
+
+Set `routeSlug` on each configured external source to choose its stable route segment. The route reads the external catalog for sorter metadata, then safely parses the public `customize/songList.ts` from the sorter's GitHub branch. If that source file cannot be read, it falls back to extracting the literal song list from the deployed JavaScript bundle. Imported sorter progress is stored on this collection's origin under a source-specific prefix; external Google Sheets credentials are not imported.
+
 In repository settings:
 
 1. Enable GitHub Pages.

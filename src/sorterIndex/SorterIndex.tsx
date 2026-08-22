@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import {externalSorterHref, externalSorterStoragePrefix} from '../externalSorter/routing';
 import { progressPercentage, type SortState } from '../sorter';
 import { externalSorterSources } from './externalSorterSources';
 import { sorters } from './sorters.generated';
@@ -69,7 +70,6 @@ const externalProgressRequestTimeoutMs = 5000;
 
 export function SorterIndex() {
     const [externalSorters, setExternalSorters] = useState<SorterIndexEntry[]>([]);
-    const [externalProgress, setExternalProgress] = useState<Map<string, SorterProgress>>(new Map());
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
     useEffect(() => {
@@ -101,30 +101,7 @@ export function SorterIndex() {
         return exposeSorterIndexProgressRequests();
     }, []);
 
-    useEffect(() => {
-        let cancelled = false;
-        setExternalProgress(new Map());
-
-        void loadExternalSorterProgress(externalSorters, (sourceProgress) => {
-            if (!cancelled) {
-                setExternalProgress((currentProgress) => new Map([...currentProgress, ...sourceProgress]));
-            }
-        }).then((nextExternalProgress) => {
-            if (!cancelled) {
-                setExternalProgress(nextExternalProgress);
-            }
-        });
-
-        return () => {
-            cancelled = true;
-        };
-    }, [externalSorters]);
-
-    const externalSortersWithProgress = externalSorters.map((sorter): SorterIndexDisplayEntry => {
-        const progress = externalProgress.get(externalSorterProgressKey(sorter));
-        return progress ? {...sorter, progress} : sorter;
-    });
-    const allSorters = [...sorters, ...externalSortersWithProgress].filter((sorter) => sorter.hide !== true);
+    const allSorters = [...sorters, ...externalSorters].filter((sorter) => sorter.hide !== true);
     const allTags = collectTags(allSorters);
     const visibleSorters = selectedTags.length
         ? allSorters.filter((sorter) => hasSelectedTags(sorter, selectedTags))
@@ -190,7 +167,6 @@ export function SorterIndex() {
                                                 {subgroup.sorters.map((sorter) => (
                                                     <SorterCard
                                                         sorter={sorter}
-                                                        showLocalProgress={!sorter.sourceTitle}
                                                         key={`${sorter.sourceTitle ?? 'local'}:${sorter.url ?? sorter.slug}`}
                                                     />
                                                 ))}
@@ -211,10 +187,10 @@ export function SorterIndex() {
     );
 }
 
-function SorterCard({sorter, showLocalProgress}: { sorter: SorterIndexDisplayEntry; showLocalProgress: boolean }) {
-    const href = sorter.url ?? `${sorter.slug}/`;
+function SorterCard({sorter}: { sorter: SorterIndexDisplayEntry }) {
+    const href = externalSorterCardHref(sorter) ?? sorter.url ?? `${sorter.slug}/`;
     const iconUrl = sorter.iconUrl ?? `${sorter.slug}/customize/favicon.ico`;
-    const progress = sorter.progress ?? (showLocalProgress ? loadSorterProgress(sorter) : null);
+    const progress = sorter.progress ?? loadSorterProgress(sorterWithEffectiveStoragePrefix(sorter));
     const deadline = formatDeadline(sorter.deadline);
 
     return (
@@ -244,6 +220,25 @@ function SorterCard({sorter, showLocalProgress}: { sorter: SorterIndexDisplayEnt
             </div>
         </a>
     );
+}
+
+function externalSorterCardHref(sorter: SorterIndexEntry): string | null {
+    if (!sorter.sourceRouteSlug || !sorter.sourceSlug) {
+        return null;
+    }
+
+    return externalSorterHref(window.location.href, sorter.sourceRouteSlug, sorter.sourceSlug);
+}
+
+function sorterWithEffectiveStoragePrefix(sorter: SorterIndexEntry): SorterIndexEntry {
+    if (!sorter.sourceRouteSlug || !sorter.sourceSlug) {
+        return sorter;
+    }
+
+    return {
+        ...sorter,
+        localStoragePrefix: externalSorterStoragePrefix(sorter.sourceRouteSlug, sorter.sourceSlug),
+    };
 }
 
 function formatDeadline(deadline: string | undefined): {
@@ -446,7 +441,7 @@ function groupSorters(entries: SorterIndexDisplayEntry[]): SorterIndexGroup[] {
     }
 
     for (const [title, group] of externalGroups) {
-        groups.push({title, url: group.find((sorter) => sorter.sourceIndexUrl)?.sourceIndexUrl, subgroups: groupSorterEntries(group, false)});
+        groups.push({title, url: group.find((sorter) => sorter.sourceIndexUrl)?.sourceIndexUrl, subgroups: groupSorterEntries(group, true)});
     }
 
     return groups;
@@ -481,7 +476,7 @@ function groupSorterEntries(entries: SorterIndexDisplayEntry[], includeLocalProg
     const now = Date.now();
     const classified = entries.map((sorter, index) => {
         const deadlineTime = parsedDeadlineTime(sorter.deadline);
-        const progress = sorter.progress ?? (includeLocalProgress ? loadSorterProgress(sorter) : null);
+        const progress = sorter.progress ?? (includeLocalProgress ? loadSorterProgress(sorterWithEffectiveStoragePrefix(sorter)) : null);
         const isComplete = progress?.kind === 'complete';
         const isInProgress = progress?.kind === 'in-progress';
         const hasPastDeadline = deadlineTime !== null && deadlineTime < now;
@@ -571,7 +566,7 @@ async function discoverExternalSorters(): Promise<SorterIndexEntry[]> {
         const excludedSorterSlugs = new Set(source.excludedSorterSlugs ?? []);
         const sourceSorters = sourceCatalog.sorters
             .filter((entry) => !excludedSorterSlugs.has(entry.slug))
-            .map((entry) => externalizeEntry(entry, sourceUrl, source.title))
+            .map((entry) => externalizeEntry(entry, sourceUrl, source.title, externalSourceRouteSlug(source)))
             .filter((entry) => {
                 const key = entry.url ?? entry.slug;
                 if (seenSorterUrls.has(key)) {
@@ -667,13 +662,19 @@ function parseExternalSources(value: unknown): ExternalSorterSource[] {
         return (
             typeof candidate.title === 'string' &&
             typeof candidate.indexUrl === 'string' &&
+            (candidate.routeSlug === undefined || typeof candidate.routeSlug === 'string') &&
             (excludedSorterSlugs === undefined ||
                 (Array.isArray(excludedSorterSlugs) && excludedSorterSlugs.every((slug) => typeof slug === 'string')))
         );
     });
 }
 
-function externalizeEntry(entry: LegacyCatalogSorterIndexEntry, indexUrl: URL, sourceTitle: string): SorterIndexEntry {
+function externalizeEntry(
+    entry: LegacyCatalogSorterIndexEntry,
+    indexUrl: URL,
+    sourceTitle: string,
+    sourceRouteSlug: string,
+): SorterIndexEntry {
     const {category, tags, ...entryWithoutCategory} = entry;
     const url = entry.url ? new URL(entry.url, indexUrl) : new URL(`${entry.slug}/`, indexUrl);
     const iconUrl = entry.iconUrl ? new URL(entry.iconUrl, indexUrl) : new URL(`${entry.slug}/customize/favicon.ico`, indexUrl);
@@ -687,8 +688,13 @@ function externalizeEntry(entry: LegacyCatalogSorterIndexEntry, indexUrl: URL, s
         iconUrl: iconUrl.toString(),
         sourceTitle: entry.sourceTitle ?? sourceTitle,
         sourceIndexUrl: indexUrl.toString(),
+        sourceRouteSlug: entry.sourceRouteSlug ?? sourceRouteSlug,
         sourceSlug: entry.sourceSlug ?? entry.slug,
     };
+}
+
+function externalSourceRouteSlug(source: ExternalSorterSource): string {
+    return source.routeSlug ?? source.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
 function categoryTag(category: string | undefined): string[] {

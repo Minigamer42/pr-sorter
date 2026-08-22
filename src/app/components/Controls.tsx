@@ -2,6 +2,8 @@ import type { SavedProgressKind, Screen } from '../types';
 
 type ControlsProps = {
     screen: Screen;
+    overviewHref?: string;
+    importHref?: string;
     savedKind: SavedProgressKind;
     rankSupported: boolean;
     googleSheetsEnabled: boolean;
@@ -24,6 +26,8 @@ type ControlsProps = {
 
 export function Controls({
     screen,
+    overviewHref = '../',
+    importHref = '../import',
     savedKind,
     rankSupported,
     googleSheetsEnabled,
@@ -87,11 +91,11 @@ export function Controls({
 
     return (
         <div className="button-container">
-            <a className="basic-button" href="../">
+            <a className="basic-button" href={overviewHref}>
                 Overview
             </a>
             {import.meta.env.DEV ? (
-                <a className="basic-button" href="../import">
+                <a className="basic-button" href={importHref}>
                     Import (Dev build only)
                 </a>
             ) : null}
