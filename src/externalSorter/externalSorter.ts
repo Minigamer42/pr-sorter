@@ -1,4 +1,5 @@
 import {parse, parseExpressionAt} from 'acorn';
+import {config as collectionConfig} from '../../customize/config';
 import type {AppConfig} from '../app/types';
 import {songEntryId, type SongData, type SongEntry} from '../songs';
 import {externalSorterSources} from '../sorterIndex/externalSorterSources';
@@ -68,6 +69,7 @@ export async function loadExternalSorter(request: ExternalSorterRequest): Promis
             ...(entry.tags ? {tags: entry.tags} : {}),
             ...(entry.rankSupported === false ? {rankSupported: false} : {}),
             ...(deadline ? {deadline} : {}),
+            ...(collectionConfig.googleSheets ? {googleSheets: {...collectionConfig.googleSheets}} : {}),
         },
         songs,
         originalUrl: sorterUrl.toString(),
