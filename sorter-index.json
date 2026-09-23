@@ -73,6 +73,15 @@
       "deadline": "2026-08-17T21:59:00.000Z"
     },
     {
+      "slug": "jpr2",
+      "title": "Japanese Non-Anisongs PR #2",
+      "description": "Party rank sorter for Japanese Non-Anisongs PR #2.",
+      "tags": [
+        "Nominations"
+      ],
+      "deadline": "2026-10-19T21:59:00.000Z"
+    },
+    {
       "slug": "princession",
       "title": "Princession Orchestra",
       "description": "Party rank sorter for Princession Orchestra songs.",
