@@ -101,6 +101,14 @@ export const songList = [
     },
     {
         'id': 13,
+        'anime': 'fripSide',
+        'name': '"Where the Light Leads Us" by fripSide',
+        'video': 'https://www.youtube.com/watch?v=3SeZr00KGZE',
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=3SeZr00KGZE'
+    },
+    {
+        'id': 14,
         'anime': 'G-senjou no Maou',
         'name': '"Close Your Eyes" by Ayane',
         'video': 'https://www.youtube.com/watch?v=7RrlNnaOzoE',
@@ -108,7 +116,7 @@ export const songList = [
         'full': 'https://www.youtube.com/watch?v=7RrlNnaOzoE'
     },
     {
-        'id': 14,
+        'id': 15,
         'anime': 'hitorie',
         'name': '"NOTOK" by hitorie',
         'video': 'https://www.youtube.com/watch?v=w-GC2rUFpjA',
@@ -116,7 +124,7 @@ export const songList = [
         'full': 'https://www.youtube.com/watch?v=6sPtmeiaxbA'
     },
     {
-        'id': 15,
+        'id': 16,
         'anime': 'IZUMI',
         'name': '"Boku ga Shinou to Omotta no wa" by SIREN starring IZUMI from SI-VIS',
         'video': 'https://www.youtube.com/watch?v=ATUV0BahZYU',
@@ -124,7 +132,7 @@ export const songList = [
         'full': 'https://www.youtube.com/watch?v=ATUV0BahZYU'
     },
     {
-        'id': 16,
+        'id': 17,
         'anime': 'Kinoko Teikoku',
         'name': '"Paranoid Parade" by Kinoko Teikoku',
         'video': 'https://www.youtube.com/watch?v=HNo0jgi5ZGw',
@@ -132,7 +140,7 @@ export const songList = [
         'full': 'https://www.youtube.com/watch?v=HNo0jgi5ZGw'
     },
     {
-        'id': 17,
+        'id': 18,
         'anime': 'LustQueen',
         'name': '"Regina Gemina" by LustQueen',
         'video': 'https://www.youtube.com/watch?v=8mXjFE6BA64',
@@ -140,7 +148,7 @@ export const songList = [
         'full': 'https://www.youtube.com/watch?v=8mXjFE6BA64'
     },
     {
-        'id': 18,
+        'id': 19,
         'anime': 'Mahoutsukai No Yoru',
         'name': '"Hoshi ga Matataku Konna Yoru Ni" by supercell',
         'video': 'https://www.youtube.com/watch?v=Xp-6bj8RiNg',
@@ -148,7 +156,7 @@ export const songList = [
         'full': 'https://www.youtube.com/watch?v=Xp-6bj8RiNg'
     },
     {
-        'id': 19,
+        'id': 20,
         'anime': 'Mahoutsukai to Kuroneko no Wiz',
         'name': '"New Order" by (K)NoW_NAME:NIKIIE',
         'video': 'https://www.youtube.com/watch?v=VOoRXbUtHrY',
@@ -156,7 +164,7 @@ export const songList = [
         'full': 'https://www.youtube.com/watch?v=VOoRXbUtHrY'
     },
     {
-        'id': 20,
+        'id': 21,
         'anime': 'Mahoutsukai to Kuroneko no Wiz',
         'name': '"Relation" by Ruriko Noguchi',
         'video': 'https://www.youtube.com/watch?v=lRtyqYOqQQI',
@@ -164,7 +172,7 @@ export const songList = [
         'full': 'https://www.youtube.com/watch?v=6siv6BoNZs8'
     },
     {
-        'id': 21,
+        'id': 22,
         'anime': 'Maica_n',
         'name': '"Scandalous ni Konagona ni" by Maica_n',
         'video': 'https://www.youtube.com/watch?v=5yLVlyICDiY',
@@ -172,7 +180,23 @@ export const songList = [
         'full': 'https://www.youtube.com/watch?v=5yLVlyICDiY'
     },
     {
-        'id': 22,
+        'id': 23,
+        'anime': 'maimai DX',
+        'name': '"Tobidase! TO THE COSMIC!!" by t+pazolite feat. Atsumi Tanezaki & Asuka Ito',
+        'video': 'https://www.youtube.com/watch?v=5dyoxEvm-04',
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=5dyoxEvm-04'
+    },
+    {
+        'id': 24,
+        'anime': 'Manami Numakura',
+        'name': '"Minna de!" by Manami Numakura',
+        'video': 'https://www.youtube.com/watch?v=bmvgKTWSIWg',
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=Stcfoys_rhQ'
+    },
+    {
+        'id': 25,
         'anime': 'Momo Asakura',
         'name': '"No Distance" by Momo Asakura',
         'video': 'https://www.youtube.com/watch?v=4P6lJpN6r_8',
@@ -180,7 +204,7 @@ export const songList = [
         'full': 'https://www.youtube.com/watch?v=4P6lJpN6r_8'
     },
     {
-        'id': 23,
+        'id': 26,
         'anime': 'Nana Okada',
         'name': '"Koe o Ushinatta Ningyouhime" by Nana Okada',
         'video': 'https://www.youtube.com/watch?v=jrt7XNiKRIQ',
@@ -188,7 +212,7 @@ export const songList = [
         'full': 'https://www.youtube.com/watch?v=jrt7XNiKRIQ'
     },
     {
-        'id': 24,
+        'id': 27,
         'anime': 'Ohashi Chippoke',
         'name': '"Cold Sleep, Love" by Ohashi Chippoke',
         'video': 'https://www.youtube.com/watch?v=nWl9HCLlA4A',
@@ -196,7 +220,7 @@ export const songList = [
         'full': 'https://www.youtube.com/watch?v=KII0cE7G29M'
     },
     {
-        'id': 25,
+        'id': 28,
         'anime': 'Project Sekai',
         'name': '"Ari no Mama no Story o" by MORE MORE JUMP! × KAITO',
         'video': 'https://www.youtube.com/watch?v=VAYBbosmDgs',
@@ -204,15 +228,7 @@ export const songList = [
         'full': 'https://www.youtube.com/watch?v=VAYBbosmDgs'
     },
     {
-        'id': 26,
-        'anime': 'Rowa',
-        'name': '"Hyakka Ryoran" by Rowa',
-        'video': 'https://www.youtube.com/watch?v=85TQNnikApc',
-        'mp3': null,
-        'full': 'https://www.youtube.com/watch?v=85TQNnikApc'
-    },
-    {
-        'id': 27,
+        'id': 29,
         'anime': 'Ruru',
         'name': '"Calendar ni wa Hanakotoba" by Ruru',
         'video': 'https://www.youtube.com/watch?v=hhzq8u_UpZw',
@@ -220,7 +236,7 @@ export const songList = [
         'full': 'https://www.youtube.com/watch?v=hhzq8u_UpZw'
     },
     {
-        'id': 28,
+        'id': 30,
         'anime': 'Ryokuoushoku Shakai',
         'name': '"Mela!" by Ryokuoushoku Shakai',
         'video': 'https://www.youtube.com/watch?v=aRDURmIYBZ4',
@@ -228,7 +244,7 @@ export const songList = [
         'full': 'https://www.youtube.com/watch?v=aRDURmIYBZ4'
     },
     {
-        'id': 29,
+        'id': 31,
         'anime': 'Shinra-Bansho',
         'name': '"Imaginalia" by Shinra-Bansho feat. ayaponzu*, ayo, Itsuki Natsume, Nanahira, wotoha, Choko, Nakuru Aitsuki, Risa Yuzuki, nayuta',
         'video': 'https://www.youtube.com/watch?v=9o8OpToxpcU',
@@ -236,7 +252,7 @@ export const songList = [
         'full': 'https://www.youtube.com/watch?v=9o8OpToxpcU'
     },
     {
-        'id': 30,
+        'id': 32,
         'anime': 'TEARS OF TRAGEDY',
         'name': '"Void Act" by TEARS OF TRAGEDY',
         'video': 'https://www.youtube.com/watch?v=N6P52F6tPYM',
@@ -244,7 +260,7 @@ export const songList = [
         'full': 'https://www.youtube.com/watch?v=N6P52F6tPYM'
     },
     {
-        'id': 31,
+        'id': 33,
         'anime': 'Touhou',
         'name': '"Fall in the Dark" by Shibayan feat. Nagi Yanagi',
         'video': 'https://www.youtube.com/watch?v=0WHPeP4-SXM',
@@ -252,7 +268,7 @@ export const songList = [
         'full': 'https://www.youtube.com/watch?v=0WHPeP4-SXM'
     },
     {
-        'id': 32,
+        'id': 34,
         'anime': 'Ui Shigure',
         'name': '"Wishing Umbrella" by Ui Shigure',
         'video': 'https://www.youtube.com/watch?v=qR2pggPX_Sc',
@@ -260,7 +276,7 @@ export const songList = [
         'full': 'https://www.youtube.com/watch?v=qR2pggPX_Sc'
     },
     {
-        'id': 33,
+        'id': 35,
         'anime': 'vivid undress',
         'name': '"Minikui Ohimesama" by vivid undress',
         'video': 'https://www.youtube.com/watch?v=sR7drTOU8DY',
@@ -268,7 +284,7 @@ export const songList = [
         'full': 'https://www.youtube.com/watch?v=sR7drTOU8DY'
     },
     {
-        'id': 34,
+        'id': 36,
         'anime': 'XAI',
         'name': '"Afterglow" by XAI',
         'video': 'https://www.youtube.com/watch?v=nxraNuOTUkQ',
@@ -276,7 +292,7 @@ export const songList = [
         'full': 'https://www.youtube.com/watch?v=nxraNuOTUkQ'
     },
     {
-        'id': 35,
+        'id': 37,
         'anime': 'Yunyun Syndrome!? Rhythm Psychosis',
         'name': '"DONIDEMONARE" by Nanahira & Haruko Momoi',
         'video': 'https://www.youtube.com/watch?v=3Ty6zjLrd-Y',
@@ -284,7 +300,7 @@ export const songList = [
         'full': 'https://www.youtube.com/watch?v=4nOQDgySoUs'
     },
     {
-        'id': 36,
+        'id': 38,
         'anime': 'Yuuhei Catharsis',
         'name': '"Fanfare!" by Miya Amamiya',
         'video': 'https://www.youtube.com/watch?v=s1gMPzdSOAs',
