@@ -137,7 +137,7 @@ export function SongListModal({
                     Current range
                     <span
                         className="help-icon"
-                        data-tooltip="Estimated possible final rank range for this song from the current sort state. A range like 2-30 means the song can still end anywhere from rank 2 through rank 30."
+                        data-tooltip="Bounds on this song's final rank using current choices, scores, and the auto-skip gap. Assumes scores and settings stay unchanged. Bounds may be wider than the ranks actually reachable."
                         aria-label="Current range help"
                         tabIndex={0}
                     >

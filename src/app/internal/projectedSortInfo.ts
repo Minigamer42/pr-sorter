@@ -6,9 +6,11 @@ import {
     type SortChoice,
     type SortState,
 } from '../../sorter';
-import type { ResolvedSongEntry } from '../../songs';
+import { songEntryId, type ResolvedSongEntry } from '../../songs';
 import type { Settings, SongScoresById } from '../types';
 import { automaticChoiceForCurrentBattle } from './automaticChoice';
+import { scoreConstrainedSortInfos } from './scoreConstrainedSortInfo';
+import { normalizeScore } from './songScores';
 
 type ProjectionOptions = {
     songs: ResolvedSongEntry[];
@@ -22,7 +24,8 @@ export function projectedSongSortInfo(
     songIndex: number,
     options: ProjectionOptions,
 ): CurrentSongSortInfo | null {
-    return combineSortInfos(projectedSortInfoStates(sort, options).map((state) => songSortInfo(state, songIndex)));
+    const info = combineSortInfos(projectedSortInfoStates(sort, options).map((state) => songSortInfo(state, songIndex)));
+    return narrowSortInfo(info, scoreBounds(sort, options).get(songIndex));
 }
 
 export function projectedSongSortInfos(
@@ -31,16 +34,38 @@ export function projectedSongSortInfos(
     options: ProjectionOptions,
 ): Map<number, CurrentSongSortInfo> {
     const states = projectedSortInfoStates(sort, options);
+    const bounds = scoreBounds(sort, options);
     const infos = new Map<number, CurrentSongSortInfo>();
 
     for (let songIndex = 0; songIndex < songCount; songIndex += 1) {
-        const info = combineSortInfos(states.map((state) => songSortInfo(state, songIndex)));
+        const info = narrowSortInfo(combineSortInfos(states.map((state) => songSortInfo(state, songIndex))), bounds.get(songIndex));
         if (info) {
             infos.set(songIndex, info);
         }
     }
 
     return infos;
+}
+
+function scoreBounds(sort: SortState, options: ProjectionOptions): Map<number, CurrentSongSortInfo> {
+    if (!options.scoreEnabled) return new Map();
+    const scores = options.songs.map((song) => {
+        try {
+            return normalizeScore(options.scoresBySongId[songEntryId(song)] ?? '');
+        } catch {
+            return null;
+        }
+    });
+    return scoreConstrainedSortInfos(sort, scores, options.settings.autoSkipScoreDifference);
+}
+
+function narrowSortInfo(info: CurrentSongSortInfo | null, bounds: CurrentSongSortInfo | undefined): CurrentSongSortInfo | null {
+    if (!info || !bounds) return info;
+    return {
+        ...info,
+        minRank: Math.max(info.minRank, bounds.minRank),
+        maxRank: Math.min(info.maxRank, bounds.maxRank),
+    };
 }
 
 function projectedSortInfoStates(sort: SortState, options: ProjectionOptions): SortState[] {
