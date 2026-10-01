@@ -810,6 +810,101 @@ body.sorter-index-body {
   margin-top: auto;
 }
 
+.media-viewport {
+  width: 100%;
+  height: 100%;
+}
+
+.sorter-stage__wake-area {
+  display: none;
+}
+
+.sorter-stage:fullscreen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 450ms ease;
+}
+
+.sorter-stage:fullscreen .music-card {
+  /* A backdrop filter would make the card contain its fixed video viewport. */
+  backdrop-filter: none;
+  transition: opacity 450ms ease, visibility 450ms, background-color 450ms ease,
+    border-color 450ms ease, box-shadow 450ms ease;
+}
+
+.sorter-stage:fullscreen .music-card > :not([data-slot="media"]),
+.sorter-stage:fullscreen .media-control-buttons,
+.sorter-stage:fullscreen .progress {
+  transition: opacity 450ms ease, visibility 450ms;
+}
+
+.sorter-stage:fullscreen:is([data-fullscreen-side="left"]) .music-card[data-side="left"] .media-viewport,
+.sorter-stage:fullscreen:is([data-fullscreen-side="right"]) .music-card[data-side="right"] .media-viewport {
+  position: fixed;
+  z-index: 2;
+  left: var(--focused-media-left);
+  top: var(--focused-media-top);
+  width: var(--focused-media-width);
+  height: var(--focused-media-height);
+  transition: left 450ms ease, top 450ms ease, width 450ms ease, height 450ms ease;
+}
+
+.sorter-stage:fullscreen.sorter-stage--immersive::before {
+  opacity: 1;
+}
+
+.sorter-stage:fullscreen.sorter-stage--immersive .music-card {
+  background-color: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.sorter-stage:fullscreen.sorter-stage--immersive .music-card > :not([data-slot="media"]),
+.sorter-stage:fullscreen.sorter-stage--immersive .media-control-buttons,
+.sorter-stage:fullscreen.sorter-stage--immersive .progress,
+.sorter-stage:fullscreen.sorter-stage--immersive[data-fullscreen-side="left"] .music-card[data-side="right"],
+.sorter-stage:fullscreen.sorter-stage--immersive[data-fullscreen-side="right"] .music-card[data-side="left"] {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.sorter-stage:fullscreen.sorter-stage--immersive[data-fullscreen-side="left"] .music-card[data-side="left"] .media-viewport,
+.sorter-stage:fullscreen.sorter-stage--immersive[data-fullscreen-side="right"] .music-card[data-side="right"] .media-viewport {
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+}
+
+.sorter-stage:fullscreen.sorter-stage--immersive .media-viewport :is(video, iframe) {
+  border-radius: 0;
+  object-fit: contain;
+}
+
+.sorter-stage:fullscreen.sorter-stage--immersive .sorter-stage__wake-area {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  cursor: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sorter-stage:fullscreen::before,
+  .sorter-stage:fullscreen .music-card,
+  .sorter-stage:fullscreen .music-card > :not([data-slot="media"]),
+  .sorter-stage:fullscreen .media-control-buttons,
+  .sorter-stage:fullscreen .progress,
+  .sorter-stage:fullscreen .media-viewport {
+    transition: none;
+  }
+}
+
 .duel-container {
   display: flex;
   align-items: stretch;

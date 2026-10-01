@@ -1,8 +1,9 @@
-import { type MouseEvent, useState } from 'react';
+import { type MouseEvent, useContext, useEffect, useState } from 'react';
 import { Media } from '../../media';
 import type { CurrentSongSortInfo, SortChoice } from '../../sorter';
 import type { ResolvedSong } from '../../songs';
 import type { Settings } from '../types';
+import { SorterFullscreenContext } from './SorterStage';
 
 type SongCardProps = {
     song: ResolvedSong;
@@ -48,6 +49,11 @@ export function SongCard({
     onScoreChange,
 }: SongCardProps) {
     const [mediaRemountKey, setMediaRemountKey] = useState(0);
+    const fullscreenPlayback = useContext(SorterFullscreenContext);
+
+    useEffect(() => () => fullscreenPlayback.onStop(side), [
+        fullscreenPlayback.onStop, side, song.id, settings.mediaFormat, settings.region, autoPlayKey, mediaRemountKey,
+    ]);
 
     function toggleFullscreen(event: MouseEvent<HTMLButtonElement>): void {
         const target = event.currentTarget.closest(fullscreenTargetSelector ?? '');
@@ -56,32 +62,42 @@ export function SongCard({
             return;
         }
 
-        void target?.requestFullscreen();
+        void target?.requestFullscreen().catch(() => {
+            // Keep the regular sorter usable if the browser refuses fullscreen.
+        });
     }
 
     return (
-        <div className={`music-card${scoreEnabled ? ' music-card--scored' : ''}${compact ? ' music-card--compact' : ''}${playing ? ' music-card--playing' : ''}`}>
+        <div data-side={side} className={`music-card${scoreEnabled ? ' music-card--scored' : ''}${compact ? ' music-card--compact' : ''}${playing ? ' music-card--playing' : ''}`}>
             <div data-slot="media">
-                <Media
-                    key={`${song.id}:${settings.mediaFormat}:${settings.region}:${autoPlayKey}:${mediaRemountKey}`}
-                    song={song}
-                    settings={settings}
-                    autoPlay={autoPlay}
-                    paused={paused}
-                    onPlay={onMediaPlay}
-                    onPause={onMediaPause}
-                    onEnded={
-                        autoPlay || onMediaEnded
-                            ? () => {
-                                if (onMediaEnded) {
-                                    onMediaEnded();
-                                } else if (autoPlay) {
-                                    onAutoPlayEnded(side);
+                <div className="media-viewport">
+                    <Media
+                        key={`${song.id}:${settings.mediaFormat}:${settings.region}:${autoPlayKey}:${mediaRemountKey}`}
+                        song={song}
+                        settings={settings}
+                        autoPlay={autoPlay}
+                        paused={paused}
+                        onPlay={() => {
+                            fullscreenPlayback.onPlay(side);
+                            onMediaPlay?.();
+                        }}
+                        onPause={() => {
+                            fullscreenPlayback.onStop(side);
+                            onMediaPause?.();
+                        }}
+                        onEnded={
+                            autoPlay || onMediaEnded
+                                ? () => {
+                                    if (onMediaEnded) {
+                                        onMediaEnded();
+                                    } else if (autoPlay) {
+                                        onAutoPlayEnded(side);
+                                    }
                                 }
-                            }
-                            : undefined
-                    }
-                />
+                                : undefined
+                        }
+                    />
+                </div>
                 <div className="media-control-buttons">
                     <button
                         type="button"

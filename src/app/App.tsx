@@ -18,6 +18,7 @@ import { Progress } from './components/Progress';
 import { Results } from './components/Results';
 import { SettingsModal } from './components/SettingsModal';
 import { SongListModal } from './components/SongListModal';
+import { SorterStage } from './components/SorterStage';
 import { automaticChoiceForCurrentBattle } from './internal/automaticChoice';
 import { projectedSongSortInfos } from './internal/projectedSortInfo';
 import { isScoreEnabled, normalizeScore } from './internal/songScores';
@@ -989,7 +990,7 @@ export function App({config, songs, overviewHref, importHref}: AppProps) {
                         onSetupGoogleSheet={chooseSheet}
                     />
                 ) : screen !== 'landing' && sort ? (
-                    <div className="sorter-stage">
+                    <SorterStage>
                         <div className="duel-container">
                             {screen === 'sorting' ? (
                                 <Duel
@@ -1012,7 +1013,7 @@ export function App({config, songs, overviewHref, importHref}: AppProps) {
                             ) : null}
                         </div>
                         <Progress label={progressLabel} percentage={progressValue}/>
-                    </div>
+                    </SorterStage>
                 ) : null}
             </div>
         </>
