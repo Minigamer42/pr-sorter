@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { LegacySorterSaveInfo } from '../legacySorterMigration';
 import type { GoogleSpreadsheetSelection, MediaFormat, Region, Settings, SorterAutoPlayMode } from '../types';
 
@@ -58,6 +58,13 @@ export function SettingsModal({
     onMigrateLegacySorterSave,
 }: SettingsModalProps) {
     const importInputRef = useRef<HTMLInputElement | null>(null);
+    const [scoreGapInput, setScoreGapInput] = useState(String(settings.autoSkipScoreDifference));
+
+    useEffect(() => {
+        setScoreGapInput((draft) => open && draft.trim() !== '' && Number(draft) === settings.autoSkipScoreDifference
+            ? draft
+            : String(settings.autoSkipScoreDifference));
+    }, [open, settings.autoSkipScoreDifference]);
 
     if (!open) {
         return null;
@@ -104,17 +111,23 @@ export function SettingsModal({
                         </p>
                         <input
                             className="setting-number-input"
+                            aria-label="Auto-skip score gap"
                             type="number"
                             min="0"
                             max="10"
                             step="0.01"
-                            value={settings.autoSkipScoreDifference}
-                            onChange={(event) => {
+                            value={scoreGapInput}
+                            onChange={(event) => setScoreGapInput(event.currentTarget.value)}
+                            onBlur={(event) => {
                                 const value = event.currentTarget.valueAsNumber;
-                                onChange({
-                                    ...settings,
-                                    autoSkipScoreDifference: Number.isFinite(value) ? Math.min(10, Math.max(0, value)) : 10,
-                                });
+                                if (Number.isFinite(value) && value >= 0 && value <= 10 && value !== settings.autoSkipScoreDifference) {
+                                    onChange({...settings, autoSkipScoreDifference: value});
+                                }
+                            }}
+                            onKeyDown={(event) => {
+                                if (event.key === 'Enter') {
+                                    event.currentTarget.blur();
+                                }
                             }}
                         />
                     </div>

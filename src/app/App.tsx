@@ -231,9 +231,12 @@ export function App({config, songs, overviewHref, importHref}: AppProps) {
     }
 
     function updateSettings(nextSettings: Settings): void {
+        const playbackChanged = nextSettings.mediaFormat !== settings.mediaFormat ||
+            nextSettings.region !== settings.region ||
+            nextSettings.sorterAutoPlayMode !== settings.sorterAutoPlayMode;
         setSettings(nextSettings);
         storage.saveSettings(nextSettings);
-        if (screen === 'sorting') {
+        if (screen === 'sorting' && playbackChanged) {
             setSorterAutoPlayForSort(sort, nextSettings, scoresBySongId);
         }
     }
