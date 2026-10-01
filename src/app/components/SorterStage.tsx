@@ -16,6 +16,12 @@ export function SorterStage({children, autoPlaySide = null}: {children: ReactNod
     const playbackRef = useRef({activeSide, focusedSide, autoPlaySide});
     const playbackChangedRef = useRef<() => void>(() => undefined);
     const startSide = useCallback((side: SortChoice) => {
+        const stage = stageRef.current;
+        if (stage?.classList.contains('sorter-stage--immersive') && stage.dataset.fullscreenSide !== side) {
+            stage.classList.add('sorter-stage--immersive-settled');
+            // Position the incoming layer while hidden, before starting its fade.
+            stage.querySelector(`.music-card[data-side="${side}"] .media-viewport`)?.getBoundingClientRect();
+        }
         setActiveSide(side);
         setFocusedSide(side);
     }, []);
@@ -31,9 +37,16 @@ export function SorterStage({children, autoPlaySide = null}: {children: ReactNod
 
         let timer: ReturnType<typeof setTimeout> | undefined;
         let handoffTimer: ReturnType<typeof setTimeout> | undefined;
+        let settleTimer: ReturnType<typeof setTimeout> | undefined;
+        let layoutFrame: number | undefined;
+        let readyFrame: number | undefined;
         let controlsHovered = false;
         const isFullscreen = () => document.fullscreenElement === stage;
         const clearTimer = () => clearTimeout(timer);
+        const cancelReadyFrames = () => {
+            if (layoutFrame !== undefined) cancelAnimationFrame(layoutFrame);
+            if (readyFrame !== undefined) cancelAnimationFrame(readyFrame);
+        };
         const controlsActive = () => controlsHovered || [...stage.querySelectorAll<HTMLElement>(CONTROLS)].some(
             (element) => element.matches(':focus-visible') || Boolean(element.querySelector(':focus-visible')),
         );
@@ -43,13 +56,20 @@ export function SorterStage({children, autoPlaySide = null}: {children: ReactNod
                 timer = setTimeout(() => {
                     if (isFullscreen() && playbackRef.current.activeSide !== null && !controlsActive()) {
                         stage.classList.add('sorter-stage--immersive');
+                        clearTimeout(settleTimer);
+                        settleTimer = setTimeout(() => {
+                            if (stage.classList.contains('sorter-stage--immersive')) {
+                                stage.classList.add('sorter-stage--immersive-settled');
+                            }
+                        }, 500);
                     }
                 }, HIDE_DELAY_MS);
             }
         };
         const reveal = () => {
             clearTimeout(handoffTimer);
-            stage.classList.remove('sorter-stage--immersive');
+            clearTimeout(settleTimer);
+            stage.classList.remove('sorter-stage--immersive', 'sorter-stage--immersive-settled');
             scheduleHide();
         };
         const updateMediaBounds = () => {
@@ -65,9 +85,19 @@ export function SorterStage({children, autoPlaySide = null}: {children: ReactNod
             }
         };
         const fullscreenChanged = () => {
+            cancelReadyFrames();
+            stage.classList.remove('sorter-stage--fullscreen-ready');
             controlsHovered = [...stage.querySelectorAll(CONTROLS)].some(element => element.matches(':hover'));
             updateMediaBounds();
             reveal();
+            if (isFullscreen()) {
+                // Paint the initial fullscreen positions before allowing transitions.
+                layoutFrame = requestAnimationFrame(() => {
+                    readyFrame = requestAnimationFrame(() => {
+                        if (isFullscreen()) stage.classList.add('sorter-stage--fullscreen-ready');
+                    });
+                });
+            }
         };
         const pointerOver = (event: PointerEvent) => {
             controlsHovered = event.target instanceof Element && Boolean(event.target.closest(CONTROLS));
@@ -120,6 +150,8 @@ export function SorterStage({children, autoPlaySide = null}: {children: ReactNod
         return () => {
             clearTimer();
             clearTimeout(handoffTimer);
+            cancelReadyFrames();
+            clearTimeout(settleTimer);
             playbackChangedRef.current = () => undefined;
             resized.disconnect();
             document.removeEventListener('fullscreenchange', fullscreenChanged);

@@ -849,6 +849,14 @@ body.sorter-index-body {
   top: var(--media-top);
   width: var(--media-width);
   height: var(--media-height);
+}
+
+.sorter-stage:fullscreen.sorter-stage--fullscreen-ready .music-card .media-viewport {
+  transition: opacity 450ms ease, visibility 450ms;
+}
+
+.sorter-stage:fullscreen.sorter-stage--fullscreen-ready[data-fullscreen-side="left"] .music-card[data-side="left"] .media-viewport,
+.sorter-stage:fullscreen.sorter-stage--fullscreen-ready[data-fullscreen-side="right"] .music-card[data-side="right"] .media-viewport {
   transition: left 450ms ease, top 450ms ease, width 450ms ease, height 450ms ease,
     opacity 450ms ease, visibility 450ms;
 }
@@ -872,12 +880,17 @@ body.sorter-index-body {
 }
 
 .sorter-stage:fullscreen.sorter-stage--immersive .music-card .media-viewport {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sorter-stage:fullscreen.sorter-stage--immersive-settled .music-card .media-viewport,
+.sorter-stage:fullscreen.sorter-stage--immersive[data-fullscreen-side="left"] .music-card[data-side="left"] .media-viewport,
+.sorter-stage:fullscreen.sorter-stage--immersive[data-fullscreen-side="right"] .music-card[data-side="right"] .media-viewport {
   left: 0;
   top: 0;
   width: 100vw;
   height: 100vh;
-  opacity: 0;
-  pointer-events: none;
 }
 
 .sorter-stage:fullscreen.sorter-stage--immersive[data-fullscreen-side="left"] .music-card[data-side="left"] .media-viewport,
@@ -904,7 +917,9 @@ body.sorter-index-body {
   .sorter-stage:fullscreen .music-card > :not([data-slot="media"]),
   .sorter-stage:fullscreen .media-control-buttons,
   .sorter-stage:fullscreen .progress,
-  .sorter-stage:fullscreen .media-viewport {
+  .sorter-stage:fullscreen.sorter-stage--fullscreen-ready .music-card .media-viewport,
+  .sorter-stage:fullscreen.sorter-stage--fullscreen-ready[data-fullscreen-side="left"] .music-card[data-side="left"] .media-viewport,
+  .sorter-stage:fullscreen.sorter-stage--fullscreen-ready[data-fullscreen-side="right"] .music-card[data-side="right"] .media-viewport {
     transition: none;
   }
 }
