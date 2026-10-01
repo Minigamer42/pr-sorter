@@ -302,7 +302,6 @@ export function App({config, songs, overviewHref, importHref}: AppProps) {
         }
 
         setSorterAutoPlaySide(nextSide);
-        setSorterAutoPlayKey((current) => current + 1);
     }
 
     function activateSorterAutoPlaySide(side: SortChoice): void {
@@ -990,7 +989,7 @@ export function App({config, songs, overviewHref, importHref}: AppProps) {
                         onSetupGoogleSheet={chooseSheet}
                     />
                 ) : screen !== 'landing' && sort ? (
-                    <SorterStage>
+                    <SorterStage autoPlaySide={screen === 'sorting' ? sorterAutoPlaySide : null}>
                         <div className="duel-container">
                             {screen === 'sorting' ? (
                                 <Duel

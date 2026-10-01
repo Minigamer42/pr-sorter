@@ -842,15 +842,15 @@ body.sorter-index-body {
   transition: opacity 450ms ease, visibility 450ms;
 }
 
-.sorter-stage:fullscreen:is([data-fullscreen-side="left"]) .music-card[data-side="left"] .media-viewport,
-.sorter-stage:fullscreen:is([data-fullscreen-side="right"]) .music-card[data-side="right"] .media-viewport {
+.sorter-stage:fullscreen .music-card .media-viewport {
   position: fixed;
   z-index: 2;
-  left: var(--focused-media-left);
-  top: var(--focused-media-top);
-  width: var(--focused-media-width);
-  height: var(--focused-media-height);
-  transition: left 450ms ease, top 450ms ease, width 450ms ease, height 450ms ease;
+  left: var(--media-left);
+  top: var(--media-top);
+  width: var(--media-width);
+  height: var(--media-height);
+  transition: left 450ms ease, top 450ms ease, width 450ms ease, height 450ms ease,
+    opacity 450ms ease, visibility 450ms;
 }
 
 .sorter-stage:fullscreen.sorter-stage--immersive::before {
@@ -865,20 +865,24 @@ body.sorter-index-body {
 
 .sorter-stage:fullscreen.sorter-stage--immersive .music-card > :not([data-slot="media"]),
 .sorter-stage:fullscreen.sorter-stage--immersive .media-control-buttons,
-.sorter-stage:fullscreen.sorter-stage--immersive .progress,
-.sorter-stage:fullscreen.sorter-stage--immersive[data-fullscreen-side="left"] .music-card[data-side="right"],
-.sorter-stage:fullscreen.sorter-stage--immersive[data-fullscreen-side="right"] .music-card[data-side="left"] {
+.sorter-stage:fullscreen.sorter-stage--immersive .progress {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
 }
 
-.sorter-stage:fullscreen.sorter-stage--immersive[data-fullscreen-side="left"] .music-card[data-side="left"] .media-viewport,
-.sorter-stage:fullscreen.sorter-stage--immersive[data-fullscreen-side="right"] .music-card[data-side="right"] .media-viewport {
+.sorter-stage:fullscreen.sorter-stage--immersive .music-card .media-viewport {
   left: 0;
   top: 0;
   width: 100vw;
   height: 100vh;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sorter-stage:fullscreen.sorter-stage--immersive[data-fullscreen-side="left"] .music-card[data-side="left"] .media-viewport,
+.sorter-stage:fullscreen.sorter-stage--immersive[data-fullscreen-side="right"] .music-card[data-side="right"] .media-viewport {
+  opacity: 1;
 }
 
 .sorter-stage:fullscreen.sorter-stage--immersive .media-viewport :is(video, iframe) {

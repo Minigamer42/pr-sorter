@@ -111,6 +111,8 @@ type YouTubePlayerProps = {
 
 type YouTubePlayerInstance = {
     destroy(): void;
+    getPlayerState(): number;
+    seekTo(seconds: number, allowSeekAhead: boolean): void;
     playVideo(): void;
     pauseVideo(): void;
 };
@@ -232,6 +234,7 @@ function YouTubePlayer({videoId, title, autoPlay = false, paused = false, onPlay
     const onPlayRef = useRef(onPlay);
     const onPauseRef = useRef(onPause);
     const onEndedRef = useRef(onEnded);
+    const shouldAutoPlayRef = useRef(autoPlay && !paused);
     const [failed, setFailed] = useState(false);
 
     useEffect(() => {
@@ -247,10 +250,18 @@ function YouTubePlayer({videoId, title, autoPlay = false, paused = false, onPlay
     }, [onEnded]);
 
     useEffect(() => {
+        shouldAutoPlayRef.current = autoPlay && !paused;
         if (paused) {
             safelyControlYouTubePlayer(playerRef.current, (player) => player.pauseVideo());
+        } else if (autoPlay) {
+            safelyControlYouTubePlayer(playerRef.current, (player) => {
+                if (player.getPlayerState() === window.YT?.PlayerState.ENDED) {
+                    player.seekTo(0, true);
+                }
+                player.playVideo();
+            });
         }
-    }, [paused]);
+    }, [autoPlay, paused]);
 
     useEffect(() => {
         let canceled = false;
@@ -279,11 +290,14 @@ function YouTubePlayer({videoId, title, autoPlay = false, paused = false, onPlay
                     },
                     events: {
                         onReady(event) {
-                            if (autoPlay) {
+                            if (!canceled && shouldAutoPlayRef.current) {
                                 safelyControlYouTubePlayer(event.target, (player) => player.playVideo());
                             }
                         },
                         onStateChange(event) {
+                            if (canceled) {
+                                return;
+                            }
                             if (event.data === api.PlayerState.PLAYING) {
                                 onPlayRef.current?.();
                             }
@@ -316,7 +330,7 @@ function YouTubePlayer({videoId, title, autoPlay = false, paused = false, onPlay
             playerRef.current = null;
             safelyReplaceChildren(mount);
         };
-    }, [autoPlay, videoId]);
+    }, [videoId]);
 
     if (failed) {
         return <div>Media not available</div>;
