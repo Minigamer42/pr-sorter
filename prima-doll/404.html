@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loading sorter…</title>
+</head>
+<body>
+  <p>Loading sorter…</p>
+  <script>
+    (() => {
+      const marker = '/external/';
+      const markerIndex = window.location.pathname.indexOf(marker);
+
+      if (markerIndex < 0) {
+        document.body.textContent = 'Page not found.';
+        return;
+      }
+
+      const collectionPath = window.location.pathname.slice(0, markerIndex + 1);
+      const externalRoute = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+      const destination = new URL(collectionPath, window.location.origin);
+      destination.searchParams.set('externalRoute', externalRoute);
+      window.location.replace(destination);
+    })();
+  </script>
+</body>
+</html>

@@ -82,6 +82,15 @@
       "deadline": "2026-10-19T21:59:00.000Z"
     },
     {
+      "slug": "prima-doll",
+      "title": "Prima Doll",
+      "description": "Party rank sorter for Prima Doll.",
+      "tags": [
+        "Franchise"
+      ],
+      "deadline": "2026-10-31T21:59:00.000Z"
+    },
+    {
       "slug": "princession",
       "title": "Princession Orchestra",
       "description": "Party rank sorter for Princession Orchestra songs.",
