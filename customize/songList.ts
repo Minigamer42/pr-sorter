@@ -3,34 +3,244 @@
 import type { Song } from '../src/songs';
 
 export const songList = [
-    {'id': 1, 'anime': 'Bang Dream', 'name': 'Asu no Yozora Shoukaihan by Afterglow', 'video': 'https://www.youtube.com/watch?v=1JgfLP2QtZw', 'mp3': null},
-    {'id': 2, 'anime': 'Bang Dream', 'name': 'Ave Mujica by Ave Mujica', 'video': 'https://youtu.be/QDsd0nyzwz0', 'mp3': null},
-    {'id': 3, 'anime': 'Bang Dream', 'name': 'Bad Kids All Bet by RAISE A SUILEN', 'video': 'https://www.youtube.com/watch?v=mKt2u5a3-H8', 'mp3': null},
-    {'id': 4, 'anime': 'Bang Dream', 'name': 'Beautiful Birthday by RAISE A SUILEN', 'video': 'https://www.youtube.com/watch?v=AxEUw6LdHR4', 'mp3': null},
-    {'id': 5, 'anime': 'Bang Dream', 'name': 'Choir \'s\' Choir by Ave Mujica', 'video': 'https://youtu.be/7llj4mh4L-8', 'mp3': null},
-    {'id': 6, 'anime': 'Bang Dream', 'name': 'Double Rainbow by Poppin\'Party', 'video': 'https://www.youtube.com/watch?v=sNaJuqFB-_g', 'mp3': null},
-    {'id': 7, 'anime': 'Bang Dream', 'name': 'Ether by Ave Mujica', 'video': 'https://www.youtube.com/watch?v=z6k7YIIZ6Hk', 'mp3': null},
-    {'id': 8, 'anime': 'Bang Dream', 'name': 'Freedom by Poppin\'Party x Misato Fukuen', 'video': 'https://www.youtube.com/watch?v=oy6OCnr9eAg', 'mp3': null},
-    {'id': 9, 'anime': 'Bang Dream', 'name': 'Hey-day Capriccio by Afterglow', 'video': 'https://www.youtube.com/watch?v=czHlLBls4oo', 'mp3': null},
-    {'id': 10, 'anime': 'Bang Dream', 'name': 'Kamisama, Baka by Ave Mujica', 'video': 'https://youtu.be/vmheOfqsH_o', 'mp3': null},
-    {'id': 11, 'anime': 'Bang Dream', 'name': 'KiLLKiSS by Ave Mujica', 'video': 'https://www.youtube.com/watch?v=RexyoaXaQ1o', 'mp3': null},
-    {'id': 12, 'anime': 'Bang Dream', 'name': 'Kimi ga Inakucha, Hello Happy World', 'video': 'https://naedist.animemusicquiz.com/8poyjw.webm', 'mp3': null},
-    {'id': 13, 'anime': 'Bang Dream', 'name': 'Mugen My World by Mugendai Mewtype', 'video': 'https://youtube.com/watch?v=GB2MEvY2sQk', 'mp3': null},
-    {'id': 14, 'anime': 'Bang Dream', 'name': 'Radiate Warriors by Pastel＊Palettes', 'video': 'https://youtu.be/dS-SUwftzmM', 'mp3': null},
-    {'id': 15, 'anime': 'Bang Dream', 'name': 'Returns by Poppin\'Party', 'video': 'https://www.youtube.com/watch?v=zWKV5yudE18', 'mp3': null},
-    {'id': 16, 'anime': 'Bang Dream', 'name': 'Roku-chou Nen to Ichiya Monogatari by Roselia', 'video': 'https://www.youtube.com/watch?v=xnlJkmRhi3Q', 'mp3': null},
-    {'id': 17, 'anime': 'Bang Dream', 'name': 'Sing Alive by Roselia', 'video': 'https://naedist.animemusicquiz.com/2h5qt3.webm', 'mp3': null},
-    {'id': 18, 'anime': 'Bang Dream', 'name': 'Mayoi Uta by MyGO!!!!!', 'video': 'https://naedist.animemusicquiz.com/vppf6y.webm', 'mp3': null},
-    {'id': 19, 'anime': 'Bang Dream', 'name': 'Smiling & Singing A Song by Hello, Happy World!', 'video': 'https://youtu.be/XFv3P-fKhWw', 'mp3': null},
-    {'id': 20, 'anime': 'Bang Dream', 'name': 'Song I am. by Roselia', 'video': 'https://naedist.animemusicquiz.com/njc8p5.webm', 'mp3': null},
-    {'id': 21, 'anime': 'Bang Dream', 'name': 'Sora no Música by Ave Mujica', 'video': 'https://youtu.be/2Bo-ULStqLo', 'mp3': null},
-    {'id': 22, 'anime': 'Bang Dream', 'name': 'Sprechchor by Roselia', 'video': 'https://www.youtube.com/watch?v=sdRwP4OjVn4', 'mp3': null},
-    {'id': 23, 'anime': 'Bang Dream', 'name': 'Sunlit Musical - Roselia', 'video': 'https://youtu.be/BtG1mA_1e0s', 'mp3': null},
-    {'id': 24, 'anime': 'Bang Dream', 'name': 'swim by MyGO!!!!!', 'video': 'https://www.youtube.com/watch?v=AEZ7suhPML0', 'mp3': null},
-    {'id': 25, 'anime': 'Bang Dream', 'name': 'Symbol III: ▽ by Ave Mujica', 'video': 'https://www.youtube.com/watch?v=NB3PxWLn9v4', 'mp3': null},
-    {'id': 26, 'anime': 'Bang Dream', 'name': 'Symbol IV :Earth by Ave Mujica', 'video': 'https://www.youtube.com/watch?v=WqQPM0dZpXc', 'mp3': null},
-    {'id': 27, 'anime': 'Bang Dream', 'name': 'Telepathy by Mugendai Mewtype', 'video': 'https://www.youtube.com/watch?v=GN_0T7cClGM', 'mp3': null},
-    {'id': 28, 'anime': 'Bang Dream', 'name': 'The Circle of Butterflies by Morfonica x fhána', 'video': 'https://www.youtube.com/watch?v=JfhgKn1hnnk', 'mp3': null},
-    {'id': 29, 'anime': 'Bang Dream', 'name': 'Utakotoba by MyGO!!!!!', 'video': 'https://youtu.be/wJ-OebTVyvk', 'mp3': null},
-    {'id': 30, 'anime': 'Bang Dream', 'name': 'Yakusoku by Roselia', 'video': 'https://naedist.animemusicquiz.com/h0rza6.webm', 'mp3': null},
+    {
+        'id': 1,
+        'anime': null,
+        'name': '"Tin Toy Melody" by Chat Noir',
+        'video': 'https://naedist.animemusicquiz.com/uvrs4p.webm',
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=Dx3nvcC54Hc'
+    },
+    {
+        'id': 2,
+        'anime': null,
+        'name': '"Kikaijikake no Sanka" by Chat Noir',
+        'video': null,
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=QqkxQoHtZTk'
+    },
+    {
+        'id': 3,
+        'anime': null,
+        'name': '"Yumesaki*Harebutai" by Chat Noir',
+        'video': 'https://naedist.animemusicquiz.com/g60wxf.webm',
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=Jtb3gK0NAf0'
+    },
+    {
+        'id': 4,
+        'anime': null,
+        'name': '"Usuhanazakura" by Haizakura (CV: Azumi Waki)',
+        'video': 'https://naedist.animemusicquiz.com/338c2w.webm',
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=7TPVEPNi2MA'
+    },
+    {
+        'id': 5,
+        'anime': null,
+        'name': '"Tsugihagi" by Karasuba (CV: Tomori Kusunoki)',
+        'video': 'https://naedist.animemusicquiz.com/yz5bse.webm',
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=aU6RIfruA7Q'
+    },
+    {
+        'id': 6,
+        'anime': null,
+        'name': '"Machiyoizuki" by Gekka (CV: Miyu Tomita)',
+        'video': 'https://naedist.animemusicquiz.com/2vyu1r.webm',
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=5C-Gi-xUbtw'
+    },
+    {
+        'id': 7,
+        'anime': null,
+        'name': '"Hoshi Shirube" by Houkiboshi (CV: Yuki Nakashima)',
+        'video': 'https://naedist.animemusicquiz.com/0ry6r2.webm',
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=QEtuixfgxa8'
+    },
+    {
+        'id': 8,
+        'anime': null,
+        'name': '"Ame no Mayoi Neko" by Haizakura (CV: Azumi Waki) & Retzel (CV: Akari Kitou)',
+        'video': 'https://naedist.animemusicquiz.com/02mf5i.webm',
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=Q1FIjcUwL-s'
+    },
+    {
+        'id': 9,
+        'anime': null,
+        'name': '"Soukatou" by Chat Noir',
+        'video': 'https://naedist.animemusicquiz.com/xnstyc.webm',
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=Ciz8QLosr58'
+    },
+    {
+        'id': 10,
+        'anime': null,
+        'name': '"Getsuraikou " by Gekka (CV: Miyu Tomita)',
+        'video': 'https://naedist.animemusicquiz.com/5wjrj9.webm',
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=wVZW7s3OzoY'
+    },
+    {
+        'id': 11,
+        'anime': null,
+        'name': '"Ice Cream no Uta " by Haizakura (CV: Azumi Waki) & Chiyo (CV: Misaki Kuno)',
+        'video': null,
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=_cyFPbMXQNs'
+    },
+    {
+        'id': 12,
+        'anime': null,
+        'name': '"Shukusaika" by Haizakura (CV: Azumi Waki)',
+        'video': 'https://naedist.animemusicquiz.com/dcbod0.webm',
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=PJKFhbrUMP4'
+    },
+    {
+        'id': 13,
+        'anime': null,
+        'name': '"Hanabaori" by Haizakura (CV: Azumi Waki) & Karasuba (CV: Tomori Kusunoki)',
+        'video': 'https://naedist.animemusicquiz.com/ibfxg1.webm',
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=MFV3cACfhZ8'
+    },
+    {
+        'id': 14,
+        'anime': null,
+        'name': '"Kamitsure no Uta " by Chiyo (CV: Misaki Kuno)',
+        'video': null,
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=NnEJMgM9FQ4'
+    },
+    {
+        'id': 15,
+        'anime': null,
+        'name': '"Kikaijikake no Sanka ~Next Order~" by Chat Noir',
+        'video': 'https://naedist.animemusicquiz.com/373kin.webm',
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=_O8UfHYM1ik'
+    },
+    {
+        'id': 16,
+        'anime': null,
+        'name': '"Toki no Yurikago" by Ouka (CV: Mai Nakahara)',
+        'video': 'https://naedist.animemusicquiz.com/50fddg.webm',
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=aZUohWvkyoo'
+    },
+    {
+        'id': 17,
+        'anime': null,
+        'name': '"Toki o Kizamu Uta" by Haizakura (CV: Azumi Waki)',
+        'video': 'https://www.youtube.com/watch?v=o0WmaluaDQo',
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=qzA5qonfSC8'
+    },
+    {
+        'id': 18,
+        'anime': null,
+        'name': '"Tori no Uta" by Karasuba (CV: Tomori Kusunoki)',
+        'video': 'https://www.youtube.com/watch?v=8TCUoIKWfuk',
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=Wba3O3AT8Dk'
+    },
+    {
+        'id': 19,
+        'anime': null,
+        'name': '"Last regrets" by Gekka (CV: Miyu Tomita)',
+        'video': 'https://www.youtube.com/watch?v=Tvbbd1mQWig',
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=Rzu4r1pbYF0'
+    },
+    {
+        'id': 20,
+        'anime': null,
+        'name': '"Twinkle Starlight" by Houkiboshi (CV: Yuki Nakashima)',
+        'video': 'https://www.youtube.com/watch?v=weWJGWnOweY',
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=cNGpwJpfjFU'
+    },
+    {
+        'id': 21,
+        'anime': null,
+        'name': '"Madoi Sora" by Karasuba (CV: Tomori Kusunoki)',
+        'video': 'https://www.youtube.com/watch?v=Ms9eRyeK-q4',
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=Qf9GmXi-Hd0'
+    },
+    {
+        'id': 22,
+        'anime': null,
+        'name': '"Hoshikuzu" by Retzel (CV: Akari Kitou)',
+        'video': 'https://www.youtube.com/watch?v=4IBxwDWZwBM',
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=yMn-3CaFSR0'
+    },
+    {
+        'id': 23,
+        'anime': null,
+        'name': '"Little Busters!" by chat noir',
+        'video': 'https://www.youtube.com/watch?v=HmBGb7T3M6s',
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=r0T6OoGx1OE'
+    },
+    {
+        'id': 24,
+        'anime': null,
+        'name': '"Yoru o Utau" by Gekka (CV: Miyu Tomita)',
+        'video': null,
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=VGlmchVxQJw'
+    },
+    {
+        'id': 25,
+        'anime': null,
+        'name': '"Fuyuzora Hanabi" by Haizakura (CV: Azumi Waki)',
+        'video': null,
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=7vV8NTulX-Q'
+    },
+    {
+        'id': 26,
+        'anime': null,
+        'name': '"Fuyuzora Hanabi" by Lilija (CV: Minori Suzuki)',
+        'video': null,
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=_cXs7WAHl1Y'
+    },
+    {
+        'id': 27,
+        'anime': null,
+        'name': '"Sekka Monyou" by Karasuba (CV: Tomori Kusunoki)',
+        'video': null,
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=-DpGhpM85ic'
+    },
+    {
+        'id': 28,
+        'anime': null,
+        'name': '"Hoshi no Komoriuta" by Houkiboshi (CV: Yuki Nakashima)',
+        'video': null,
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=cbtUfO0B2V4'
+    },
+    {
+        'id': 29,
+        'anime': null,
+        'name': '"Mumeika" by Houkiboshi (CV: Yuki Nakashima)',
+        'video': 'https://www.youtube.com/watch?v=bX8hJ09dR4A',
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=oqoOsrR872Q'
+    },
+    {
+        'id': 30,
+        'anime': null,
+        'name': '"Hoshiboshi no Chinkonka" by Houkiboshi (CV: Yuki Nakashima)',
+        'video': null,
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=27AUNDf9klU'
+    }
 ] satisfies Song[];
