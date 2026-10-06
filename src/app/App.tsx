@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { MediaStoragePrefixContext } from '../media';
 import { canUndo, choose, chooseAutomatic, createSort, currentBattle, isComplete, pickHistory, progressPercentage, ranksBySongId, type SortChoice, type SortState, undo } from '../sorter';
 import { GoogleAuthenticationRequiredError, GooglePickerCanceledError, GoogleWritebackError } from '../google/types';
 import { chooseGoogleSpreadsheet, loadScoresFromGoogleSheet, writePartialRanksToGoogleSheet, writeRanksToGoogleSheet, writeScoresToGoogleSheet } from '../google/googleSheetsWriteback';
@@ -893,7 +894,7 @@ export function App({config, songs, overviewHref, importHref}: AppProps) {
     const scoredPlaylistSongCount = countScoredSongs(resolvedSongs, scoresBySongId);
 
     return (
-        <>
+        <MediaStoragePrefixContext.Provider value={config.localStoragePrefix}>
             <SettingsModal
                 open={isSettingsOpen}
                 settings={settings}
@@ -1018,7 +1019,7 @@ export function App({config, songs, overviewHref, importHref}: AppProps) {
                     </SorterStage>
                 ) : null}
             </div>
-        </>
+        </MediaStoragePrefixContext.Provider>
     );
 }
 

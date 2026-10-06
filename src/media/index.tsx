@@ -1,9 +1,12 @@
-import { type ReactElement, useEffect, useId, useRef, useState } from 'react';
+import { type ReactElement, createContext, useCallback, useContext, useEffect, useId, useRef, useState } from 'react';
 import type { MediaFormat, Settings } from '../app/types';
 import type { SongData } from '../songs';
 import { mediaType, normalizeAmqUrl, urlExtension, youtubeVideoId } from './internal/urls';
+import { loadMediaVolume, saveMediaVolume } from './internal/volume';
 
 type MediaField = 'video' | 'mp3' | 'full';
+
+export const MediaStoragePrefixContext = createContext('pr-sorter');
 
 const mediaPriorities: Record<MediaFormat, MediaField[]> = {
     video: ['video', 'mp3', 'full'],
@@ -22,6 +25,7 @@ type MediaProps = {
 };
 
 export function Media({song, settings, autoPlay = false, paused = false, onPlay, onPause, onEnded}: MediaProps): ReactElement {
+    const storagePrefix = useContext(MediaStoragePrefixContext);
     if (!song.video && !song.mp3 && !song.full) {
         return <div>Media not available</div>;
     }
@@ -32,7 +36,7 @@ export function Media({song, settings, autoPlay = false, paused = false, onPlay,
             continue;
         }
 
-        const media = renderMedia(url, song, settings, {autoPlay, paused, onPlay, onPause, onEnded});
+        const media = renderMedia(url, song, settings, `${storagePrefix}:media-volume:${song.id}:${field}`, {autoPlay, paused, onPlay, onPause, onEnded});
         if (media !== null) {
             return media;
         }
@@ -45,6 +49,7 @@ function renderMedia(
     url: string,
     song: SongData,
     settings: Settings,
+    volumeStorageKey: string,
     options: Pick<MediaProps, 'autoPlay' | 'paused' | 'onPlay' | 'onPause' | 'onEnded'>,
 ): ReactElement | null {
     const youtubeId = youtubeVideoId(url);
@@ -67,7 +72,9 @@ function renderMedia(
         const src = normalizeAmqUrl(url, settings);
         return (
             <NativeMedia
+                key={`${volumeStorageKey}:${url}`}
                 kind="video"
+                volumeStorageKey={volumeStorageKey}
                 src={src}
                 type={mediaType(src, 'video/webm')}
                 autoPlay={options.autoPlay}
@@ -83,7 +90,9 @@ function renderMedia(
         const src = normalizeAmqUrl(url, settings);
         return (
             <NativeMedia
+                key={`${volumeStorageKey}:${url}`}
                 kind="audio"
+                volumeStorageKey={volumeStorageKey}
                 src={src}
                 type={mediaType(src, 'audio/mp3')}
                 autoPlay={options.autoPlay}
@@ -157,6 +166,7 @@ let youtubeApiPromise: Promise<YouTubeApi> | null = null;
 
 type NativeMediaProps = {
     kind: 'video' | 'audio';
+    volumeStorageKey: string;
     src: string;
     type: string;
     autoPlay?: boolean;
@@ -167,8 +177,28 @@ type NativeMediaProps = {
     onEnded?: () => void;
 };
 
-function NativeMedia({kind, src, type, autoPlay = false, paused = false, title, onPlay, onPause, onEnded}: NativeMediaProps): ReactElement {
+function NativeMedia({kind, volumeStorageKey, src, type, autoPlay = false, paused = false, title, onPlay, onPause, onEnded}: NativeMediaProps): ReactElement {
     const mediaRef = useRef<HTMLMediaElement | null>(null);
+    const lastVolumeRef = useRef<number | null>(null);
+
+    const setMediaRef = useCallback((element: HTMLMediaElement | null) => {
+        mediaRef.current = element;
+        if (element) {
+            // Restore on attachment so autoplay starts at the saved level.
+            const volume = loadMediaVolume(volumeStorageKey);
+            lastVolumeRef.current = volume;
+            element.volume = volume;
+        }
+    }, [volumeStorageKey]);
+
+    const handleVolumeChange = () => {
+        const volume = mediaRef.current?.volume;
+        // Muting also fires volumechange; only persist actual level changes.
+        if (volume !== undefined && volume !== lastVolumeRef.current) {
+            lastVolumeRef.current = volume;
+            saveMediaVolume(volumeStorageKey, volume);
+        }
+    };
 
     useEffect(() => {
         if (paused) {
@@ -194,14 +224,13 @@ function NativeMedia({kind, src, type, autoPlay = false, paused = false, title, 
     if (kind === 'video') {
         return (
             <video
-                ref={(element) => {
-                    mediaRef.current = element;
-                }}
+                ref={setMediaRef}
                 controls
                 autoPlay={autoPlay}
                 onPlay={onPlay}
                 onPause={onPause}
                 onEnded={handleEnded}
+                onVolumeChange={handleVolumeChange}
                 title={title}
             >
                 <source src={src} type={type}/>
@@ -211,14 +240,13 @@ function NativeMedia({kind, src, type, autoPlay = false, paused = false, title, 
 
     return (
         <audio
-            ref={(element) => {
-                mediaRef.current = element;
-            }}
+            ref={setMediaRef}
             controls
             autoPlay={autoPlay}
             onPlay={onPlay}
             onPause={onPause}
             onEnded={handleEnded}
+            onVolumeChange={handleVolumeChange}
             title={title}
         >
             <source src={src} type={type}/>
