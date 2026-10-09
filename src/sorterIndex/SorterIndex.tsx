@@ -106,7 +106,11 @@ export function SorterIndex() {
     const visibleSorters = selectedTags.length
         ? allSorters.filter((sorter) => hasSelectedTags(sorter, selectedTags))
         : allSorters;
-    const sorterGroups = groupSorters(visibleSorters);
+    const statusGroups = groupSorterEntries(visibleSorters, true);
+    const activeSorters = statusGroups.find((group) => group.title === 'Active')?.sorters ?? [];
+    const activeSorterSet = new Set(activeSorters);
+    const remainingSorters = visibleSorters.filter((sorter) => !activeSorterSet.has(sorter));
+    const sorterGroups = groupSorters(remainingSorters);
 
     function toggleTag(tag: string): void {
         setSelectedTags((currentTags) =>
@@ -149,6 +153,12 @@ export function SorterIndex() {
                     ) : null}
                     {visibleSorters.length ? (
                         <div className="sorter-index-sections">
+                            {activeSorters.length ? (
+                                <section className="sorter-index-section">
+                                    <h2 className="sorter-index-section__title">Active</h2>
+                                    <SorterGrid sorters={activeSorters} showCollection/>
+                                </section>
+                            ) : null}
                             {sorterGroups.map((group) => (
                                 <section className="sorter-index-section" key={group.title}>
                                     <h2 className="sorter-index-section__title">
@@ -162,15 +172,10 @@ export function SorterIndex() {
                                     </h2>
                                     {group.subgroups.map((subgroup) => (
                                         <section className="sorter-index-subsection" key={`${group.title}:${subgroup.title}`}>
-                                            <h3 className="sorter-index-subsection__title">{subgroup.title}</h3>
-                                            <div className="sorter-index-grid">
-                                                {subgroup.sorters.map((sorter) => (
-                                                    <SorterCard
-                                                        sorter={sorter}
-                                                        key={`${sorter.sourceTitle ?? 'local'}:${sorter.url ?? sorter.slug}`}
-                                                    />
-                                                ))}
-                                            </div>
+                                            {subgroup.title !== 'Past' ? (
+                                                <h3 className="sorter-index-subsection__title">{subgroup.title}</h3>
+                                            ) : null}
+                                            <SorterGrid sorters={subgroup.sorters}/>
                                         </section>
                                     ))}
                                 </section>
@@ -187,7 +192,21 @@ export function SorterIndex() {
     );
 }
 
-function SorterCard({sorter}: { sorter: SorterIndexDisplayEntry }) {
+function SorterGrid({sorters, showCollection = false}: { sorters: SorterIndexDisplayEntry[]; showCollection?: boolean }) {
+    return (
+        <div className="sorter-index-grid">
+            {sorters.map((sorter) => (
+                <SorterCard
+                    sorter={sorter}
+                    showCollection={showCollection}
+                    key={`${sorter.sourceTitle ?? 'local'}:${sorter.slug}:${sorter.url ?? ''}`}
+                />
+            ))}
+        </div>
+    );
+}
+
+function SorterCard({sorter, showCollection = false}: { sorter: SorterIndexDisplayEntry; showCollection?: boolean }) {
     const href = externalSorterCardHref(sorter) ?? sorter.url ?? `${sorter.slug}/`;
     const iconUrl = sorter.iconUrl ?? `${sorter.slug}/customize/favicon.ico`;
     const progress = sorter.progress ?? loadSorterProgress(sorterWithEffectiveStoragePrefix(sorter));
@@ -197,6 +216,9 @@ function SorterCard({sorter}: { sorter: SorterIndexDisplayEntry }) {
         <a className="sorter-index-card" href={href}>
             <img className="sorter-index-card__icon" src={iconUrl} alt=""/>
             <div className="sorter-index-card__body">
+                {showCollection ? (
+                    <span className="sorter-index-card__collection">{sorter.sourceTitle ?? 'This Collection'}</span>
+                ) : null}
                 <h3>{sorter.title}</h3>
                 <p>{sorter.description}</p>
                 {deadline ? (
