@@ -107,9 +107,9 @@ export function SorterIndex() {
         ? allSorters.filter((sorter) => hasSelectedTags(sorter, selectedTags))
         : allSorters;
     const statusGroups = groupSorterEntries(visibleSorters, true);
-    const activeSorters = statusGroups.find((group) => group.title === 'Active')?.sorters ?? [];
-    const activeSorterSet = new Set(activeSorters);
-    const remainingSorters = visibleSorters.filter((sorter) => !activeSorterSet.has(sorter));
+    const primaryGroups = statusGroups.filter((group) => group.title === 'Started' || group.title === 'Active');
+    const primarySorterSet = new Set(primaryGroups.flatMap((group) => group.sorters));
+    const remainingSorters = visibleSorters.filter((sorter) => !primarySorterSet.has(sorter));
     const sorterGroups = groupSorters(remainingSorters);
 
     function toggleTag(tag: string): void {
@@ -153,12 +153,12 @@ export function SorterIndex() {
                     ) : null}
                     {visibleSorters.length ? (
                         <div className="sorter-index-sections">
-                            {activeSorters.length ? (
-                                <section className="sorter-index-section">
-                                    <h2 className="sorter-index-section__title">Active</h2>
-                                    <SorterGrid sorters={activeSorters} showCollection/>
+                            {primaryGroups.map((group) => (
+                                <section className="sorter-index-section" key={`status:${group.title}`}>
+                                    <h2 className="sorter-index-section__title">{group.title}</h2>
+                                    <SorterGrid sorters={group.sorters} showCollection/>
                                 </section>
-                            ) : null}
+                            ))}
                             {sorterGroups.map((group) => (
                                 <section className="sorter-index-section" key={group.title}>
                                     <h2 className="sorter-index-section__title">
@@ -393,6 +393,10 @@ function loadScoreProgress(localStoragePrefix: string, sorter: SorterIndexEntry,
     const raw = storage.getItem(`${localStoragePrefix}:scores`);
     const scoredCount = raw ? countStoredScores(raw) : 0;
     const cappedScoredCount = Math.min(scoredCount, sorter.songCount);
+    if (cappedScoredCount === 0) {
+        return null;
+    }
+
     const percent = Math.floor((cappedScoredCount * 100) / sorter.songCount);
 
     return {
@@ -500,20 +504,27 @@ function groupSorterEntries(entries: SorterIndexDisplayEntry[], includeLocalProg
         const deadlineTime = parsedDeadlineTime(sorter.deadline);
         const progress = sorter.progress ?? (includeLocalProgress ? loadSorterProgress(sorterWithEffectiveStoragePrefix(sorter)) : null);
         const isComplete = progress?.kind === 'complete';
-        const isInProgress = progress?.kind === 'in-progress';
+        const isStarted = progress?.kind === 'in-progress';
         const hasPastDeadline = deadlineTime !== null && deadlineTime < now;
-        const isActive = isInProgress || (deadlineTime !== null && !hasPastDeadline && !isComplete);
+        const isActive = deadlineTime !== null && !hasPastDeadline && !isComplete;
         const isPast = !isActive && (isComplete || hasPastDeadline);
 
         return {
             sorter,
             index,
             deadlineTime,
-            bucket: isActive ? 'active' : isPast ? 'past' : 'no-deadline',
+            bucket: isStarted ? 'started' : isActive ? 'active' : isPast ? 'past' : 'no-deadline',
         };
     });
 
     return [
+        {
+            title: 'Started',
+            sorters: classified
+                .filter((entry) => entry.bucket === 'started')
+                .sort(compareClassifiedSorters)
+                .map((entry) => entry.sorter),
+        },
         {
             title: 'Active',
             sorters: classified
