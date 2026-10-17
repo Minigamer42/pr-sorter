@@ -1,0 +1,5 @@
+* text=auto eol=crlf
+
+# Shell scripts need LF when run on Linux or WSL.
+*.sh text eol=lf
+*.bash text eol=lf
