@@ -268,13 +268,7 @@ function buildUpdates(
     const shouldWriteScores = Boolean(scoreColumnHeader && scoresBySongId && scoresBySongId.size > 0);
     let scoreColumnIndex: number | null = null;
     if (shouldWriteScores && scoreColumnHeader) {
-        const scoreHeaderIndexes = matchingHeaderIndexes(headerRow, scoreColumnHeader);
-
-        if (scoreHeaderIndexes.length > 1) {
-            throw new GoogleWritebackError(`Score header "${scoreColumnHeader}" appears more than once.`);
-        }
-
-        scoreColumnIndex = scoreHeaderIndexes[0] ?? null;
+        scoreColumnIndex = requireHeaderColumnIndex(headerRow, scoreColumnHeader, 'Score');
     }
 
     const rowsBySongId = rowsBySongIdFromValues(values, idColumnIndex);
@@ -441,16 +435,7 @@ function buildScoreUpdates(
     }
 
     const idColumnIndex = requireHeaderColumnIndex(headerRow, idColumnHeader, 'ID');
-    const scoreHeaderIndexes = matchingHeaderIndexes(headerRow, scoreColumnHeader);
-    if (scoreHeaderIndexes.length === 0) {
-        return [];
-    }
-
-    if (scoreHeaderIndexes.length > 1) {
-        throw new GoogleWritebackError(`Score header "${scoreColumnHeader}" appears more than once.`);
-    }
-
-    const scoreColumnIndex = scoreHeaderIndexes[0];
+    const scoreColumnIndex = requireHeaderColumnIndex(headerRow, scoreColumnHeader, 'Score');
     const rowsBySongId = rowsBySongIdFromValues(values, idColumnIndex);
 
     return [...scoresBySongId.entries()].map(([songId, score]) => {

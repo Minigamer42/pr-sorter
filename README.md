@@ -313,9 +313,9 @@ External sorter cards open through this collection's current app version at a ro
 https://YOUR_USERNAME.github.io/pr-sorter/external/tutti/nana-mizuki/
 ```
 
-Set `routeSlug` on each configured external source to choose its stable route segment. The route reads the external catalog for sorter metadata, then safely parses the public `customize/songList.ts` from the sorter's GitHub branch. If that source file cannot be read, it falls back to extracting the literal song list from the deployed JavaScript bundle. Imported sorter progress is stored on this collection's origin under a source-specific prefix.
+Set `routeSlug` on each configured external source to choose its stable route segment. The route reads the external catalog for sorter metadata, then safely parses the public `customize/songList.ts` and `customize/config.ts` from the sorter's GitHub branch. If a source file cannot be read, it falls back to extracting the corresponding literal data from the deployed JavaScript bundle. External code is parsed without being executed. Imported sorter progress is stored on this collection's origin under a source-specific prefix.
 
-Every imported external sorter reuses the `googleSheets` configuration from this repository's main `customize/config.ts`. This includes the OAuth client ID, app ID, and configured column headers. The browser API key still comes from `VITE_GOOGLE_API_KEY`. Authentication tokens and selected spreadsheets remain isolated by each external sorter's local storage prefix; configuration and tokens from the external fork are never imported.
+External sorters use the OAuth client ID and app ID from this repository's main `customize/config.ts`; the browser API key still comes from `VITE_GOOGLE_API_KEY`. ID, rank, and score column headers come from the external sorter's own `googleSheets` configuration, including omitted headers. An external sorter without `googleSheets` keeps its scores local. The external `rankSupported` setting is also preserved. If neither source nor bundle provides a readable config, loading reports an error instead of using this collection's column mappings. External Google credentials and tokens are never imported. Authentication tokens and selected spreadsheets remain isolated by each external sorter's local storage prefix.
 
 In repository settings:
 

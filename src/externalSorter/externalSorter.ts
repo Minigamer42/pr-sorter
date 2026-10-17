@@ -1,6 +1,6 @@
 import {parse, parseExpressionAt} from 'acorn';
 import {config as collectionConfig} from '../../customize/config';
-import type {AppConfig} from '../app/types';
+import type {AppConfig, GoogleSheetsConfig} from '../app/types';
 import {songEntryId, type SongData, type SongEntry} from '../songs';
 import {externalSorterSources} from '../sorterIndex/externalSorterSources';
 import type {ExternalSorterSource} from '../sorterIndex/types';
@@ -15,6 +15,12 @@ export type LoadedExternalSorter = {
     config: AppConfig;
     songs: SongEntry[];
     originalUrl: string;
+};
+
+type ExternalSheetSettings = {
+    localStoragePrefix: string;
+    rankSupported?: boolean;
+    googleSheets?: Pick<GoogleSheetsConfig, 'idColumnHeader' | 'rankColumnHeader' | 'scoreColumnHeader'>;
 };
 
 type ExternalCatalogEntry = {
@@ -58,8 +64,15 @@ export async function loadExternalSorter(request: ExternalSorterRequest): Promis
     }
 
     const sorterUrl = new URL(entry.url ?? `${entry.slug}/`, sourceUrl);
-    const songs = await fetchExternalSongs(sourceUrl, sorterUrl, sorterSlug, entry.songCount);
+    let bundleSource: Promise<string> | undefined;
+    const loadBundle = () => bundleSource ??= fetchSorterBundle(sorterUrl);
+    const [songs, sheetSettings] = await Promise.all([
+        fetchExternalSongs(sourceUrl, loadBundle, sorterSlug, entry.songCount),
+        fetchExternalSheetSettings(sourceUrl, loadBundle, sorterSlug),
+    ]);
     const deadline = parsedDeadline(entry.deadline);
+    const rankSupported = sheetSettings.rankSupported ?? entry.rankSupported;
+    const hostGoogleSheets = collectionConfig.googleSheets;
 
     return {
         config: {
@@ -67,9 +80,15 @@ export async function loadExternalSorter(request: ExternalSorterRequest): Promis
             title: entry.title,
             description: entry.description,
             ...(entry.tags ? {tags: entry.tags} : {}),
-            ...(entry.rankSupported === false ? {rankSupported: false} : {}),
+            ...(rankSupported === false ? {rankSupported: false} : {}),
             ...(deadline ? {deadline} : {}),
-            ...(collectionConfig.googleSheets ? {googleSheets: {...collectionConfig.googleSheets}} : {}),
+            ...(hostGoogleSheets && sheetSettings.googleSheets ? {
+                googleSheets: {
+                    clientId: hostGoogleSheets.clientId,
+                    appId: hostGoogleSheets.appId,
+                    ...sheetSettings.googleSheets,
+                },
+            } : {}),
         },
         songs,
         originalUrl: sorterUrl.toString(),
@@ -192,12 +211,12 @@ function parsedDeadline(rawDeadline: string | undefined): Date | null {
 
 async function fetchExternalSongs(
     sourceUrl: URL,
-    sorterUrl: URL,
+    loadBundle: () => Promise<string>,
     sorterSlug: string,
     expectedSongCount: number | undefined,
 ): Promise<SongEntry[]> {
     const sourceError: unknown[] = [];
-    const sourceFileUrl = githubSongListUrl(sourceUrl, sorterSlug);
+    const sourceFileUrl = githubCustomizeFileUrl(sourceUrl, sorterSlug, 'songList.ts');
 
     if (sourceFileUrl) {
         try {
@@ -213,7 +232,7 @@ async function fetchExternalSongs(
     }
 
     try {
-        return await fetchSongListFromBundle(sorterUrl, expectedSongCount);
+        return songListFromBundle(await loadBundle(), expectedSongCount);
     } catch (bundleError) {
         const sourceDetail = sourceError.length
             ? ` Source lookup failed: ${errorMessage(sourceError[0])}.`
@@ -222,7 +241,7 @@ async function fetchExternalSongs(
     }
 }
 
-function githubSongListUrl(sourceUrl: URL, sorterSlug: string): URL | null {
+function githubCustomizeFileUrl(sourceUrl: URL, sorterSlug: string, fileName: 'songList.ts' | 'config.ts'): URL | null {
     const githubPagesSuffix = '.github.io';
     if (!sourceUrl.hostname.endsWith(githubPagesSuffix)) {
         return null;
@@ -235,8 +254,109 @@ function githubSongListUrl(sourceUrl: URL, sorterSlug: string): URL | null {
     }
 
     return new URL(
-        `https://raw.githubusercontent.com/${owner}/${repository}/refs/heads/pr-sorter/${sorterSlug}/customize/songList.ts`,
+        `https://raw.githubusercontent.com/${owner}/${repository}/refs/heads/pr-sorter/${sorterSlug}/customize/${fileName}`,
     );
+}
+
+async function fetchExternalSheetSettings(
+    sourceUrl: URL,
+    loadBundle: () => Promise<string>,
+    sorterSlug: string,
+): Promise<ExternalSheetSettings> {
+    let sourceError: unknown;
+    const sourceFileUrl = githubCustomizeFileUrl(sourceUrl, sorterSlug, 'config.ts');
+    if (sourceFileUrl) {
+        try {
+            const response = await fetch(sourceFileUrl);
+            if (!response.ok) {
+                throw new Error(`source returned ${response.status}`);
+            }
+            return parseSheetSettingsSource(await response.text());
+        } catch (error) {
+            sourceError = error;
+        }
+    }
+
+    try {
+        const program = parse(await loadBundle(), {ecmaVersion: 'latest', sourceType: 'module'});
+        const candidates = findSyntaxCandidates(program, sheetSettingsFromSyntaxNode);
+        const settings = candidates.find((candidate) => candidate.localStoragePrefix === sorterSlug)
+            ?? (candidates.length === 1 ? candidates[0] : null);
+        if (!settings) {
+            throw new Error('no unambiguous literal sorter config was found in the JavaScript');
+        }
+        return settings;
+    } catch (bundleError) {
+        const sourceDetail = sourceError ? ` Source lookup failed: ${errorMessage(sourceError)}.` : '';
+        throw new Error(`Could not read the external spreadsheet configuration.${sourceDetail} Bundle lookup failed: ${errorMessage(bundleError)}.`);
+    }
+}
+
+function parseSheetSettingsSource(source: string): ExternalSheetSettings {
+    const assignment = /\b(?:export\s+)?const\s+config(?:\s*:[^=]+)?\s*=/.exec(source);
+    if (!assignment) {
+        throw new Error('config export was not found');
+    }
+    const expression = parseExpressionAt(source, assignment.index + assignment[0].length, {ecmaVersion: 'latest'});
+    const settings = sheetSettingsFromSyntaxNode(expression);
+    if (!settings) {
+        throw new Error('config is not a supported literal sorter configuration');
+    }
+    return settings;
+}
+
+function sheetSettingsFromSyntaxNode(value: unknown): ExternalSheetSettings | null {
+    const properties = literalObjectProperties(value);
+    if (!properties) {
+        return null;
+    }
+    const localStoragePrefix = syntaxValue(properties.get('localStoragePrefix'));
+    if (typeof localStoragePrefix !== 'string' || typeof syntaxValue(properties.get('title')) !== 'string') {
+        return null;
+    }
+    const settings: ExternalSheetSettings = {localStoragePrefix};
+    if (properties.has('rankSupported')) {
+        const rankSupported = syntaxValue(properties.get('rankSupported'));
+        if (typeof rankSupported !== 'boolean') {
+            return null;
+        }
+        settings.rankSupported = rankSupported;
+    }
+    if (properties.has('googleSheets')) {
+        const sheetProperties = literalObjectProperties(properties.get('googleSheets'));
+        if (!sheetProperties) {
+            return null;
+        }
+        settings.googleSheets = {};
+        for (const key of ['idColumnHeader', 'rankColumnHeader', 'scoreColumnHeader'] as const) {
+            if (sheetProperties.has(key)) {
+                const header = syntaxValue(sheetProperties.get(key));
+                if (typeof header !== 'string') {
+                    return null;
+                }
+                settings.googleSheets[key] = header;
+            }
+        }
+    }
+    return settings;
+}
+
+function literalObjectProperties(value: unknown): Map<string, unknown> | null {
+    if (!isSyntaxNode(value) || value.type !== 'ObjectExpression' || !Array.isArray(value.properties)) {
+        return null;
+    }
+    const properties = new Map<string, unknown>();
+    for (const property of value.properties) {
+        if (!isSyntaxNode(property) || property.type !== 'Property' || property.kind !== 'init' || property.computed === true) {
+            return null;
+        }
+        const key = propertyKey(property.key);
+        if (key === null) {
+            return null;
+        }
+        properties.set(key, property.value);
+    }
+    return properties;
 }
 
 function parseSongListSource(source: string): SongEntry[] {
@@ -259,7 +379,7 @@ function parseSongListSource(source: string): SongEntry[] {
     return songs;
 }
 
-async function fetchSongListFromBundle(sorterUrl: URL, expectedSongCount: number | undefined): Promise<SongEntry[]> {
+async function fetchSorterBundle(sorterUrl: URL): Promise<string> {
     const pageResponse = await fetch(sorterUrl);
     if (!pageResponse.ok) {
         throw new Error(`sorter page returned ${pageResponse.status}`);
@@ -279,8 +399,12 @@ async function fetchSongListFromBundle(sorterUrl: URL, expectedSongCount: number
         throw new Error(`sorter JavaScript returned ${bundleResponse.status}`);
     }
 
-    const program = parse(await bundleResponse.text(), {ecmaVersion: 'latest', sourceType: 'module'});
-    const candidates = findSongListCandidates(program as unknown);
+    return bundleResponse.text();
+}
+
+function songListFromBundle(source: string, expectedSongCount: number | undefined): SongEntry[] {
+    const program = parse(source, {ecmaVersion: 'latest', sourceType: 'module'});
+    const candidates = findSyntaxCandidates(program, songListFromSyntaxNode);
     const expectedCandidate = expectedSongCount === undefined
         ? null
         : candidates.find((candidate) => candidate.length === expectedSongCount) ?? null;
@@ -292,8 +416,8 @@ async function fetchSongListFromBundle(sorterUrl: URL, expectedSongCount: number
     return songs;
 }
 
-function findSongListCandidates(root: unknown): SongEntry[][] {
-    const candidates: SongEntry[][] = [];
+function findSyntaxCandidates<T>(root: unknown, parseCandidate: (value: unknown) => T | null): T[] {
+    const candidates: T[] = [];
     const pending: unknown[] = [root];
     const visited = new Set<object>();
 
@@ -304,9 +428,9 @@ function findSongListCandidates(root: unknown): SongEntry[][] {
         }
 
         visited.add(value);
-        const songs = songListFromSyntaxNode(value);
-        if (songs) {
-            candidates.push(songs);
+        const candidate = parseCandidate(value);
+        if (candidate) {
+            candidates.push(candidate);
         }
 
         for (const child of Object.values(value)) {
@@ -422,6 +546,12 @@ function syntaxValue(value: unknown): unknown | typeof invalidSyntaxValue {
         }).reduce<unknown | typeof invalidSyntaxValue>((result, part) => {
             return result === invalidSyntaxValue || part === invalidSyntaxValue ? invalidSyntaxValue : `${result}${part}`;
         }, '');
+    }
+    if (value.type === 'UnaryExpression' && value.operator === '!') {
+        const argument = syntaxValue(value.argument);
+        if (argument !== invalidSyntaxValue) {
+            return !argument;
+        }
     }
     if (value.type === 'UnaryExpression' && (value.operator === '-' || value.operator === '+')) {
         const argument = syntaxValue(value.argument);
