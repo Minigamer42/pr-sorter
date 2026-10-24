@@ -1,12 +1,15 @@
-import { type MouseEvent, useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { Media } from '../../media';
 import type { CurrentSongSortInfo, SortChoice } from '../../sorter';
 import type { ResolvedSong } from '../../songs';
 import type { Settings } from '../types';
 import { SorterFullscreenContext } from './SorterStage';
+import { LikeButton } from './LikeButton';
+import { FullscreenButton } from './FullscreenButton';
 
 type SongCardProps = {
     song: ResolvedSong;
+    likeSong?: ResolvedSong;
     side: SortChoice;
     settings: Settings;
     scoreEnabled: boolean;
@@ -29,6 +32,7 @@ type SongCardProps = {
 
 export function SongCard({
     song,
+    likeSong = song,
     side,
     settings,
     scoreEnabled,
@@ -54,18 +58,6 @@ export function SongCard({
     useEffect(() => () => fullscreenPlayback.onStop(side), [
         fullscreenPlayback.onStop, side, song.id, settings.mediaFormat, settings.region, autoPlayKey, mediaRemountKey,
     ]);
-
-    function toggleFullscreen(event: MouseEvent<HTMLButtonElement>): void {
-        const target = event.currentTarget.closest(fullscreenTargetSelector ?? '');
-        if (document.fullscreenElement === target) {
-            void document.exitFullscreen();
-            return;
-        }
-
-        void target?.requestFullscreen().catch(() => {
-            // Keep the regular sorter usable if the browser refuses fullscreen.
-        });
-    }
 
     return (
         <div data-side={side} className={`music-card${scoreEnabled ? ' music-card--scored' : ''}${compact ? ' music-card--compact' : ''}${playing ? ' music-card--playing' : ''}`}>
@@ -99,6 +91,7 @@ export function SongCard({
                     />
                 </div>
                 <div className="media-control-buttons">
+                    <LikeButton song={likeSong}/>
                     <button
                         type="button"
                         className="media-remount-button"
@@ -109,15 +102,7 @@ export function SongCard({
                         &#8635;
                     </button>
                     {fullscreenTargetSelector ? (
-                        <button
-                            type="button"
-                            className="media-remount-button"
-                            onClick={toggleFullscreen}
-                            aria-label="Open sorter fullscreen"
-                            title="Fullscreen"
-                        >
-                            &#9974;
-                        </button>
+                        <FullscreenButton targetSelector={fullscreenTargetSelector} label="Open sorter fullscreen"/>
                     ) : null}
                 </div>
             </div>

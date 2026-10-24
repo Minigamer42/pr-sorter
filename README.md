@@ -246,6 +246,18 @@ User flow:
 
 Refreshing the page keeps both the selected spreadsheet and the stored OAuth access token. If Google rejects the token, the app removes it and the next write or sheet selection requests authorization again.
 
+## Song Library
+
+Use the heart button on a song card, in the song list, or in the playlist to like a recording. Likes are shared across sorters on the same site and saved in this browser. A recording keeps its like when another sorter gives it a different song ID.
+
+Open **Liked songs** or **Rated songs** from the overview to play your global library. **Score ≥** includes songs at or above the configurable cutoff (0–10, default 8), including decimal scores. Set the cutoff, media format, and region in the library's **Settings** window. Like the sorter settings, format and region changes apply immediately, while numeric changes apply on blur or Enter. Changes are saved automatically, and help is available through the same question-mark tooltips. Both playlists support ordered playback, shuffle, previous/next, and automatic advancement.
+
+The library uses main-site paths: `/library/liked/` for liked songs and `/library/rated/` for songs at or above the score threshold. `/library/` also opens liked songs. These routes are separate from the `/test/` sorter preview and support direct links, refresh, and browser back/forward navigation.
+
+The library automatically discovers existing saved ratings across localStorage prefixes and loads the corresponding song details, including saves made before the library existed. Ratings remain specific to their sorter; the global playlist uses the highest saved score when a recording appears in several sorters. A grouped entry's score applies to each of its songs. Edit ratings in their original sorter. Clearing a sorter's scores also removes those ratings from the global playlist. If a song catalog cannot be loaded, the library reports it and offers a retry instead of treating the saved ratings as empty.
+
+The liked-song and score-threshold playlists are available only in the global library. Each sorter keeps its original playlist controls. Global likes and the cutoff are separate from sorter progress and sorter-specific backup files.
+
 ## 9. Build And Preview
 
 Build the local Pages-style output:

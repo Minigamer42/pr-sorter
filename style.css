@@ -24,6 +24,8 @@ body.sorter-index-body {
   display: flex;
   justify-content: center;
   margin: -4px auto 14px;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .sorter-index-tags {
@@ -1135,15 +1137,22 @@ body.sorter-index-body {
   left: 0;
   z-index: 1;
   display: flex;
+  align-items: center;
   gap: 4px;
 }
 
 .media-control-buttons .media-remount-button {
-  width: 24px;
-  height: 24px;
-  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  min-height: 30px;
   padding: 0;
-  border: 0;
+  border: 1px solid transparent;
+  border-radius: 5px;
   background-color: transparent;
   color: #fcffef;
   cursor: pointer;
@@ -1343,7 +1352,7 @@ body.sorter-index-body {
   grid-template-rows: auto minmax(0, 1fr);
   align-content: start;
   min-height: 0;
-  padding: 14px 0 0;
+  padding: 40px 0 0;
   text-align: center;
   min-width: 0;
   overflow: hidden;
@@ -1713,5 +1722,193 @@ table td {
   .playlist-song,
   .playlist-actions button {
     font-size: 1.8vh;
+  }
+}
+
+
+.song-like-button,
+.music-card .song-like-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  min-height: 30px;
+  box-sizing: border-box;
+  flex: 0 0 30px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: #fcffef;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.media-control-buttons svg,
+.song-like-button svg {
+  display: block;
+  flex-shrink: 0;
+}
+
+.song-like-button--liked,
+.music-card .song-like-button--liked {
+  color: #ff8fae;
+}
+
+.song-like-button:hover,
+.song-like-button:focus-visible,
+.music-card .song-like-button:hover,
+.music-card .song-like-button:focus-visible {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.song-like-button[aria-pressed="true"],
+.media-control-buttons .media-fullscreen-button[aria-pressed="true"],
+.music-card .song-like-button[aria-pressed="true"],
+.song-like-button:active,
+.music-card .song-like-button:active,
+.media-control-buttons .media-remount-button:active {
+  border-color: rgba(255, 255, 255, 0.35);
+  background: #001a3f;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.45);
+}
+
+.song-like-button:focus-visible,
+.media-control-buttons .media-remount-button:focus-visible {
+  outline: 2px solid #fcffef;
+  outline-offset: 2px;
+}
+
+.song-list-table .song-like-button + .song-like-button {
+  margin-left: 4px;
+}
+
+.library-page .playlist {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: auto;
+}
+
+.library-page .playlist-toolbar {
+  height: auto;
+}
+
+.library-page .playlist-position {
+  flex-shrink: 0;
+  font-size: clamp(13px, 1.8vh, 17px);
+}
+
+.library-page .playlist-toolbar-controls {
+  flex-wrap: wrap;
+}
+
+.library-page .playlist-mode__button {
+  min-height: 40px;
+  font-size: clamp(13px, 1.6vh, 16px);
+}
+
+.library-page .playlist-card {
+  height: min(70vh, 740px);
+  min-height: 400px;
+}
+
+.library-page .playlist-card--scored {
+  grid-template-rows: minmax(0, 1fr) auto auto;
+}
+
+.library-page .playlist-anime {
+  font-size: clamp(15px, 2.1vh, 21px);
+}
+
+.library-page .playlist-song,
+.library-page .playlist-actions button {
+  font-size: clamp(14px, 2vh, 20px);
+}
+
+.library-page {
+  height: auto;
+  min-height: 100vh;
+  padding-bottom: 20px;
+  box-sizing: border-box;
+}
+
+.library-load-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  width: min(1080px, calc(100% - 40px));
+  margin: 0 auto 16px;
+  color: #f0fff2;
+  font-size: 14px;
+}
+
+.library-page .title {
+  font-size: clamp(22px, 3vh, 32px);
+}
+
+.library-page .basic-button {
+  font-size: clamp(14px, 2vh, 20px);
+}
+
+.library-page .score-field,
+.library-page .score-field input {
+  font-size: clamp(14px, 1.8vh, 18px);
+}
+
+.settings-modal {
+  width: min(460px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.settings-modal .option-group {
+  position: relative;
+}
+
+.settings-modal .help-icon {
+  position: static;
+}
+
+.settings-modal .help-icon::after {
+  left: 0;
+  right: 0;
+  width: 100%;
+  max-width: 280px;
+  margin-inline: auto;
+  box-sizing: border-box;
+  transform: none;
+}
+
+@media (max-width: 700px) {
+  .library-page .playlist-card {
+    height: min(64vh, 620px);
+  }
+
+  .library-page .playlist-mode__button {
+    min-width: 0;
+    padding: 8px;
+    font-size: 13px;
+  }
+
+  .library-page .playlist-toolbar-controls {
+    gap: 8px;
+  }
+
+  .library-page .playlist-mode[aria-label="Playlist score filter"] {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .library-page .playlist-mode[aria-label="Playlist score filter"] .playlist-mode__button:nth-child(odd) {
+    border-left: 0;
+  }
+
+  .library-page .playlist-mode[aria-label="Playlist score filter"] .playlist-mode__button:nth-child(n + 3) {
+    border-top: 1px solid rgba(255, 255, 255, 0.25);
   }
 }

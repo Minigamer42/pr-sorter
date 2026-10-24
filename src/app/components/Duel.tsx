@@ -248,6 +248,7 @@ function DuelEntry({
                     >
                         <SongCard
                             song={songWithTypeLabel(song, config.songTypes?.[index])}
+                            likeSong={song}
                             side={side}
                             settings={settings}
                             scoreEnabled={false}

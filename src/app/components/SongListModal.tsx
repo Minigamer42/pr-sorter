@@ -11,6 +11,7 @@ import {
 } from '../../songs';
 import { projectedSongSortInfos } from '../internal/projectedSortInfo';
 import type { GoogleSpreadsheetSelection, Settings, SongScoresById } from '../types';
+import { LikeButton } from './LikeButton';
 
 type SheetScoreStatus =
     | { state: 'unavailable'; message: string }
@@ -145,6 +146,7 @@ export function SongListModal({
                     </span>
                   </span>
                             </th>
+                            <th>Like</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -176,6 +178,9 @@ export function SongListModal({
                                     </td>
                                     <td>{sheetScoresBySongId[id] ?? ''}</td>
                                     <td>{range ? formatRankRange(range.minRank, range.maxRank) : ''}</td>
+                                    <td>
+                                        {songEntrySongs(song).map((item, index) => <LikeButton key={index} song={item}/>)}
+                                    </td>
                                 </tr>
                             );
                         })}

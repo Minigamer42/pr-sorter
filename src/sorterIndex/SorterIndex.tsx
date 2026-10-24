@@ -4,6 +4,7 @@ import { progressPercentage, type SortState } from '../sorter';
 import { externalSorterSources } from './externalSorterSources';
 import { sorters } from './sorters.generated';
 import type { ExternalSorterSource, SorterIndexEntry } from './types';
+import { libraryHref } from '../app/libraryRouting';
 
 type SorterIndexCatalog = {
     sorters: LegacyCatalogSorterIndexEntry[];
@@ -122,6 +123,10 @@ export function SorterIndex() {
         <div className="main-page main-page--landing sorter-index-page">
             <div className="title">
                 Choose a sorter to start ranking.
+            </div>
+            <div className="sorter-index-actions">
+                <a className="basic-button" href={libraryHref('./', window.location.href)}>Liked songs</a>
+                <a className="basic-button" href={libraryHref('./', window.location.href, 'above-threshold')}>Rated songs</a>
             </div>
             {import.meta.env.DEV ? (
                 <div className="sorter-index-actions">

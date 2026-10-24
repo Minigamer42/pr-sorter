@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef } from 'react';
 import type { LegacySorterSaveInfo } from '../legacySorterMigration';
-import type { GoogleSpreadsheetSelection, MediaFormat, Region, Settings, SorterAutoPlayMode } from '../types';
+import { PlaybackSettings, ScoreSetting, SettingsWindow } from './SettingsControls';
+import type { GoogleSpreadsheetSelection, Settings, SorterAutoPlayMode } from '../types';
 
 type SettingsModalProps = {
     open: boolean;
@@ -19,18 +20,6 @@ type SettingsModalProps = {
     onImportSorterState(file: File): void;
     onMigrateLegacySorterSave(): void;
 };
-
-const regions: { value: Region; label: string }[] = [
-    {value: 'eu', label: 'Europe'},
-    {value: 'naw', label: 'NA West'},
-    {value: 'nae', label: 'NA East'},
-];
-
-const mediaFormats: { value: MediaFormat; label: string }[] = [
-    {value: 'video', label: 'Video'},
-    {value: 'audio', label: 'Audio'},
-    {value: 'full', label: 'Full songs'},
-];
 
 const sorterAutoPlayModes: { value: SorterAutoPlayMode; label: string }[] = [
     {value: 'off', label: 'Off'},
@@ -58,181 +47,114 @@ export function SettingsModal({
     onMigrateLegacySorterSave,
 }: SettingsModalProps) {
     const importInputRef = useRef<HTMLInputElement | null>(null);
-    const [scoreGapInput, setScoreGapInput] = useState(String(settings.autoSkipScoreDifference));
-
-    useEffect(() => {
-        setScoreGapInput((draft) => open && draft.trim() !== '' && Number(draft) === settings.autoSkipScoreDifference
-            ? draft
-            : String(settings.autoSkipScoreDifference));
-    }, [open, settings.autoSkipScoreDifference]);
-
-    if (!open) {
-        return null;
-    }
-
     return (
-        <>
-            <div className="modal-overlay" onClick={onClose}/>
-            <div className="modal">
-                <h2>Settings</h2>
+        <SettingsWindow open={open} onClose={onClose}>
+            <PlaybackSettings settings={settings} onChange={onChange}/>
+            {scoreEnabled ? (
+                <ScoreSetting
+                    label="Auto-skip score gap"
+                    help="Skips a comparison when both songs have scores and their score difference is at least this value. Equal scores never skip."
+                    value={settings.autoSkipScoreDifference}
+                    onChange={(autoSkipScoreDifference) => onChange({ ...settings, autoSkipScoreDifference })}
+                />
+            ) : null}
+            <div className="option-group">
+                <p>
+                    Sorter autoplay:
+                    <span className="help-icon"
+                          data-tooltip="Chooses which song starts autoplay for each comparison. After that, autoplay swaps between the two songs until sorting moves to another comparison."
+                          aria-label="Sorter autoplay help"
+                    >?</span>
+                </p>
+                {sorterAutoPlayModes.map((mode) => (
+                    <button
+                        key={mode.value}
+                        className={`option-button${settings.sorterAutoPlayMode === mode.value ? ' active' : ''}`}
+                        type="button"
+                        onClick={() => onChange({...settings, sorterAutoPlayMode: mode.value})}
+                    >
+                        {mode.label}
+                    </button>
+                ))}
+            </div>
+            {googleSheetsConfigured ? (
                 <div className="option-group">
-                    <p>Format:</p>
-                    {mediaFormats.map((format) => (
-                        <button
-                            key={format.value}
-                            className={`option-button${settings.mediaFormat === format.value ? ' active' : ''}`}
-                            type="button"
-                            onClick={() => onChange({...settings, mediaFormat: format.value})}
-                        >
-                            {format.label}
-                        </button>
-                    ))}
-                </div>
-                <div className="option-group">
-                    <p>Region:</p>
-                    {regions.map((region) => (
-                        <button
-                            key={region.value}
-                            className={`option-button${settings.region === region.value ? ' active' : ''}`}
-                            type="button"
-                            onClick={() => onChange({...settings, region: region.value})}
-                        >
-                            {region.label}
-                        </button>
-                    ))}
-                </div>
-                {scoreEnabled ? (
-                    <div className="option-group">
-                        <p>
-                            Auto-skip score gap:
-                            <span className="help-icon" data-tooltip="Skips a comparison when both songs have scores and their score difference is at least this value. Equal scores never skip."
-                                  aria-label="Auto-skip score gap help"
-                            >?</span>
-                        </p>
-                        <input
-                            className="setting-number-input"
-                            aria-label="Auto-skip score gap"
-                            type="number"
-                            min="0"
-                            max="10"
-                            step="0.01"
-                            value={scoreGapInput}
-                            onChange={(event) => setScoreGapInput(event.currentTarget.value)}
-                            onBlur={(event) => {
-                                const value = event.currentTarget.valueAsNumber;
-                                if (Number.isFinite(value) && value >= 0 && value <= 10 && value !== settings.autoSkipScoreDifference) {
-                                    onChange({...settings, autoSkipScoreDifference: value});
-                                }
-                            }}
-                            onKeyDown={(event) => {
-                                if (event.key === 'Enter') {
-                                    event.currentTarget.blur();
-                                }
-                            }}
-                        />
+                    <p>Google Sheet:</p>
+                    <div className="setting-value">
+                        {googleSpreadsheetSelection ? (
+                            <a
+                                className="setting-value-link"
+                                href={`https://docs.google.com/spreadsheets/d/${encodeURIComponent(googleSpreadsheetSelection.id)}/edit`}
+                                target="_blank"
+                                rel="noreferrer"
+                            >
+                                {googleSpreadsheetSelection.name}
+                            </a>
+                        ) : 'No spreadsheet selected'}
                     </div>
-                ) : null}
-                <div className="option-group">
-                    <p>
-                        Sorter autoplay:
-                        <span className="help-icon"
-                              data-tooltip="Chooses which song starts autoplay for each comparison. After that, autoplay swaps between the two songs until sorting moves to another comparison."
-                              aria-label="Sorter autoplay help"
-                        >?</span>
-                    </p>
-                    {sorterAutoPlayModes.map((mode) => (
-                        <button
-                            key={mode.value}
-                            className={`option-button${settings.sorterAutoPlayMode === mode.value ? ' active' : ''}`}
-                            type="button"
-                            onClick={() => onChange({...settings, sorterAutoPlayMode: mode.value})}
-                        >
-                            {mode.label}
+                    <button
+                        className="option-button"
+                        type="button"
+                        onClick={onChooseGoogleSheet}
+                        disabled={isConnectingGoogleSheet || Boolean(googleSheetsDisabledReason)}
+                        title={googleSheetsDisabledReason ?? undefined}
+                    >
+                        {isConnectingGoogleSheet
+                            ? 'Connecting...'
+                            : googleSheetsDisabledReason
+                                ? 'Google setup missing'
+                                : googleSpreadsheetSelection
+                                    ? 'Change Sheet'
+                                    : 'Choose Sheet'}
+                    </button>
+                    {googleSpreadsheetSelection ? (
+                        <button className="option-button" type="button" onClick={onClearGoogleSheet}>
+                            Forget Sheet
                         </button>
-                    ))}
+                    ) : null}
                 </div>
-                {googleSheetsConfigured ? (
-                    <div className="option-group">
-                        <p>Google Sheet:</p>
+            ) : null}
+            <div className="option-group">
+                <p>Sorter state:</p>
+                <button className="option-button" type="button" onClick={onExportSorterState}>
+                    Export
+                </button>
+                <button className="option-button" type="button" onClick={() => importInputRef.current?.click()}>
+                    Import
+                </button>
+                {legacySorterSaveInfo ? (
+                    <>
                         <div className="setting-value">
-                            {googleSpreadsheetSelection ? (
-                                <a
-                                    className="setting-value-link"
-                                    href={`https://docs.google.com/spreadsheets/d/${encodeURIComponent(googleSpreadsheetSelection.id)}/edit`}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                >
-                                    {googleSpreadsheetSelection.name}
-                                </a>
-                            ) : 'No spreadsheet selected'}
+                            Legacy save found at {legacySorterSaveInfo.legacyPrefix}*
+                            {legacySorterSaveInfo.complete ? ' (complete)' : ' (in progress)'}.
+                            {!legacySorterSaveInfo.compatible && legacySorterSaveInfo.reason ? (
+                                <span className="setting-warning"> {legacySorterSaveInfo.reason}</span>
+                            ) : null}
                         </div>
                         <button
                             className="option-button"
                             type="button"
-                            onClick={onChooseGoogleSheet}
-                            disabled={isConnectingGoogleSheet || Boolean(googleSheetsDisabledReason)}
-                            title={googleSheetsDisabledReason ?? undefined}
+                            onClick={onMigrateLegacySorterSave}
+                            disabled={!legacySorterSaveInfo.compatible}
                         >
-                            {isConnectingGoogleSheet
-                                ? 'Connecting...'
-                                : googleSheetsDisabledReason
-                                    ? 'Google setup missing'
-                                    : googleSpreadsheetSelection
-                                        ? 'Change Sheet'
-                                        : 'Choose Sheet'}
+                            Migrate Legacy Save
                         </button>
-                        {googleSpreadsheetSelection ? (
-                            <button className="option-button" type="button" onClick={onClearGoogleSheet}>
-                                Forget Sheet
-                            </button>
-                        ) : null}
-                    </div>
+                    </>
                 ) : null}
-                <div className="option-group">
-                    <p>Sorter state:</p>
-                    <button className="option-button" type="button" onClick={onExportSorterState}>
-                        Export
-                    </button>
-                    <button className="option-button" type="button" onClick={() => importInputRef.current?.click()}>
-                        Import
-                    </button>
-                    {legacySorterSaveInfo ? (
-                        <>
-                            <div className="setting-value">
-                                Legacy save found at {legacySorterSaveInfo.legacyPrefix}*
-                                {legacySorterSaveInfo.complete ? ' (complete)' : ' (in progress)'}.
-                                {!legacySorterSaveInfo.compatible && legacySorterSaveInfo.reason ? (
-                                    <span className="setting-warning"> {legacySorterSaveInfo.reason}</span>
-                                ) : null}
-                            </div>
-                            <button
-                                className="option-button"
-                                type="button"
-                                onClick={onMigrateLegacySorterSave}
-                                disabled={!legacySorterSaveInfo.compatible}
-                            >
-                                Migrate Legacy Save
-                            </button>
-                        </>
-                    ) : null}
-                    <input
-                        ref={importInputRef}
-                        className="state-file-input"
-                        type="file"
-                        accept="application/json,.json"
-                        onChange={(event) => {
-                            const file = event.currentTarget.files?.[0] ?? null;
-                            event.currentTarget.value = '';
-                            if (file) {
-                                onImportSorterState(file);
-                            }
-                        }}
-                    />
-                </div>
-                <button className="close-button" type="button" onClick={onClose}>
-                    Close
-                </button>
+                <input
+                    ref={importInputRef}
+                    className="state-file-input"
+                    type="file"
+                    accept="application/json,.json"
+                    onChange={(event) => {
+                        const file = event.currentTarget.files?.[0] ?? null;
+                        event.currentTarget.value = '';
+                        if (file) {
+                            onImportSorterState(file);
+                        }
+                    }}
+                />
             </div>
-        </>
+        </SettingsWindow>
     );
 }

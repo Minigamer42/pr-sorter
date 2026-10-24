@@ -47,23 +47,7 @@ type SyntaxNode = {
 const invalidSyntaxValue = Symbol('invalid-syntax-value');
 
 export async function loadExternalSorter(request: ExternalSorterRequest): Promise<LoadedExternalSorter> {
-    const sourceRouteSlug = normalizedRouteSlug(request.sourceRouteSlug);
-    const sorterSlug = normalizedSorterSlug(request.sorterSlug);
-    const sourceUrl = await resolveExternalSourceUrl(sourceRouteSlug);
-    const catalogUrl = new URL('sorter-index.json', sourceUrl);
-    const catalogResponse = await fetch(catalogUrl);
-
-    if (!catalogResponse.ok) {
-        throw new Error(`The external sorter catalog returned ${catalogResponse.status}.`);
-    }
-
-    const catalog = parseCatalog(await catalogResponse.json());
-    const entry = catalog.sorters.find((candidate) => candidate.slug === sorterSlug);
-    if (!entry) {
-        throw new Error(`Sorter "${sorterSlug}" is not listed by that collection.`);
-    }
-
-    const sorterUrl = new URL(entry.url ?? `${entry.slug}/`, sourceUrl);
+    const { sourceRouteSlug, sorterSlug, sourceUrl, entry, sorterUrl } = await resolveExternalSorterEntry(request);
     let bundleSource: Promise<string> | undefined;
     const loadBundle = () => bundleSource ??= fetchSorterBundle(sorterUrl);
     const [songs, sheetSettings] = await Promise.all([
@@ -93,6 +77,33 @@ export async function loadExternalSorter(request: ExternalSorterRequest): Promis
         songs,
         originalUrl: sorterUrl.toString(),
     };
+}
+
+export async function loadExternalSorterSongs(request: ExternalSorterRequest): Promise<{ title: string; songs: SongEntry[] }> {
+    const { sorterSlug, sourceUrl, entry, sorterUrl } = await resolveExternalSorterEntry(request);
+    const songs = await fetchExternalSongs(sourceUrl, () => fetchSorterBundle(sorterUrl), sorterSlug, entry.songCount);
+    return { title: entry.title, songs };
+}
+
+async function resolveExternalSorterEntry(request: ExternalSorterRequest) {
+    const sourceRouteSlug = normalizedRouteSlug(request.sourceRouteSlug);
+    const sorterSlug = normalizedSorterSlug(request.sorterSlug);
+    const sourceUrl = await resolveExternalSourceUrl(sourceRouteSlug);
+    const catalogUrl = new URL('sorter-index.json', sourceUrl);
+    const catalogResponse = await fetch(catalogUrl);
+
+    if (!catalogResponse.ok) {
+        throw new Error(`The external sorter catalog returned ${catalogResponse.status}.`);
+    }
+
+    const catalog = parseCatalog(await catalogResponse.json());
+    const entry = catalog.sorters.find((candidate) => candidate.slug === sorterSlug);
+    if (!entry) {
+        throw new Error(`Sorter "${sorterSlug}" is not listed by that collection.`);
+    }
+
+    const sorterUrl = new URL(entry.url ?? `${entry.slug}/`, sourceUrl);
+    return { sourceRouteSlug, sorterSlug, sourceUrl, entry, sorterUrl };
 }
 
 async function resolveExternalSourceUrl(requestedRouteSlug: string): Promise<URL> {
@@ -239,6 +250,10 @@ async function fetchExternalSongs(
             : '';
         throw new Error(`Could not read the external song list.${sourceDetail} Bundle lookup failed: ${errorMessage(bundleError)}.`);
     }
+}
+
+export async function loadSorterSongs(collectionUrl: URL, sorterUrl: URL, sorterSlug: string, expectedSongCount?: number): Promise<SongEntry[]> {
+    return fetchExternalSongs(collectionUrl, () => fetchSorterBundle(sorterUrl), sorterSlug, expectedSongCount);
 }
 
 function githubCustomizeFileUrl(sourceUrl: URL, sorterSlug: string, fileName: 'songList.ts' | 'config.ts'): URL | null {

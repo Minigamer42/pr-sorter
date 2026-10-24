@@ -1,10 +1,13 @@
-import { type MouseEvent, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Media } from '../../media';
 import { songEntryId, songEntrySongs, songWithTypeLabel, type ResolvedSongEntry } from '../../songs';
 import type { AppConfig, Settings, SongScoresById } from '../types';
+import { LikeButton } from './LikeButton';
+import { FullscreenButton } from './FullscreenButton';
 
 export type PlaylistMode = 'in-order' | 'random';
-export type PlaylistScoreFilter = 'all' | 'unscored';
+export type SorterPlaylistScoreFilter = 'all' | 'unscored';
+export type PlaylistScoreFilter = SorterPlaylistScoreFilter | 'liked' | 'above-threshold';
 
 type PlaylistProps = {
     config: AppConfig;
@@ -16,6 +19,10 @@ type PlaylistProps = {
     totalSongCount: number;
     mode: PlaylistMode;
     scoreFilter: PlaylistScoreFilter;
+    scoreThreshold?: number;
+    library?: boolean;
+    emptyMessage?: string;
+    emptyPositionLabel?: string;
     settings: Settings;
     scoreEnabled: boolean;
     scoresBySongId: SongScoresById;
@@ -42,6 +49,10 @@ export function Playlist({
     totalSongCount,
     mode,
     scoreFilter,
+    scoreThreshold = 8,
+    library = false,
+    emptyMessage,
+    emptyPositionLabel,
     settings,
     scoreEnabled,
     scoresBySongId,
@@ -66,7 +77,7 @@ export function Playlist({
         setPlayingSongIndex(null);
     }, [currentPosition, currentSongId, settings.mediaFormat, settings.region]);
 
-    const writeScoresButton = scoreEnabled ? (
+    const writeScoresButton = scoreEnabled && !library ? (
         <button
             className="playlist-mode__button"
             type="button"
@@ -78,12 +89,8 @@ export function Playlist({
         </button>
     ) : null;
 
-    if (songs.length === 0) {
-        return (
-            <div className="playlist">
-                <div className="playlist-empty">No songs are configured.</div>
-            </div>
-        );
+    if (!library && songs.length === 0) {
+        return <div className="playlist"><div className="playlist-empty">No songs are configured.</div></div>;
     }
 
     if (!currentSong) {
@@ -91,18 +98,20 @@ export function Playlist({
             <div className="playlist">
                 <div className="playlist-toolbar">
                     <div className="playlist-position">
-                        {scoredSongCount} / {totalSongCount} scored
+                        {emptyPositionLabel ?? `${scoredSongCount} / ${totalSongCount} scored`}
                     </div>
                     <PlaylistToolbarControls
                         mode={mode}
                         scoreFilter={scoreFilter}
+                        scoreThreshold={scoreThreshold}
+                        library={library}
                         scoreEnabled={scoreEnabled}
                         writeScoresButton={writeScoresButton}
                         onModeChange={onModeChange}
                         onScoreFilterChange={onScoreFilterChange}
                     />
                 </div>
-                <div className="playlist-empty">All songs have scores.</div>
+                <div className="playlist-empty">{emptyMessage ?? (songs.length === 0 ? 'No songs are configured.' : scoreFilter === 'liked' ? 'No liked songs yet. Use the heart button to like a song.' : scoreFilter === 'above-threshold' ? `No songs have a score ≥ ${scoreThreshold}.` : 'All songs have scores.')}</div>
             </div>
         );
     }
@@ -146,16 +155,6 @@ export function Playlist({
         onNext();
     }
 
-    function toggleFullscreen(event: MouseEvent<HTMLButtonElement>): void {
-        const target = event.currentTarget.closest('.playlist-card');
-        if (document.fullscreenElement === target) {
-            void document.exitFullscreen();
-            return;
-        }
-
-        void target?.requestFullscreen();
-    }
-
     return (
         <div className="playlist">
             <div className="playlist-toolbar">
@@ -167,6 +166,8 @@ export function Playlist({
                 <PlaylistToolbarControls
                     mode={mode}
                     scoreFilter={scoreFilter}
+                    scoreThreshold={scoreThreshold}
+                    library={library}
                     scoreEnabled={scoreEnabled}
                     writeScoresButton={writeScoresButton}
                     onModeChange={onModeChange}
@@ -193,19 +194,12 @@ export function Playlist({
                                         onPause={() => mediaPaused(index)}
                                         onEnded={() => mediaEnded(index)}
                                     />
-                                    {index === 0 ? (
-                                        <div className="media-control-buttons">
-                                            <button
-                                                type="button"
-                                                className="media-remount-button playlist-fullscreen-button"
-                                                onClick={toggleFullscreen}
-                                                aria-label="Open playlist card fullscreen"
-                                                title="Fullscreen"
-                                            >
-                                                &#9974;
-                                            </button>
-                                        </div>
-                                    ) : null}
+                                    <div className="media-control-buttons">
+                                        <LikeButton song={song}/>
+                                        {index === 0 ? (
+                                            <FullscreenButton targetSelector=".playlist-card" label="Open playlist card fullscreen" className="playlist-fullscreen-button"/>
+                                        ) : null}
+                                    </div>
                                 </div>
                                 <div className="playlist-song-meta">
                                     <div className="playlist-anime" title={labelledSong.anime}>{labelledSong.anime}</div>
@@ -217,13 +211,14 @@ export function Playlist({
                 </div>
                 {scoreEnabled ? (
                     <label className="score-field playlist-score-field">
-                        <span>Score</span>
+                        <span>{library ? 'Saved score' : 'Score'}</span>
                         <input
                             type="number"
                             min="0"
                             max="10"
                             step="0.01"
                             value={scoresBySongId[currentSongId] ?? ''}
+                            readOnly={library}
                             onChange={(event) => onScoreChange(currentSongId, event.currentTarget.value)}
                         />
                     </label>
@@ -244,6 +239,8 @@ export function Playlist({
 type PlaylistToolbarControlsProps = {
     mode: PlaylistMode;
     scoreFilter: PlaylistScoreFilter;
+    scoreThreshold: number;
+    library: boolean;
     scoreEnabled: boolean;
     writeScoresButton: React.ReactNode;
     onModeChange(mode: PlaylistMode): void;
@@ -253,6 +250,8 @@ type PlaylistToolbarControlsProps = {
 function PlaylistToolbarControls({
     mode,
     scoreFilter,
+    scoreThreshold,
+    library,
     scoreEnabled,
     writeScoresButton,
     onModeChange,
@@ -282,22 +281,21 @@ function PlaylistToolbarControls({
                 </button>
             </div>
             {scoreEnabled ? (
-                <div className="playlist-mode" aria-label="Playlist score filter">
-                    <button
-                        className={`playlist-mode__button${scoreFilter === 'all' ? ' playlist-mode__button--active' : ''}`}
-                        type="button"
-                        onClick={() => onScoreFilterChange('all')}
-                    >
-                        All songs
-                    </button>
-                    <button
-                        className={`playlist-mode__button${scoreFilter === 'unscored' ? ' playlist-mode__button--active' : ''}`}
-                        type="button"
-                        onClick={() => onScoreFilterChange('unscored')}
-                    >
-                        No score
-                    </button>
-                </div>
+                <>
+                    <div className="playlist-mode" aria-label="Playlist score filter">
+                        {(library ? ['liked', 'above-threshold'] as const : ['all', 'unscored'] as const).map((filter) => (
+                            <button
+                                key={filter}
+                                className={`playlist-mode__button${scoreFilter === filter ? ' playlist-mode__button--active' : ''}`}
+                                type="button"
+                                aria-pressed={scoreFilter === filter}
+                                onClick={() => onScoreFilterChange(filter)}
+                            >
+                                {{ all: 'All songs', unscored: 'No score', liked: 'Liked songs', 'above-threshold': `Score ≥ ${scoreThreshold}` }[filter]}
+                            </button>
+                        ))}
+                    </div>
+                </>
             ) : null}
         </div>
     );

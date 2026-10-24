@@ -14,7 +14,7 @@ import {
 import { Controls } from './components/Controls';
 import { Duel } from './components/Duel';
 import { HistoryModal } from './components/HistoryModal';
-import { Playlist, type PlaylistMode, type PlaylistScoreFilter } from './components/Playlist';
+import { Playlist, type PlaylistMode, type SorterPlaylistScoreFilter } from './components/Playlist';
 import { Progress } from './components/Progress';
 import { Results } from './components/Results';
 import { SettingsModal } from './components/SettingsModal';
@@ -24,6 +24,7 @@ import { automaticChoiceForCurrentBattle } from './internal/automaticChoice';
 import { projectedSongSortInfos } from './internal/projectedSortInfo';
 import { isScoreEnabled, normalizeScore } from './internal/songScores';
 import { createStorage, parseSorterStorageSnapshot } from './storage';
+import { registerLibrarySongs } from './songLibrary';
 import type { AppConfig, GoogleSpreadsheetSelection, SavedProgressKind, Screen, Settings, SongScoresById, SorterAutoPlayMode } from './types';
 
 type AppProps = {
@@ -59,7 +60,7 @@ export function App({config, songs, overviewHref, importHref}: AppProps) {
     const [sorterAutoPlaySide, setSorterAutoPlaySide] = useState<SortChoice | null>(null);
     const [sorterAutoPlayKey, setSorterAutoPlayKey] = useState(0);
     const [playlistMode, setPlaylistMode] = useState<PlaylistMode>('in-order');
-    const [playlistScoreFilter, setPlaylistScoreFilter] = useState<PlaylistScoreFilter>('all');
+    const [playlistScoreFilter, setPlaylistScoreFilter] = useState<SorterPlaylistScoreFilter>('all');
     const [playlistOrder, setPlaylistOrder] = useState<number[]>(() => createPlaylistOrder(resolvedSongs.length, 'in-order'));
     const [playlistPosition, setPlaylistPosition] = useState(0);
     const [sort, setSort] = useState<SortState | null>(null);
@@ -92,6 +93,10 @@ export function App({config, songs, overviewHref, importHref}: AppProps) {
         document.querySelector('meta[name="og:site_name"]')?.setAttribute('content', config.title);
         document.querySelector('meta[name="og:description"]')?.setAttribute('content', config.description);
     }, [config.description, config.title]);
+
+    useEffect(() => {
+        registerLibrarySongs(config.localStoragePrefix, resolvedSongs);
+    }, [config.localStoragePrefix, resolvedSongs]);
 
     useEffect(() => {
         setPlaylistOrder(createPlaylistOrder(resolvedSongs.length, playlistMode, playlistEligibleIndexes()));
@@ -272,7 +277,7 @@ export function App({config, songs, overviewHref, importHref}: AppProps) {
         setPlaylistPosition(0);
     }
 
-    function changePlaylistScoreFilter(nextFilter: PlaylistScoreFilter): void {
+    function changePlaylistScoreFilter(nextFilter: SorterPlaylistScoreFilter): void {
         setPlaylistScoreFilter(nextFilter);
         setPlaylistOrder(createPlaylistOrder(resolvedSongs.length, playlistMode, playlistEligibleIndexes(nextFilter)));
         setPlaylistPosition(0);
@@ -860,7 +865,7 @@ export function App({config, songs, overviewHref, importHref}: AppProps) {
         );
     }
 
-    function playlistEligibleIndexes(nextFilter: PlaylistScoreFilter = playlistScoreFilter): number[] {
+    function playlistEligibleIndexes(nextFilter: SorterPlaylistScoreFilter = playlistScoreFilter): number[] {
         if (!scoreEnabled || nextFilter === 'all') {
             return Array.from({length: resolvedSongs.length}, (_, index) => index);
         }
