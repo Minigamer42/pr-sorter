@@ -4,6 +4,7 @@ import { songEntryId, songEntrySongs, songWithTypeLabel, type ResolvedSongEntry 
 import type { AppConfig, Settings, SongScoresById } from '../types';
 import { LikeButton } from './LikeButton';
 import { FullscreenButton } from './FullscreenButton';
+import { PlaylistStage } from './PlaylistStage';
 
 export type PlaylistMode = 'in-order' | 'random';
 export type SorterPlaylistScoreFilter = 'all' | 'unscored';
@@ -175,7 +176,12 @@ export function Playlist({
                 />
             </div>
 
-            <div className={`playlist-card${scoreEnabled ? ' playlist-card--scored' : ''}${currentSongs.length > 1 ? ' playlist-card--group' : ''}`}>
+            <PlaylistStage
+                className={`playlist-card${scoreEnabled ? ' playlist-card--scored' : ''}${currentSongs.length > 1 ? ' playlist-card--group' : ''}`}
+                playingIndex={playingSongIndex}
+                activeIndex={clampedActiveSongIndex}
+                entryId={currentSongId}
+            >
                 <div className={currentSongs.length > 1 ? 'playlist-media-grid' : 'playlist-media'}>
                     {currentSongs.map((song, index) => {
                         const labelledSong = songWithTypeLabel(song, config.songTypes?.[index]);
@@ -183,17 +189,19 @@ export function Playlist({
                         const isPlaying = currentSongs.length > 1 && index === playingSongIndex;
 
                         return (
-                            <div className={`playlist-media-entry${isPlaying ? ' playlist-media-entry--active' : ''}`} key={`${song.id}-${index}`}>
+                            <div className={`playlist-media-entry${isPlaying ? ' playlist-media-entry--active' : ''}`} data-playlist-active={index === clampedActiveSongIndex ? 'true' : undefined} key={`${song.id}-${index}`}>
                                 <div className="playlist-media">
-                                    <Media
-                                        key={`${currentSongId}:${index}:${clampedActiveSongIndex}:${settings.mediaFormat}:${settings.region}`}
-                                        song={song}
-                                        settings={settings}
-                                        autoPlay={shouldAutoPlay}
-                                        onPlay={() => mediaStarted(index)}
-                                        onPause={() => mediaPaused(index)}
-                                        onEnded={() => mediaEnded(index)}
-                                    />
+                                    <div className="playlist-media-viewport">
+                                        <Media
+                                            key={`${currentSongId}:${index}:${clampedActiveSongIndex}:${settings.mediaFormat}:${settings.region}`}
+                                            song={song}
+                                            settings={settings}
+                                            autoPlay={shouldAutoPlay}
+                                            onPlay={() => mediaStarted(index)}
+                                            onPause={() => mediaPaused(index)}
+                                            onEnded={() => mediaEnded(index)}
+                                        />
+                                    </div>
                                     <div className="media-control-buttons">
                                         <LikeButton song={song}/>
                                         {index === 0 ? (
@@ -231,7 +239,7 @@ export function Playlist({
                         Next
                     </button>
                 </div>
-            </div>
+            </PlaylistStage>
         </div>
     );
 }

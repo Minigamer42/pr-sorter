@@ -258,6 +258,8 @@ The library automatically discovers existing saved ratings across localStorage p
 
 The liked-song and score-threshold playlists are available only in the global library. Each sorter keeps its original playlist controls. Global likes and the cutoff are separate from sorter progress and sorter-specific backup files.
 
+In both global and sorter-specific playlists, fullscreen expands the playing media after 2.5 seconds of inactivity, as in the sorter. Moving the pointer, using the controls, or pausing restores the playlist controls. Expansion follows autoplay to the next song and the active player in grouped entries; if the next player cannot start, the controls return automatically.
+
 ## 9. Build And Preview
 
 Build the local Pages-style output:
