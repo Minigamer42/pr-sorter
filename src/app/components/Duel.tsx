@@ -42,9 +42,12 @@ export function Duel({
     const [activePlayer, setActivePlayer] = useState<ActiveDuelPlayer | null>(null);
     const battle = currentBattle(sort);
 
-    useEffect(() => {
+    const battleKey = `${battle?.[0]}:${battle?.[1]}:${settings.mediaFormat}:${settings.region}`;
+    const [previousBattleKey, setPreviousBattleKey] = useState(battleKey);
+    if (previousBattleKey !== battleKey) {
+        setPreviousBattleKey(battleKey);
         setActivePlayer(null);
-    }, [battle?.[0], battle?.[1], settings.mediaFormat, settings.region]);
+    }
 
     if (battle === null) {
         return null;
@@ -159,10 +162,13 @@ function DuelEntry({
     const [playingSongIndex, setPlayingSongIndex] = useState<number | null>(null);
     const songCardRefs = useRef<Array<HTMLDivElement | null>>([]);
 
-    useEffect(() => {
+    const entryKey = `${autoPlayKey}:${entryId}:${settings.mediaFormat}:${settings.region}`;
+    const [previousEntryKey, setPreviousEntryKey] = useState(entryKey);
+    if (previousEntryKey !== entryKey) {
+        setPreviousEntryKey(entryKey);
         setAutoPlaySongIndex(0);
         setPlayingSongIndex(null);
-    }, [autoPlayKey, entryId, settings.mediaFormat, settings.region]);
+    }
 
     function mediaStarted(index: number): void {
         setPlayingSongIndex(index);
@@ -241,7 +247,7 @@ function DuelEntry({
                 {entrySongs.map((song, index) => (
                     <div
                         className="music-card-wrapper__song-anchor"
-                        key={`${song.id}-${index}`}
+                        key={index}
                         ref={(element) => {
                             songCardRefs.current[index] = element;
                         }}

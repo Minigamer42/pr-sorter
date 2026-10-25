@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Media } from '../../media';
 import { songEntryId, songEntrySongs, songWithTypeLabel, type ResolvedSongEntry } from '../../songs';
 import type { AppConfig, Settings, SongScoresById } from '../types';
@@ -73,10 +73,15 @@ export function Playlist({
     const [playingSongIndex, setPlayingSongIndex] = useState<number | null>(null);
     const currentSongId = currentSong ? songEntryId(currentSong) : null;
 
-    useEffect(() => {
+    const entryKey = `${currentPosition}:${currentSongId}:${settings.mediaFormat}:${settings.region}`;
+    const [previousEntryKey, setPreviousEntryKey] = useState(entryKey);
+    if (previousEntryKey !== entryKey) {
+        // Reset before committing children so retained players receive only the
+        // incoming entry's playback intent, including after grouped entries.
+        setPreviousEntryKey(entryKey);
         setActiveSongIndex(0);
         setPlayingSongIndex(null);
-    }, [currentPosition, currentSongId, settings.mediaFormat, settings.region]);
+    }
 
     const writeScoresButton = scoreEnabled && !library ? (
         <button
@@ -189,14 +194,15 @@ export function Playlist({
                         const isPlaying = currentSongs.length > 1 && index === playingSongIndex;
 
                         return (
-                            <div className={`playlist-media-entry${isPlaying ? ' playlist-media-entry--active' : ''}`} data-playlist-active={index === clampedActiveSongIndex ? 'true' : undefined} key={`${song.id}-${index}`}>
+                            <div className={`playlist-media-entry${isPlaying ? ' playlist-media-entry--active' : ''}`} data-playlist-active={index === clampedActiveSongIndex ? 'true' : undefined} key={index}>
                                 <div className="playlist-media">
                                     <div className="playlist-media-viewport">
                                         <Media
-                                            key={`${currentSongId}:${index}:${clampedActiveSongIndex}:${settings.mediaFormat}:${settings.region}`}
+                                            playbackKey={`${currentPosition}:${currentSongId}:${index}:${settings.mediaFormat}:${settings.region}`}
                                             song={song}
                                             settings={settings}
                                             autoPlay={shouldAutoPlay}
+                                            paused={playingSongIndex !== null && playingSongIndex !== index}
                                             onPlay={() => mediaStarted(index)}
                                             onPause={() => mediaPaused(index)}
                                             onEnded={() => mediaEnded(index)}

@@ -64,7 +64,8 @@ export function SongCard({
             <div data-slot="media">
                 <div className="media-viewport">
                     <Media
-                        key={`${song.id}:${settings.mediaFormat}:${settings.region}:${autoPlayKey}:${mediaRemountKey}`}
+                        key={mediaRemountKey}
+                        playbackKey={`${song.id}:${settings.mediaFormat}:${settings.region}:${autoPlayKey}`}
                         song={song}
                         settings={settings}
                         autoPlay={autoPlay}

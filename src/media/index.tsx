@@ -1,8 +1,9 @@
-import { type ReactElement, createContext, useCallback, useContext, useEffect, useId, useRef, useState } from 'react';
+import { type ReactElement, type Ref, createContext, useContext, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import type { MediaFormat, Settings } from '../app/types';
 import type { SongData } from '../songs';
 import { mediaType, normalizeAmqUrl, urlExtension, youtubeVideoId } from './internal/urls';
 import { loadMediaVolume, saveMediaVolume } from './internal/volume';
+import { YouTubePlayback, type YouTubePlayerInstance } from './internal/youtubePlayback';
 
 type MediaField = 'video' | 'mp3' | 'full';
 
@@ -19,111 +20,59 @@ type MediaProps = {
     settings: Settings;
     autoPlay?: boolean;
     paused?: boolean;
+    playbackKey?: string | number;
     onPlay?: () => void;
     onPause?: () => void;
     onEnded?: () => void;
 };
 
-export function Media({song, settings, autoPlay = false, paused = false, onPlay, onPause, onEnded}: MediaProps): ReactElement {
+type MediaSource =
+    | { kind: 'youtube'; videoId: string }
+    | { kind: 'video' | 'audio'; src: string; volumeStorageKey: string };
+
+export function Media({song, settings, autoPlay = false, paused = false, playbackKey, onPlay, onPause, onEnded}: MediaProps): ReactElement {
     const storagePrefix = useContext(MediaStoragePrefixContext);
-    if (!song.video && !song.mp3 && !song.full) {
-        return <div>Media not available</div>;
-    }
+    const source = resolveMediaSource(song, settings, storagePrefix);
+    const playback = {autoPlay, paused, playbackKey, onPlay, onPause, onEnded};
 
-    for (const field of mediaPriorities[settings.mediaFormat]) {
-        const url = song[field];
-        if (!url) {
-            continue;
-        }
-
-        const media = renderMedia(url, song, settings, `${storagePrefix}:media-volume:${song.id}:${field}`, {autoPlay, paused, onPlay, onPause, onEnded});
-        if (media !== null) {
-            return media;
-        }
-    }
-
-    return <div>Media not available</div>;
+    return (
+        <>
+            <YouTubePlayer
+                {...playback}
+                videoId={source?.kind === 'youtube' ? source.videoId : null}
+                title={`${song.name} video`}
+            />
+            <NativeMedia {...playback} kind="video" source={source?.kind === 'video' ? source : null}/>
+            <NativeMedia {...playback} kind="audio" source={source?.kind === 'audio' ? source : null} title={`${song.name} audio`}/>
+            {!source ? <div>Media not available</div> : null}
+        </>
+    );
 }
 
-function renderMedia(
-    url: string,
-    song: SongData,
-    settings: Settings,
-    volumeStorageKey: string,
-    options: Pick<MediaProps, 'autoPlay' | 'paused' | 'onPlay' | 'onPause' | 'onEnded'>,
-): ReactElement | null {
-    const youtubeId = youtubeVideoId(url);
-    if (youtubeId !== null) {
-        return (
-            <YouTubePlayer
-                videoId={youtubeId}
-                title={`${song.name} video`}
-                autoPlay={options.autoPlay}
-                paused={options.paused}
-                onPlay={options.onPlay}
-                onPause={options.onPause}
-                onEnded={options.onEnded}
-            />
-        );
-    }
+function resolveMediaSource(song: SongData, settings: Settings, storagePrefix: string): MediaSource | null {
+    for (const field of mediaPriorities[settings.mediaFormat]) {
+        const url = song[field];
+        if (!url) continue;
 
-    const extension = urlExtension(url);
-    if (extension === '.webm' || extension === '.mp4') {
-        const src = normalizeAmqUrl(url, settings);
-        return (
-            <NativeMedia
-                key={`${volumeStorageKey}:${url}`}
-                kind="video"
-                volumeStorageKey={volumeStorageKey}
-                src={src}
-                type={mediaType(src, 'video/webm')}
-                autoPlay={options.autoPlay}
-                paused={options.paused}
-                onPlay={options.onPlay}
-                onPause={options.onPause}
-                onEnded={options.onEnded}
-            />
-        );
-    }
+        const videoId = youtubeVideoId(url);
+        if (videoId) return {kind: 'youtube', videoId};
 
-    if (extension === '.mp3') {
-        const src = normalizeAmqUrl(url, settings);
-        return (
-            <NativeMedia
-                key={`${volumeStorageKey}:${url}`}
-                kind="audio"
-                volumeStorageKey={volumeStorageKey}
-                src={src}
-                type={mediaType(src, 'audio/mp3')}
-                autoPlay={options.autoPlay}
-                paused={options.paused}
-                title={`${song.name} audio`}
-                onPlay={options.onPlay}
-                onPause={options.onPause}
-                onEnded={options.onEnded}
-            />
-        );
+        const extension = urlExtension(url);
+        const kind = extension === '.mp3' ? 'audio' : extension === '.webm' || extension === '.mp4' ? 'video' : null;
+        if (kind) {
+            return {
+                kind,
+                src: normalizeAmqUrl(url, settings),
+                volumeStorageKey: `${storagePrefix}:media-volume:${song.id}:${field}`,
+            };
+        }
     }
-
     return null;
 }
 
-type YouTubePlayerProps = {
-    videoId: string;
+type YouTubePlayerProps = Pick<MediaProps, 'autoPlay' | 'paused' | 'playbackKey' | 'onPlay' | 'onPause' | 'onEnded'> & {
+    videoId: string | null;
     title: string;
-    autoPlay?: boolean;
-    paused?: boolean;
-    onPlay?: () => void;
-    onPause?: () => void;
-    onEnded?: () => void;
-};
-
-type YouTubePlayerInstance = {
-    destroy(): void;
-    getPlayerState(): number;
-    seekTo(seconds: number, allowSeekAhead: boolean): void;
-    playVideo(): void;
-    pauseVideo(): void;
 };
 
 type YouTubePlayerEvent = {
@@ -133,7 +82,6 @@ type YouTubePlayerEvent = {
 type YouTubeConstructor = new (
     element: HTMLElement,
     options: {
-        videoId: string;
         playerVars: {
             autoplay: 0 | 1;
             modestbranding: 1;
@@ -164,207 +112,147 @@ declare global {
 
 let youtubeApiPromise: Promise<YouTubeApi> | null = null;
 
-type NativeMediaProps = {
+type NativeMediaProps = Pick<MediaProps, 'autoPlay' | 'paused' | 'playbackKey' | 'onPlay' | 'onPause' | 'onEnded'> & {
     kind: 'video' | 'audio';
-    volumeStorageKey: string;
-    src: string;
-    type: string;
-    autoPlay?: boolean;
-    paused?: boolean;
+    source: Extract<MediaSource, {src: string}> | null;
     title?: string;
-    onPlay?: () => void;
-    onPause?: () => void;
-    onEnded?: () => void;
 };
 
-function NativeMedia({kind, volumeStorageKey, src, type, autoPlay = false, paused = false, title, onPlay, onPause, onEnded}: NativeMediaProps): ReactElement {
+function NativeMedia({kind, source, autoPlay = false, paused = false, playbackKey, title, onPlay, onPause, onEnded}: NativeMediaProps): ReactElement {
     const mediaRef = useRef<HTMLMediaElement | null>(null);
     const lastVolumeRef = useRef<number | null>(null);
+    const previousSourceRef = useRef<string | null>(null);
+    const previousAutoPlayRef = useRef(autoPlay);
+    const src = source?.src;
+    const volumeStorageKey = source?.volumeStorageKey;
+    const sourceKey = JSON.stringify([src, volumeStorageKey, playbackKey]);
 
-    const setMediaRef = useCallback((element: HTMLMediaElement | null) => {
-        mediaRef.current = element;
-        if (element) {
-            // Restore on attachment so autoplay starts at the saved level.
-            const volume = loadMediaVolume(volumeStorageKey);
-            lastVolumeRef.current = volume;
-            element.volume = volume;
+    useLayoutEffect(() => {
+        const media = mediaRef.current;
+        if (!media) return;
+
+        const sourceChanged = previousSourceRef.current !== sourceKey;
+        const wasAutoPlay = previousAutoPlayRef.current;
+        previousSourceRef.current = sourceKey;
+        previousAutoPlayRef.current = autoPlay;
+        if (sourceChanged) {
+            media.pause();
+            if (volumeStorageKey) {
+                const volume = loadMediaVolume(volumeStorageKey);
+                lastVolumeRef.current = volume;
+                media.volume = volume;
+            }
+            // Keep the element itself alive, including while its slot shows YouTube.
+            media.load();
         }
-    }, [volumeStorageKey]);
+        if (!src || paused || (wasAutoPlay && !autoPlay)) {
+            media.pause();
+        } else if (autoPlay) {
+            if (media.ended) media.currentTime = 0;
+            void media.play().catch(() => {
+                // Browser autoplay policy can reject playback; controls remain usable.
+            });
+        }
+    }, [src, volumeStorageKey, sourceKey, autoPlay, paused]);
 
     const handleVolumeChange = () => {
         const volume = mediaRef.current?.volume;
-        // Muting also fires volumechange; only persist actual level changes.
-        if (volume !== undefined && volume !== lastVolumeRef.current) {
+        if (volumeStorageKey && volume !== undefined && volume !== lastVolumeRef.current) {
             lastVolumeRef.current = volume;
             saveMediaVolume(volumeStorageKey, volume);
         }
     };
-
-    useEffect(() => {
-        if (paused) {
-            mediaRef.current?.pause();
+    const handlePlay = () => {
+        const media = mediaRef.current;
+        if (!src) {
+            media?.pause();
+        } else if (media && !media.paused) {
+            onPlay?.();
         }
-    }, [paused]);
-
-    useEffect(() => {
-        if (!autoPlay || paused) {
-            return;
-        }
-
-        void mediaRef.current?.play().catch(() => {
-            // Browser autoplay policy can reject playback; the visible controls remain usable.
-        });
-    }, [autoPlay, paused]);
-
-    const handleEnded = () => {
-        onPause?.();
-        onEnded?.();
     };
-
-    if (kind === 'video') {
-        return (
-            <video
-                ref={setMediaRef}
-                controls
-                autoPlay={autoPlay}
-                onPlay={onPlay}
-                onPause={onPause}
-                onEnded={handleEnded}
-                onVolumeChange={handleVolumeChange}
-                title={title}
-            >
-                <source src={src} type={type}/>
-            </video>
-        );
-    }
-
+    const handlePause = () => {
+        // Ignore events queued by load() for the outgoing source.
+        if (src && mediaRef.current?.paused) onPause?.();
+    };
+    const handleEnded = () => {
+        if (src && mediaRef.current?.ended) {
+            onPause?.();
+            onEnded?.();
+        }
+    };
+    const Element = kind;
     return (
-        <audio
-            ref={setMediaRef}
+        <Element
+            ref={mediaRef as Ref<HTMLVideoElement & HTMLAudioElement>}
             controls
-            autoPlay={autoPlay}
-            onPlay={onPlay}
-            onPause={onPause}
+            hidden={!source}
+            style={source ? undefined : {display: 'none'}}
+            onPlay={handlePlay}
+            onPause={handlePause}
             onEnded={handleEnded}
             onVolumeChange={handleVolumeChange}
             title={title}
         >
-            <source src={src} type={type}/>
-        </audio>
+            {src ? <source src={src} type={mediaType(src, kind === 'video' ? 'video/webm' : 'audio/mp3')}/> : null}
+        </Element>
     );
 }
 
-function YouTubePlayer({videoId, title, autoPlay = false, paused = false, onPlay, onPause, onEnded}: YouTubePlayerProps): ReactElement {
+function YouTubePlayer({videoId, title, autoPlay = false, paused = false, playbackKey, onPlay, onPause, onEnded}: YouTubePlayerProps): ReactElement {
     const reactId = useId();
     const domId = `youtube-player-${reactId.replace(/[^a-zA-Z0-9_-]/g, '')}`;
     const mountRef = useRef<HTMLDivElement | null>(null);
-    const playerRef = useRef<YouTubePlayerInstance | null>(null);
-    const onPlayRef = useRef(onPlay);
-    const onPauseRef = useRef(onPause);
-    const onEndedRef = useRef(onEnded);
-    const shouldAutoPlayRef = useRef(autoPlay && !paused);
+    const [playback] = useState(() => new YouTubePlayback());
+    const [started, setStarted] = useState(videoId !== null);
     const [failed, setFailed] = useState(false);
+    // Start lazily, then retain the iframe even while native media is selected.
+    if (videoId !== null && !started) setStarted(true);
+
+    useLayoutEffect(() => {
+        playback.update({videoId, autoPlay, paused, playbackKey}, {onPlay, onPause, onEnded});
+    }, [playback, videoId, autoPlay, paused, playbackKey, onPlay, onPause, onEnded]);
 
     useEffect(() => {
-        onPlayRef.current = onPlay;
-    }, [onPlay]);
-
-    useEffect(() => {
-        onPauseRef.current = onPause;
-    }, [onPause]);
-
-    useEffect(() => {
-        onEndedRef.current = onEnded;
-    }, [onEnded]);
-
-    useEffect(() => {
-        shouldAutoPlayRef.current = autoPlay && !paused;
-        if (paused) {
-            safelyControlYouTubePlayer(playerRef.current, (player) => player.pauseVideo());
-        } else if (autoPlay) {
-            safelyControlYouTubePlayer(playerRef.current, (player) => {
-                if (player.getPlayerState() === window.YT?.PlayerState.ENDED) {
-                    player.seekTo(0, true);
-                }
-                player.playVideo();
-            });
-        }
-    }, [autoPlay, paused]);
-
-    useEffect(() => {
+        if (!started) return;
         let canceled = false;
-        const mount = mountRef.current;
-        if (!mount) {
-            return undefined;
-        }
-
+        let player: YouTubePlayerInstance | null = null;
+        const mount = mountRef.current!;
         const playerElement = document.createElement('div');
         safelyReplaceChildren(mount, playerElement);
-
         setFailed(false);
 
         void loadYouTubeApi().then((api) => {
-            if (canceled) {
-                return;
-            }
-
-            try {
-                playerRef.current = new api.Player(playerElement, {
-                    videoId,
-                    playerVars: {
-                        autoplay: autoPlay ? 1 : 0,
-                        modestbranding: 1,
-                        rel: 0,
+            if (canceled) return;
+            player = new api.Player(playerElement, {
+                playerVars: {autoplay: 0, modestbranding: 1, rel: 0},
+                events: {
+                    onReady(event) {
+                        if (!canceled) playback.attach(event.target);
                     },
-                    events: {
-                        onReady(event) {
-                            if (!canceled && shouldAutoPlayRef.current) {
-                                safelyControlYouTubePlayer(event.target, (player) => player.playVideo());
-                            }
-                        },
-                        onStateChange(event) {
-                            if (canceled) {
-                                return;
-                            }
-                            if (event.data === api.PlayerState.PLAYING) {
-                                onPlayRef.current?.();
-                            }
-
-                            if (event.data === api.PlayerState.PAUSED) {
-                                onPauseRef.current?.();
-                            }
-
-                            if (event.data === api.PlayerState.ENDED) {
-                                onPauseRef.current?.();
-                                onEndedRef.current?.();
-                            }
-                        },
+                    onStateChange(event) {
+                        if (!canceled) playback.handleState(event.data);
                     },
-                });
-            } catch (error) {
-                console.error('YouTube player failed to initialize:', error);
-                setFailed(true);
-            }
+                },
+            });
         }).catch((error: unknown) => {
-            console.error('YouTube iframe API failed to load:', error);
-            if (!canceled) {
-                setFailed(true);
-            }
+            console.error('YouTube player failed to initialize:', error);
+            if (!canceled) setFailed(true);
         });
 
         return () => {
             canceled = true;
-            safelyControlYouTubePlayer(playerRef.current, (player) => player.destroy());
-            playerRef.current = null;
+            playback.detach();
+            safelyControlYouTubePlayer(player, (instance) => instance.destroy());
             safelyReplaceChildren(mount);
         };
-    }, [videoId]);
+    }, [started, playback]);
 
-    if (failed) {
-        return <div>Media not available</div>;
-    }
-
-    return <div id={domId} className="youtube-player" ref={mountRef} aria-label={title}/>;
+    return (
+        <div hidden={videoId === null} style={videoId === null ? {display: 'none'} : undefined} className="youtube-player" aria-label={title}>
+            <div id={domId} ref={mountRef} style={failed ? {display: 'none'} : {width: '100%', height: '100%'}}/>
+            {failed ? <div>Media not available</div> : null}
+        </div>
+    );
 }
 
 function safelyControlYouTubePlayer(player: YouTubePlayerInstance | null, action: (player: YouTubePlayerInstance) => void): void {
