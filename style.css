@@ -546,7 +546,7 @@ body.sorter-index-body {
 }
 
 .song-list-modal--library .song-list-table {
-  min-width: 640px;
+  min-width: 800px;
 }
 
 .song-list-table th,

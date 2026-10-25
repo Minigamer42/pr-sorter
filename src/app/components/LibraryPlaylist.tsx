@@ -11,6 +11,7 @@ import { LibrarySettingsModal } from './LibrarySettingsModal';
 import { SongListModal } from './SongListModal';
 import { discoverSavedLibrarySongs } from '../songLibraryDiscovery';
 import { createLibrarySongSourceLoader } from '../loadLibrarySongSource';
+import { librarySongSources } from '../librarySongSources';
 
 const config: AppConfig = {
     localStoragePrefix: 'pr-sorter-global-playlist',
@@ -52,6 +53,10 @@ export function LibraryPlaylist({ initialFilter }: { initialFilter: 'liked' | 'a
     const currentSong = activeKey === undefined ? null : songs[keys.indexOf(activeKey)];
     const eligibleSet = new Set(eligible);
     const listedSongs = songs.filter((_, index) => eligibleSet.has(keys[index]));
+    const originalPrsBySongId = useMemo(() => {
+        const sources = librarySongSources(library, libraryOverviewHref(window.location.href));
+        return Object.fromEntries(Object.keys(library.songs).map((key, id) => [id, sources[key] ?? []]));
+    }, [library]);
 
     useEffect(() => {
         let cancelled = false;
@@ -120,6 +125,7 @@ export function LibraryPlaylist({ initialFilter }: { initialFilter: 'liked' | 'a
                 open={songListOpen}
                 songs={listedSongs}
                 scoresBySongId={scoresBySongId}
+                originalPrsBySongId={originalPrsBySongId}
                 onClose={() => setSongListOpen(false)}
             />
             <LibrarySettingsModal

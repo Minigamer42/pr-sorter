@@ -12,6 +12,7 @@ import {
 import { projectedSongSortInfos } from '../internal/projectedSortInfo';
 import type { GoogleSpreadsheetSelection, Settings, SongScoresById } from '../types';
 import { LikeButton } from './LikeButton';
+import type { OriginalPrLink } from '../librarySongSources';
 
 type SheetScoreStatus =
     | { state: 'unavailable'; message: string }
@@ -26,6 +27,7 @@ type SongListModalProps = {
     onClose(): void;
 } & ({
     library: true;
+    originalPrsBySongId: Record<number, OriginalPrLink[]>;
 } | {
     library?: false;
     sort: SortState | null;
@@ -40,7 +42,7 @@ type SongListModalProps = {
     onWriteSheetScores(): void;
 });
 
-type SortColumn = 'id' | 'anime' | 'song' | 'score' | 'sheetScore';
+type SortColumn = 'id' | 'originalPr' | 'anime' | 'song' | 'score' | 'sheetScore';
 type SortDirection = 'asc' | 'desc';
 
 export function SongListModal(props: SongListModalProps) {
@@ -48,6 +50,7 @@ export function SongListModal(props: SongListModalProps) {
     const sorter = props.library ? undefined : props;
     const sheetScoresBySongId = sorter?.sheetScoresBySongId ?? {};
     const googleSpreadsheetSelection = sorter?.googleSpreadsheetSelection;
+    const originalPrsBySongId = props.library ? props.originalPrsBySongId : {};
     const [sortColumn, setSortColumn] = useState<SortColumn>('id');
     const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
@@ -72,7 +75,7 @@ export function SongListModal(props: SongListModalProps) {
     const rows = songs
         .map((song, index) => ({song, index}))
         .sort((left, right) =>
-            compareRows(left, right, sortColumn, sortDirection, scoresBySongId, sheetScoresBySongId),
+            compareRows(left, right, sortColumn, sortDirection, scoresBySongId, sheetScoresBySongId, originalPrsBySongId),
         );
 
     function changeSort(column: SortColumn): void {
@@ -117,6 +120,11 @@ export function SongListModal(props: SongListModalProps) {
                             <SortableHeader column="id" activeColumn={sortColumn} direction={sortDirection} onSort={changeSort}>
                                 ID
                             </SortableHeader>
+                            {props.library ? (
+                                <SortableHeader column="originalPr" activeColumn={sortColumn} direction={sortDirection} onSort={changeSort}>
+                                    Original PR
+                                </SortableHeader>
+                            ) : null}
                             <SortableHeader column="anime" activeColumn={sortColumn} direction={sortDirection} onSort={changeSort}>
                                 Anime
                             </SortableHeader>
@@ -148,7 +156,7 @@ export function SongListModal(props: SongListModalProps) {
                         </thead>
                         <tbody>
                         {props.library && rows.length === 0 ? (
-                            <tr><td colSpan={6}>No songs match the selected filter.</td></tr>
+                            <tr><td colSpan={7}>No songs match the selected filter.</td></tr>
                         ) : null}
                         {rows.map(({song, index}) => {
                             const id = songEntryId(song);
@@ -159,6 +167,17 @@ export function SongListModal(props: SongListModalProps) {
                             return (
                                 <tr key={id}>
                                     <td>{id}</td>
+                                    {props.library ? (
+                                        <td>
+                                            {originalPrsBySongId[id]?.length ? (
+                                                <div className="song-list-links">
+                                                    {originalPrsBySongId[id].map((source) => (
+                                                        <a key={source.href} href={source.href} target="_blank" rel="noreferrer">{source.title}</a>
+                                                    ))}
+                                                </div>
+                                            ) : '—'}
+                                        </td>
+                                    ) : null}
                                     <td title={anime}>{anime}</td>
                                     <td title={name}>{name}</td>
                                     <td>
@@ -241,9 +260,10 @@ function compareRows(
     direction: SortDirection,
     scoresBySongId: SongScoresById,
     sheetScoresBySongId: SongScoresById,
+    originalPrsBySongId: Record<number, OriginalPrLink[]>,
 ): number {
     const multiplier = direction === 'asc' ? 1 : -1;
-    const compared = compareByColumn(left, right, column, scoresBySongId, sheetScoresBySongId);
+    const compared = compareByColumn(left, right, column, scoresBySongId, sheetScoresBySongId, originalPrsBySongId);
     return (compared || songEntryId(left.song) - songEntryId(right.song)) * multiplier;
 }
 
@@ -253,12 +273,20 @@ function compareByColumn(
     column: SortColumn,
     scoresBySongId: SongScoresById,
     sheetScoresBySongId: SongScoresById,
+    originalPrsBySongId: Record<number, OriginalPrLink[]>,
 ): number {
     const leftId = songEntryId(left.song);
     const rightId = songEntryId(right.song);
 
     if (column === 'id') {
         return leftId - rightId;
+    }
+
+    if (column === 'originalPr') {
+        return compareText(
+            (originalPrsBySongId[leftId] ?? []).map((source) => source.title).join('\n'),
+            (originalPrsBySongId[rightId] ?? []).map((source) => source.title).join('\n'),
+        );
     }
 
     if (column === 'anime') {
