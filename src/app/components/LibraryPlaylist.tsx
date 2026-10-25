@@ -108,6 +108,13 @@ export function LibraryPlaylist({ initialFilter }: { initialFilter: 'liked' | 'a
         setCurrentKey(order.length ? order[(position + direction + order.length) % order.length] : null);
     }
 
+    function selectSong(songId: number): void {
+        const key = keys[songId];
+        if (key === undefined || !eligibleSet.has(key)) return;
+        setCurrentKey(key);
+        setSongListOpen(false);
+    }
+
     function changeSettings(nextSettings: Settings): void {
         setSettings(nextSettings);
         createStorage(config, []).saveSettings(nextSettings);
@@ -126,6 +133,7 @@ export function LibraryPlaylist({ initialFilter }: { initialFilter: 'liked' | 'a
                 songs={listedSongs}
                 scoresBySongId={scoresBySongId}
                 originalPrsBySongId={originalPrsBySongId}
+                onSelectSong={selectSong}
                 onClose={() => setSongListOpen(false)}
             />
             <LibrarySettingsModal

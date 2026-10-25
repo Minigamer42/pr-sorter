@@ -99,9 +99,11 @@ export function App({config, songs, overviewHref, importHref}: AppProps) {
     }, [config.localStoragePrefix, resolvedSongs]);
 
     useEffect(() => {
+        // Mode/filter handlers set order and position together. Only rebuild
+        // here when the catalog size changes, preserving explicit selections.
         setPlaylistOrder(createPlaylistOrder(resolvedSongs.length, playlistMode, playlistEligibleIndexes()));
         setPlaylistPosition(0);
-    }, [playlistMode, playlistScoreFilter, resolvedSongs.length]);
+    }, [resolvedSongs.length]);
 
     useEffect(() => {
         if (!isSongListOpen) {
@@ -286,6 +288,21 @@ export function App({config, songs, overviewHref, importHref}: AppProps) {
     function nextPlaylistSong(): void {
         flushPendingScoreWriteback({allowAuthPrompt: true});
         movePlaylistSong(1);
+    }
+
+    function selectPlaylistSong(songId: number): void {
+        const songIndex = resolvedSongs.findIndex((song) => songEntryId(song) === songId);
+        if (songIndex < 0) return;
+
+        flushPendingScoreWriteback({allowAuthPrompt: true});
+        // The sorter songlist also includes scored entries. Selecting one from
+        // "No score" switches to all songs so the requested entry is available.
+        const nextFilter = playlistEligibleIndexes().includes(songIndex) ? playlistScoreFilter : 'all';
+        const nextOrder = filteredPlaylistOrder(playlistOrder, playlistEligibleIndexes(nextFilter), playlistMode);
+        setPlaylistScoreFilter(nextFilter);
+        setPlaylistOrder(nextOrder);
+        setPlaylistPosition(nextOrder.indexOf(songIndex));
+        setSongListOpen(false);
     }
 
     function previousPlaylistSong(): void {
@@ -938,6 +955,7 @@ export function App({config, songs, overviewHref, importHref}: AppProps) {
                 isWritingSheetScores={isWritingSheetScores}
                 onScoreChange={updateScore}
                 onWriteSheetScores={writeSongListScoresToSheet}
+                onSelectSong={screen === 'playlist' ? selectPlaylistSong : undefined}
                 onClose={() => setSongListOpen(false)}
             />
             <div className={`main-page ${screen === 'landing' ? 'main-page--landing' : ''}`}>

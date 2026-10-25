@@ -24,6 +24,7 @@ type SongListModalProps = {
     open: boolean;
     songs: ResolvedSongEntry[];
     scoresBySongId: SongScoresById;
+    onSelectSong?(songId: number): void;
     onClose(): void;
 } & ({
     library: true;
@@ -166,7 +167,13 @@ export function SongListModal(props: SongListModalProps) {
 
                             return (
                                 <tr key={id}>
-                                    <td>{id}</td>
+                                    <td>
+                                        {props.onSelectSong ? (
+                                            <button className="song-list-song-id" type="button" aria-label={`Switch to ${name}`} onClick={() => props.onSelectSong?.(id)}>
+                                                {id}
+                                            </button>
+                                        ) : id}
+                                    </td>
                                     {props.library ? (
                                         <td>
                                             {originalPrsBySongId[id]?.length ? (
