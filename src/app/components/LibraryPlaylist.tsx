@@ -31,6 +31,7 @@ export function LibraryPlaylist({ initialFilter }: { initialFilter: 'liked' | 'a
     const scores = useLibraryScores(library);
     const [filter, setFilter] = useState<PlaylistScoreFilter>(initialFilter);
     const [mode, setMode] = useState<PlaylistMode>('in-order');
+    const [shuffleVersion, setShuffleVersion] = useState(0);
     const [currentKey, setCurrentKey] = useState<string | null>(null);
     const [settings, setSettings] = useState(() => createStorage(config, []).loadSettings());
     const [settingsOpen, setSettingsOpen] = useState(false);
@@ -39,7 +40,7 @@ export function LibraryPlaylist({ initialFilter }: { initialFilter: 'liked' | 'a
     const loadSongSource = useMemo(() => createLibrarySongSourceLoader(libraryOverviewHref(window.location.href)), []);
     const keys = Object.keys(library.songs);
     const eligible = keys.filter((key) => filter === 'liked' ? library.liked.includes(key) : songPassesThreshold(scores[key], library.scoreThreshold));
-    const randomOrder = useMemo(() => shuffledKeys(eligible), [eligible.join('\n'), mode]);
+    const randomOrder = useMemo(() => shuffledKeys(eligible), [eligible.join('\n'), mode, shuffleVersion]);
     const order = mode === 'in-order' ? eligible : randomOrder;
     const position = Math.max(0, currentKey === null ? 0 : order.indexOf(currentKey));
     const activeKey = order[position];
@@ -84,6 +85,7 @@ export function LibraryPlaylist({ initialFilter }: { initialFilter: 'liked' | 'a
     function changeMode(nextMode: PlaylistMode): void {
         setCurrentKey(null);
         setMode(nextMode);
+        if (nextMode === 'random') setShuffleVersion((version) => version + 1);
     }
 
     function changeFilter(nextFilter: PlaylistScoreFilter): void {
