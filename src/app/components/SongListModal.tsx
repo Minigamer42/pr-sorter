@@ -22,10 +22,15 @@ type SheetScoreStatus =
 type SongListModalProps = {
     open: boolean;
     songs: ResolvedSongEntry[];
+    scoresBySongId: SongScoresById;
+    onClose(): void;
+} & ({
+    library: true;
+} | {
+    library?: false;
     sort: SortState | null;
     settings: Settings;
     scoreEnabled: boolean;
-    scoresBySongId: SongScoresById;
     sheetScoresBySongId: SongScoresById;
     sheetScoreStatus: SheetScoreStatus;
     googleSpreadsheetSelection: GoogleSpreadsheetSelection | null;
@@ -33,28 +38,16 @@ type SongListModalProps = {
     isWritingSheetScores: boolean;
     onScoreChange(songId: number, score: string): void;
     onWriteSheetScores(): void;
-    onClose(): void;
-};
+});
 
 type SortColumn = 'id' | 'anime' | 'song' | 'score' | 'sheetScore';
 type SortDirection = 'asc' | 'desc';
 
-export function SongListModal({
-    open,
-    songs,
-    sort,
-    settings,
-    scoreEnabled,
-    scoresBySongId,
-    sheetScoresBySongId,
-    sheetScoreStatus,
-    googleSpreadsheetSelection,
-    canWriteSheetScores,
-    isWritingSheetScores,
-    onScoreChange,
-    onWriteSheetScores,
-    onClose,
-}: SongListModalProps) {
+export function SongListModal(props: SongListModalProps) {
+    const { open, songs, scoresBySongId, onClose } = props;
+    const sorter = props.library ? undefined : props;
+    const sheetScoresBySongId = sorter?.sheetScoresBySongId ?? {};
+    const googleSpreadsheetSelection = sorter?.googleSpreadsheetSelection;
     const [sortColumn, setSortColumn] = useState<SortColumn>('id');
     const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
@@ -66,8 +59,10 @@ export function SongListModal({
     }, [open]);
 
     const projectedRanges = useMemo(
-        () => open && sort ? projectedSongSortInfos(sort, songs.length, {songs, scoresBySongId, settings, scoreEnabled}) : new Map(),
-        [open, scoreEnabled, scoresBySongId, settings, songs, sort],
+        () => open && sorter?.sort ? projectedSongSortInfos(sorter.sort, songs.length, {
+            songs, scoresBySongId, settings: sorter.settings, scoreEnabled: sorter.scoreEnabled,
+        }) : new Map(),
+        [open, sorter?.scoreEnabled, scoresBySongId, sorter?.settings, songs, sorter?.sort],
     );
 
     if (!open) {
@@ -93,7 +88,7 @@ export function SongListModal({
     return (
         <>
             <div className="modal-overlay" onClick={onClose}/>
-            <div className="modal song-list-modal">
+            <div className={`modal song-list-modal${props.library ? ' song-list-modal--library' : ''}`} role="dialog" aria-modal="true" aria-label="Song List">
                 <h2>
                     Song List
                     {googleSpreadsheetSelection ? (
@@ -110,9 +105,11 @@ export function SongListModal({
                         </>
                     ) : null}
                 </h2>
-                <div className={`song-list-status song-list-status--${sheetScoreStatus.state}`}>
-                    {sheetScoreStatus.message}
-                </div>
+                {sorter ? (
+                    <div className={`song-list-status song-list-status--${sorter.sheetScoreStatus.state}`}>
+                        {sorter.sheetScoreStatus.message}
+                    </div>
+                ) : null}
                 <div className="song-list-table-wrap">
                     <table className="song-list-table">
                         <thead>
@@ -130,10 +127,10 @@ export function SongListModal({
                             <SortableHeader column="score" activeColumn={sortColumn} direction={sortDirection} onSort={changeSort}>
                                 Score
                             </SortableHeader>
-                            <SortableHeader column="sheetScore" activeColumn={sortColumn} direction={sortDirection} onSort={changeSort}>
+                            {sorter ? <SortableHeader column="sheetScore" activeColumn={sortColumn} direction={sortDirection} onSort={changeSort}>
                                 Sheet score
-                            </SortableHeader>
-                            <th>
+                            </SortableHeader> : null}
+                            {sorter ? <th>
                   <span className="song-list-header-with-help">
                     Current range
                     <span
@@ -145,16 +142,19 @@ export function SongListModal({
                       ?
                     </span>
                   </span>
-                            </th>
+                            </th> : null}
                             <th>Like</th>
                         </tr>
                         </thead>
                         <tbody>
+                        {props.library && rows.length === 0 ? (
+                            <tr><td colSpan={6}>No songs match the selected filter.</td></tr>
+                        ) : null}
                         {rows.map(({song, index}) => {
                             const id = songEntryId(song);
                             const anime = songEntryAnime(song);
                             const name = songEntryName(song);
-                            const range = sort ? projectedRanges.get(index) ?? null : null;
+                            const range = sorter?.sort ? projectedRanges.get(index) ?? null : null;
 
                             return (
                                 <tr key={id}>
@@ -165,19 +165,19 @@ export function SongListModal({
                                         <SongLinks song={song}/>
                                     </td>
                                     <td>
-                                        <input
+                                        {sorter ? <input
                                             className="song-list-score-input"
                                             type="number"
                                             min="0"
                                             max="10"
                                             step="0.01"
                                             value={scoresBySongId[id] ?? ''}
-                                            disabled={!scoreEnabled}
-                                            onChange={(event) => onScoreChange(id, event.currentTarget.value)}
-                                        />
+                                            disabled={!sorter.scoreEnabled}
+                                            onChange={(event) => sorter.onScoreChange(id, event.currentTarget.value)}
+                                        /> : scoresBySongId[id] ?? ''}
                                     </td>
-                                    <td>{sheetScoresBySongId[id] ?? ''}</td>
-                                    <td>{range ? formatRankRange(range.minRank, range.maxRank) : ''}</td>
+                                    {sorter ? <td>{sheetScoresBySongId[id] ?? ''}</td> : null}
+                                    {sorter ? <td>{range ? formatRankRange(range.minRank, range.maxRank) : ''}</td> : null}
                                     <td>
                                         {songEntrySongs(song).map((item, index) => <LikeButton key={index} song={item}/>)}
                                     </td>
@@ -188,14 +188,14 @@ export function SongListModal({
                     </table>
                 </div>
                 <div className="song-list-actions">
-                    <button
+                    {sorter ? <button
                         className="song-list-write-button"
                         type="button"
-                        onClick={onWriteSheetScores}
-                        disabled={!canWriteSheetScores || isWritingSheetScores}
+                        onClick={sorter.onWriteSheetScores}
+                        disabled={!sorter.canWriteSheetScores || sorter.isWritingSheetScores}
                     >
-                        {isWritingSheetScores ? 'Writing to spreadsheet...' : 'Write to spreadsheet'}
-                    </button>
+                        {sorter.isWritingSheetScores ? 'Writing to spreadsheet...' : 'Write to spreadsheet'}
+                    </button> : null}
                     <button className="close-button" type="button" onClick={onClose}>
                         Close
                     </button>
@@ -221,7 +221,7 @@ function SortableHeader({
     const active = column === activeColumn;
 
     return (
-        <th>
+        <th aria-sort={active ? (direction === 'asc' ? 'ascending' : 'descending') : undefined}>
             <button
                 className={`song-list-sort-header${active ? ' song-list-sort-header--active' : ''}`}
                 type="button"

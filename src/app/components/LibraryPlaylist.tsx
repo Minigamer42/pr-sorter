@@ -8,6 +8,7 @@ import type { AppConfig, Settings, SongScoresById } from '../types';
 import { useLibraryScores, useSongLibrary } from '../useSongLibrary';
 import { Playlist, type PlaylistMode, type PlaylistScoreFilter } from './Playlist';
 import { LibrarySettingsModal } from './LibrarySettingsModal';
+import { SongListModal } from './SongListModal';
 import { discoverSavedLibrarySongs } from '../songLibraryDiscovery';
 import { createLibrarySongSourceLoader } from '../loadLibrarySongSource';
 
@@ -35,6 +36,7 @@ export function LibraryPlaylist({ initialFilter }: { initialFilter: 'liked' | 'a
     const [currentKey, setCurrentKey] = useState<string | null>(null);
     const [settings, setSettings] = useState(() => createStorage(config, []).loadSettings());
     const [settingsOpen, setSettingsOpen] = useState(false);
+    const [songListOpen, setSongListOpen] = useState(false);
     const [discoveryAttempt, setDiscoveryAttempt] = useState(0);
     const [discovery, setDiscovery] = useState({ loading: true, unresolvedPrefixes: [] as string[] });
     const loadSongSource = useMemo(() => createLibrarySongSourceLoader(libraryOverviewHref(window.location.href)), []);
@@ -48,6 +50,8 @@ export function LibraryPlaylist({ initialFilter }: { initialFilter: 'liked' | 'a
     const songs = useMemo<ResolvedSong[]>(() => Object.values(library.songs).map((song, id) => ({ ...song, id })), [library.songs]);
     const scoresBySongId: SongScoresById = Object.fromEntries(keys.flatMap((key, id) => scores[key] === undefined ? [] : [[id, String(scores[key])]]));
     const currentSong = activeKey === undefined ? null : songs[keys.indexOf(activeKey)];
+    const eligibleSet = new Set(eligible);
+    const listedSongs = songs.filter((_, index) => eligibleSet.has(keys[index]));
 
     useEffect(() => {
         let cancelled = false;
@@ -111,6 +115,13 @@ export function LibraryPlaylist({ initialFilter }: { initialFilter: 'liked' | 'a
 
     return (
         <MediaStoragePrefixContext.Provider value={config.localStoragePrefix}>
+            <SongListModal
+                library
+                open={songListOpen}
+                songs={listedSongs}
+                scoresBySongId={scoresBySongId}
+                onClose={() => setSongListOpen(false)}
+            />
             <LibrarySettingsModal
                 open={settingsOpen}
                 settings={settings}
@@ -123,6 +134,7 @@ export function LibraryPlaylist({ initialFilter }: { initialFilter: 'liked' | 'a
                 <div className="title">Your song library</div>
                 <div className="button-container">
                     <a className="basic-button" href={libraryOverviewHref(window.location.href)}>Overview</a>
+                    <button className="basic-button" type="button" aria-haspopup="dialog" onClick={() => setSongListOpen(true)}>Songlist</button>
                     <button className="basic-button" type="button" aria-haspopup="dialog" onClick={() => setSettingsOpen(true)}>Settings</button>
                 </div>
                 {discovery.unresolvedPrefixes.length > 0 && !discovery.loading ? (

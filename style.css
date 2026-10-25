@@ -545,6 +545,10 @@ body.sorter-index-body {
   min-width: 980px;
 }
 
+.song-list-modal--library .song-list-table {
+  min-width: 640px;
+}
+
 .song-list-table th,
 .song-list-table td {
   padding: 9px 10px;
