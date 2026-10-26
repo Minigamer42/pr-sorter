@@ -77,7 +77,6 @@ export function LibraryPlaylist({ initialFilter }: { initialFilter: 'liked' | 'a
     }, []);
 
     useEffect(() => {
-        document.title = config.title;
         const followRoute = () => {
             setFilter(libraryFilterFromUrl(window.location.href) ?? initialFilter);
             setCurrentKey(null);

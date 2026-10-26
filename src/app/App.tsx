@@ -89,10 +89,10 @@ export function App({config, songs, overviewHref, importHref}: AppProps) {
     const eagerRankWritebackQueueRef = useRef<Promise<void>>(Promise.resolve());
 
     useEffect(() => {
-        document.title = config.title;
+        if (screen !== 'playlist') document.title = config.title;
         document.querySelector('meta[name="og:site_name"]')?.setAttribute('content', config.title);
         document.querySelector('meta[name="og:description"]')?.setAttribute('content', config.description);
-    }, [config.description, config.title]);
+    }, [config.description, config.title, screen]);
 
     useEffect(() => {
         registerLibrarySongs(config.localStoragePrefix, resolvedSongs);

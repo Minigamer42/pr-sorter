@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Media } from '../../media';
 import { songEntryId, songEntrySongs, songWithTypeLabel, type ResolvedSongEntry } from '../../songs';
 import type { AppConfig, Settings, SongScoresById } from '../types';
@@ -83,6 +83,14 @@ export function Playlist({
         setPlayingSongIndex(null);
     }
 
+    const currentSongs = currentSong ? songEntrySongs(currentSong) : [];
+    const clampedActiveSongIndex = Math.min(activeSongIndex, currentSongs.length - 1);
+    const activeSongName = currentSongs[clampedActiveSongIndex]?.name;
+    useEffect(() => {
+        document.title = activeSongName ? `${activeSongName} — ${config.title}` : config.title;
+        return () => { document.title = config.title; };
+    }, [activeSongName, config.title]);
+
     const writeScoresButton = scoreEnabled && !library ? (
         <button
             className="playlist-mode__button"
@@ -125,9 +133,6 @@ export function Playlist({
     if (currentSongId === null) {
         return null;
     }
-
-    const currentSongs = songEntrySongs(currentSong);
-    const clampedActiveSongIndex = Math.min(activeSongIndex, currentSongs.length - 1);
 
     function mediaStarted(index: number): void {
         setPlayingSongIndex(index);
