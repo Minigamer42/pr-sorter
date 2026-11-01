@@ -3,34 +3,188 @@
 import type { Song } from '../src/songs';
 
 export const songList = [
-    {'id': 1, 'anime': 'Bang Dream', 'name': 'Asu no Yozora Shoukaihan by Afterglow', 'video': 'https://www.youtube.com/watch?v=1JgfLP2QtZw', 'mp3': null},
-    {'id': 2, 'anime': 'Bang Dream', 'name': 'Ave Mujica by Ave Mujica', 'video': 'https://youtu.be/QDsd0nyzwz0', 'mp3': null},
-    {'id': 3, 'anime': 'Bang Dream', 'name': 'Bad Kids All Bet by RAISE A SUILEN', 'video': 'https://www.youtube.com/watch?v=mKt2u5a3-H8', 'mp3': null},
-    {'id': 4, 'anime': 'Bang Dream', 'name': 'Beautiful Birthday by RAISE A SUILEN', 'video': 'https://www.youtube.com/watch?v=AxEUw6LdHR4', 'mp3': null},
-    {'id': 5, 'anime': 'Bang Dream', 'name': 'Choir \'s\' Choir by Ave Mujica', 'video': 'https://youtu.be/7llj4mh4L-8', 'mp3': null},
-    {'id': 6, 'anime': 'Bang Dream', 'name': 'Double Rainbow by Poppin\'Party', 'video': 'https://www.youtube.com/watch?v=sNaJuqFB-_g', 'mp3': null},
-    {'id': 7, 'anime': 'Bang Dream', 'name': 'Ether by Ave Mujica', 'video': 'https://www.youtube.com/watch?v=z6k7YIIZ6Hk', 'mp3': null},
-    {'id': 8, 'anime': 'Bang Dream', 'name': 'Freedom by Poppin\'Party x Misato Fukuen', 'video': 'https://www.youtube.com/watch?v=oy6OCnr9eAg', 'mp3': null},
-    {'id': 9, 'anime': 'Bang Dream', 'name': 'Hey-day Capriccio by Afterglow', 'video': 'https://www.youtube.com/watch?v=czHlLBls4oo', 'mp3': null},
-    {'id': 10, 'anime': 'Bang Dream', 'name': 'Kamisama, Baka by Ave Mujica', 'video': 'https://youtu.be/vmheOfqsH_o', 'mp3': null},
-    {'id': 11, 'anime': 'Bang Dream', 'name': 'KiLLKiSS by Ave Mujica', 'video': 'https://www.youtube.com/watch?v=RexyoaXaQ1o', 'mp3': null},
-    {'id': 12, 'anime': 'Bang Dream', 'name': 'Kimi ga Inakucha, Hello Happy World', 'video': 'https://naedist.animemusicquiz.com/8poyjw.webm', 'mp3': null},
-    {'id': 13, 'anime': 'Bang Dream', 'name': 'Mugen My World by Mugendai Mewtype', 'video': 'https://youtube.com/watch?v=GB2MEvY2sQk', 'mp3': null},
-    {'id': 14, 'anime': 'Bang Dream', 'name': 'Radiate Warriors by Pastel＊Palettes', 'video': 'https://youtu.be/dS-SUwftzmM', 'mp3': null},
-    {'id': 15, 'anime': 'Bang Dream', 'name': 'Returns by Poppin\'Party', 'video': 'https://www.youtube.com/watch?v=zWKV5yudE18', 'mp3': null},
-    {'id': 16, 'anime': 'Bang Dream', 'name': 'Roku-chou Nen to Ichiya Monogatari by Roselia', 'video': 'https://www.youtube.com/watch?v=xnlJkmRhi3Q', 'mp3': null},
-    {'id': 17, 'anime': 'Bang Dream', 'name': 'Sing Alive by Roselia', 'video': 'https://naedist.animemusicquiz.com/2h5qt3.webm', 'mp3': null},
-    {'id': 18, 'anime': 'Bang Dream', 'name': 'Mayoi Uta by MyGO!!!!!', 'video': 'https://naedist.animemusicquiz.com/vppf6y.webm', 'mp3': null},
-    {'id': 19, 'anime': 'Bang Dream', 'name': 'Smiling & Singing A Song by Hello, Happy World!', 'video': 'https://youtu.be/XFv3P-fKhWw', 'mp3': null},
-    {'id': 20, 'anime': 'Bang Dream', 'name': 'Song I am. by Roselia', 'video': 'https://naedist.animemusicquiz.com/njc8p5.webm', 'mp3': null},
-    {'id': 21, 'anime': 'Bang Dream', 'name': 'Sora no Música by Ave Mujica', 'video': 'https://youtu.be/2Bo-ULStqLo', 'mp3': null},
-    {'id': 22, 'anime': 'Bang Dream', 'name': 'Sprechchor by Roselia', 'video': 'https://www.youtube.com/watch?v=sdRwP4OjVn4', 'mp3': null},
-    {'id': 23, 'anime': 'Bang Dream', 'name': 'Sunlit Musical - Roselia', 'video': 'https://youtu.be/BtG1mA_1e0s', 'mp3': null},
-    {'id': 24, 'anime': 'Bang Dream', 'name': 'swim by MyGO!!!!!', 'video': 'https://www.youtube.com/watch?v=AEZ7suhPML0', 'mp3': null},
-    {'id': 25, 'anime': 'Bang Dream', 'name': 'Symbol III: ▽ by Ave Mujica', 'video': 'https://www.youtube.com/watch?v=NB3PxWLn9v4', 'mp3': null},
-    {'id': 26, 'anime': 'Bang Dream', 'name': 'Symbol IV :Earth by Ave Mujica', 'video': 'https://www.youtube.com/watch?v=WqQPM0dZpXc', 'mp3': null},
-    {'id': 27, 'anime': 'Bang Dream', 'name': 'Telepathy by Mugendai Mewtype', 'video': 'https://www.youtube.com/watch?v=GN_0T7cClGM', 'mp3': null},
-    {'id': 28, 'anime': 'Bang Dream', 'name': 'The Circle of Butterflies by Morfonica x fhána', 'video': 'https://www.youtube.com/watch?v=JfhgKn1hnnk', 'mp3': null},
-    {'id': 29, 'anime': 'Bang Dream', 'name': 'Utakotoba by MyGO!!!!!', 'video': 'https://youtu.be/wJ-OebTVyvk', 'mp3': null},
-    {'id': 30, 'anime': 'Bang Dream', 'name': 'Yakusoku by Roselia', 'video': 'https://naedist.animemusicquiz.com/h0rza6.webm', 'mp3': null},
+    {
+        'id': 1,
+        'anime': null,
+        'name': '"God knows…" by Healer Girls',
+        'video': 'https://www.youtube.com/watch?v=vZP40gkB19Y',
+        'mp3': null,
+        'full': 'https://files.catbox.moe/5lkgi6.flac'
+    },
+    {
+        'id': 2,
+        'anime': null,
+        'name': '"WALK" by Healer Girls',
+        'video': 'https://www.youtube.com/watch?v=UkgIVM6X1xg',
+        'mp3': null,
+        'full': 'https://files.catbox.moe/rdngc5.flac'
+    },
+    {
+        'id': 3,
+        'anime': null,
+        'name': '"Snow halation" by Healer Girls',
+        'video': 'https://www.youtube.com/watch?v=oDLBeZ-_rRc',
+        'mp3': null,
+        'full': 'https://files.catbox.moe/x3r2xn.flac'
+    },
+    {
+        'id': 4,
+        'anime': null,
+        'name': '"Yasashii Boukyaku" by Healer Girls',
+        'video': 'https://www.youtube.com/watch?v=Zo493gUuHEw',
+        'mp3': null,
+        'full': 'https://files.catbox.moe/lth9sm.flac'
+    },
+    {
+        'id': 5,
+        'anime': null,
+        'name': '"DREAM SOLISTER" by Healer Girls',
+        'video': 'https://www.youtube.com/watch?v=zPG1OpOTc1Q',
+        'mp3': null,
+        'full': 'https://files.catbox.moe/6lalf4.flac'
+    },
+    {
+        'id': 6,
+        'anime': null,
+        'name': '"Feel You, Heal You ~sêrênité~" by Healer Girls',
+        'video': 'https://www.youtube.com/watch?v=Gt7aoP1cB04',
+        'mp3': null,
+        'full': 'https://files.catbox.moe/vtakqd.flac'
+    },
+    {
+        'id': 7,
+        'anime': null,
+        'name': '"Sugar Song to Bitter Step" by Healer Girls',
+        'video': 'https://www.youtube.com/watch?v=rf2_WV38mao',
+        'mp3': null,
+        'full': 'https://files.catbox.moe/fmmg76.flac'
+    },
+    {
+        'id': 8,
+        'anime': null,
+        'name': '"Motteke! Sailor Fuku" by Healer Girls',
+        'video': 'https://www.youtube.com/watch?v=1KlkfWNYX5w',
+        'mp3': null,
+        'full': 'https://files.catbox.moe/34wqf6.flac'
+    },
+    {
+        'id': 9,
+        'anime': null,
+        'name': '"secret base ~Kimi ga Kureta Mono~" by Healer Girls',
+        'video': 'https://www.youtube.com/watch?v=vB-epMFp2-w',
+        'mp3': null,
+        'full': 'https://files.catbox.moe/5e0i4f.flac'
+    },
+    {
+        'id': 10,
+        'anime': null,
+        'name': '"Hare Hare Yukai" by Healer Girls',
+        'video': 'https://www.youtube.com/watch?v=dBSdyxJ2x7g',
+        'mp3': null,
+        'full': 'https://files.catbox.moe/a8vjme.flac'
+    },
+    {
+        'id': 11,
+        'anime': null,
+        'name': '"Feel You, Heal You" by Healer Girls',
+        'video': 'https://naedist.animemusicquiz.com/up0qr5.webm',
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=zRUomqFZEE0'
+    },
+    {
+        'id': 12,
+        'anime': null,
+        'name': '"Believe like Singing." by Healer Girls',
+        'video': 'https://naedist.animemusicquiz.com/zyx4wm.webm',
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=LqPNV5g_n-s'
+    },
+    {
+        'id': 13,
+        'anime': null,
+        'name': '"Yawaraka na Oto no Naka de" by Kana Fujii (CV: Karin Isobe)',
+        'video': 'https://naedist.animemusicquiz.com/btg7he.webm',
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=sCGRQGcu00A'
+    },
+    {
+        'id': 14,
+        'anime': null,
+        'name': '"Chiisana Koe, Ookina Sekai" by Ria Karasuma (CV: Ayahi Takagaki), Kana Fujii (CV: Karin Isobe), Sonia Yanagi (CV: Chihaya Yoshitake)',
+        'video': 'https://naedist.animemusicquiz.com/ecyblw.webm',
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=1m1-K27B-CQ'
+    },
+    {
+        'id': 15,
+        'anime': null,
+        'name': '"Run! Run! Run!" by Kana Fujii (CV: Karin Isobe), Reimi Itsushiro (CV: Marina Horiuchi), Hibiki Morishima (CV: Akane Kumada), Sonia Yanagi (CV: Chihaya Yoshitake)',
+        'video': 'https://naedist.animemusicquiz.com/927a0k.webm',
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=Btur9mXs-EQ'
+    },
+    {
+        'id': 16,
+        'anime': null,
+        'name': '"Mirai no Tobira Hiraite" by Kana Fujii (CV: Karin Isobe), Reimi Itsushiro (CV: Marina Horiuchi), Hibiki Morishima (CV: Akane Kumada)',
+        'video': 'https://naedist.animemusicquiz.com/cidx3a.webm',
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=F0rpq28CavA'
+    },
+    {
+        'id': 17,
+        'anime': null,
+        'name': '"Yama ni wa Suteki na Mono ga Aru ~ Teppen made Noborou ~ Hoshi to Hotaru" by Kana Fujii (CV: Karin Isobe), Reimi Itsushiro (CV: Marina Horiuchi), Takeshi Morishima (CV: Aya Yamane), Yasushi Morishima (CV: Hiyori Kouno), Haruna Morishima (CV: Natsumi Hioka), Mayumi Morishima (CV: Maki Kawase)',
+        'video': 'https://naedist.animemusicquiz.com/627cg0.webm',
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=qhVKKZDL7SE'
+    },
+    {
+        'id': 18,
+        'anime': null,
+        'name': '"Sleep tight, Sweet dreams" by Sonia Yanagi (CV: Chihaya Yoshitake)',
+        'video': 'https://naedist.animemusicquiz.com/8vbo88.webm',
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=V_dLpByEfQU'
+    },
+    {
+        'id': 19,
+        'anime': null,
+        'name': '"Resonance" by Kana Fujii (CV: Karin Isobe), Reimi Itsushiro (CV: Marina Horiuchi), Hibiki Morishima (CV: Akane Kumada), Sonia Yanagi (CV: Chihaya Yoshitake)',
+        'video': 'https://naedist.animemusicquiz.com/2vcrvl.webm',
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=_qc1nYklunw'
+    },
+    {
+        'id': 20,
+        'anime': null,
+        'name': '"Nesting birds" by Reimi Itsushiro (CV: Marina Horiuchi)',
+        'video': 'https://naedist.animemusicquiz.com/pkhwsm.webm',
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=b2Md6VWw6bc'
+    },
+    {
+        'id': 21,
+        'anime': null,
+        'name': '"SONG FOR LIFE" by Ria Karasuma (CV: Ayahi Takagaki), Kana Fujii (CV: Karin Isobe), Reimi Itsushiro (CV: Marina Horiuchi), Hibiki Morishima (CV: Akane Kumada)',
+        'video': 'https://naedist.animemusicquiz.com/8jan2m.webm',
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=NwN8SYOGBOw'
+    },
+    {
+        'id': 22,
+        'anime': null,
+        'name': '"You can choose everything" by Ria Karasuma (CV: Ayahi Takagaki), Kana Fujii (CV: Karin Isobe), Reimi Itsushiro (CV: Marina Horiuchi), Hibiki Morishima (CV: Akane Kumada), Sonia Yanagi (CV: Chihaya Yoshitake), Shinobu’s Grandmother (CV: Satomi Obata)',
+        'video': 'https://naedist.animemusicquiz.com/10qb24.webm',
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=J-rt_WKR6xg'
+    },
+    {
+        'id': 23,
+        'anime': null,
+        'name': '"Iyashi no Uta" by Kana Fujii (CV: Karin Isobe), Reimi Itsushiro (CV: Marina Horiuchi), Hibiki Morishima (CV: Akane Kumada)',
+        'video': 'https://naedist.animemusicquiz.com/ikse2i.webm',
+        'mp3': null,
+        'full': 'https://www.youtube.com/watch?v=vBiDnLtAl9E'
+    }
 ] satisfies Song[];
